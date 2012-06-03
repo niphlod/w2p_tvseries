@@ -1,0 +1,93 @@
+{{extend 'layout.html'}}
+
+<div class="row-fluid">
+    <h2>Log</h2>
+    <div id="global_logger" class="alert alert-info">
+        <table class="table table-striped table-bordered table-condensed">
+            <tbody>
+                <tr></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{if len(b['path']) > 0 :}}
+<div class="row-fluid">
+    Check basepath:
+    {{=UL(*b['path'])}}
+</div>
+{{pass}}
+
+
+{{=LOAD('organize', 'check_missing_path.load', target='check_path')}}
+
+<div class="well">
+    <h3>Start ?</h3>
+    {{=A("Organize", _href=URL('organize', 'queue_ops'), _id="start", _class="btn btn-primary btn-large disabled")}}
+    {{=A("Check missing", callback=URL('organize', 'missing.load'), target="missing", _class="btn btn-primary btn-large")}}
+</div>
+
+
+<br />
+
+<div class="well">
+    <h3>Missing</h3>
+<div id="missing"></div>
+
+</div>
+
+<script type="text/javascript">
+    (function poll_btn_status(){
+        setTimeout(function() {
+            el = $("#operation_button");
+            if (el.text() == "0/0") {
+                $("#start").removeClass('disabled');
+            } else {
+                $("#start").addClass('disabled');
+            }
+            poll_btn_status();
+        }, 1500)
+    })();
+
+    $(function() {
+        $("#start").on('click', function (e) {
+            e.preventDefault();
+            var el = $(this);
+            if (el.hasClass('disabled')) return false;
+            $("#start").addClass('disabled');
+            $("#operation_button").text("queueing");
+            $.get(el.attr('href'));
+        });
+    })
+    function removeFirst(el){
+            if ($("tr", el).length < 20) return
+            $("tr:last", el)
+            .animate({opacity: 0}, 700)
+            .fadeOut('slow', function() {$(this).remove();});
+    }
+    $.PeriodicalUpdater('/w2p_tvseries/log/index', {
+        method: 'get',
+        data: {'verbose' : 1},
+        minTimeout: 1000,
+        maxTimeout: 8000,
+        multiplier: 2,
+        type: 'json',
+        maxCalls: 0,
+        autoStop: 0,
+        'beforeSend':function(xhr) {
+            xhr.setRequestHeader('web2py-component-location', document.location);
+            xhr.setRequestHeader('web2py-component-element', 'global_logger' );
+            },
+        },
+        function(remoteData, success, xhr, handle) {
+                var el = $("#global_logger table tbody");
+                var command = xhr.getResponseHeader('web2py-component-command');
+                if (command == 'stop') handle.stop();
+                for (var i=remoteData.length-1;i>=0; i--) {
+                    $("tr:first", el).after(remoteData[i]);
+                }
+                removeFirst(el);
+                if(command) eval(decodeURIComponent(escape(command)));
+            }
+    );
+</script>

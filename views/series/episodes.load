@@ -1,0 +1,32 @@
+
+<div class="well">
+    {{if banner:}}
+    <div class="media">
+        {{=UL(
+              LI(
+                DIV(
+                    IMG(_alt=banner.episode_id, _src=w2p_deposit(banner.banner)),
+                    (metadata or ''),
+              _class="thumbnail"
+                )
+              ),
+        _class="thumbnails pull-left"
+        )}}
+    <div class="media-body">
+    {{pass}}
+
+    {{=H6(I(_title="missing", _class="icon-warning-sign"),"Aired %s" % (episode.firstaired), _class="pull-right")}}
+    {{=H4("S%.2dE%.2d - %s" % (episode.seasonnumber, episode.number, episode.name))}}
+    {{=P(episode.overview)}}
+    {{trackingclass = episode.tracking and 'btn btn-success' or 'btn btn-danger'}}
+    {{trackingtext = episode.tracking and 'Episode Tracking: On' or 'Episode Tracking: Off'}}
+    {{title = episode.tracking and 'Click to not track' or 'Click to track'}}
+    {{trackingid = "episode_tracking_%s" % episode.id}}
+    {{=DIV(
+        A(trackingtext, callback=URL('manage', 'episode_tracking', args=[episode.id]), target=trackingid, _class=trackingclass, _title=title),
+    _id=trackingid)}}
+    {{if banner:}}
+        </div>
+    </div>
+    {{pass}}
+</div>

@@ -1,0 +1,8 @@
+{{extend 'layout.html'}}
+
+<h1>Delete series</h1>
+
+<div class="alert">{{=message}}</div>
+{{if not request.vars.confirm:}}
+    {{=A("Delete %s" % (rec.name), _href=URL('', args=request.args, vars=dict(confirm=1)), _class="btn btn-large btn-danger")}}
+{{pass}}

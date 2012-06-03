@@ -1,0 +1,60 @@
+{{if len(results)>0:}}
+
+<h3>Check path existance</h3>
+<div class="well">
+
+    {{for res in results:}}
+    <div class="alert alert-block alert-error fade in">
+        <a href="#" data-dismiss="alert" class="close">&times;</a>
+        <h4 class="alert-heading">{{="%s - Season %.2d" % (res['series'], res['seasonnumber'])}}</h4>
+        <span class="message">Dir {{=res['dir']}} doesn't exist, should I create it ?</span>
+        <p>
+            {{=A("Create dir",
+            _href=URL('osi', 'check_path', args=[res['seriesid'], res['seasonnumber']]),
+            _class="btn btn-primary",
+            _id="check_path_%s_%s" % (res['seriesid'], res['seasonnumber']))}}
+        </p>
+    </div>
+    {{pass}}
+</div>
+
+{{pass}}
+
+<script type="text/javascript">
+$(function() {
+    $(".btn-primary", "#check_path").on('click', function(e) {
+        e.preventDefault();
+        var el = $(this);
+        if (el.hasClass('disabled')) return false;
+        el.addClass('disabled');
+        $.PeriodicalUpdater($(this).attr('href'), {
+            method: 'get',
+            data: function () {
+                return el.data()
+                },
+            type: 'json',
+            'beforeSend':function(xhr) {
+                xhr.setRequestHeader('web2py-component-location', document.location);
+                xhr.setRequestHeader('web2py-component-element', el.attr('id') );
+                },
+            },
+            function(remoteData, success, xhr, handle) {
+                    var command = xhr.getResponseHeader('web2py-component-command');
+                    if (command == 'stop') handle.stop();
+                    if (remoteData.task_id) el.data('task_id', remoteData.task_id);
+                    if (remoteData.ok) {
+                        el.closest('.alert').alert('close');
+                        handle.stop();
+                    } else if (remoteData.err) {
+                        el.closest('.alert').children('span').text(remoteData.err);
+                        el.hide();
+                        handle.stop();
+                    } else if (remoteData.message) {
+                        el.text(remoteData.message);
+                    }
+                    if(command) eval(decodeURIComponent(escape(command)));
+                }
+        );
+       })
+})
+</script>

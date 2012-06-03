@@ -1,0 +1,49 @@
+{{extend 'layout.html'}}
+
+<h1>Add series</h1>
+
+{{=twitter_form(form, 'form-inline')}}
+
+{{if error:}}
+    {{=twitter_alert(error)}}
+{{pass}}
+
+{{for id, language, name, overview in res:}}
+<div class="well">
+    {{=A("Add", _href=URL('manage', 'add_series', args=[id, language]), _class="btn btn-primary addseries", _id="add_series_%s_%s" % (id, language))}}
+    <h3>{{=name}} - {{=language}}</h3>
+    <p>{{=overview}}</p>
+</div>
+{{pass}}
+
+<script type="text/javascript">
+    $(function() {
+        $(".addseries").on('click', function(e) {
+            e.preventDefault();
+            var el = $(this);
+            if (el.hasClass('disabled')) return false;
+            el.addClass('disabled');
+            $.PeriodicalUpdater($(this).attr('href'), {
+                method: 'get',
+                data: function () {
+                    return el.data()
+                    },
+                type: 'json',
+                'beforeSend':function(xhr) {
+                    xhr.setRequestHeader('web2py-component-location', document.location);
+                    xhr.setRequestHeader('web2py-component-element', el.attr('id') );
+                    },
+                },
+                function(remoteData, success, xhr, handle) {
+                        var command = xhr.getResponseHeader('web2py-component-command');
+                        if (command == 'stop') handle.stop();
+                        if (remoteData.task_id) el.data('task_id', remoteData.task_id);
+                        if (remoteData.message) {
+                            el.text(remoteData.message);
+                        }
+                        if(command) eval(decodeURIComponent(escape(command)));
+                    }
+            );
+        })
+    })
+</script>

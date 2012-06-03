@@ -1,0 +1,135 @@
+{{extend 'layout.html'}}
+
+{{keys = sorted(episodes.keys())}}
+
+<div class="span12">
+    <div class="media">
+        <ul class="thumbnails pull-right">
+            <li>
+            <a class="thumbnail">
+                {{=IMG(_alt=name, _src=w2p_deposit(banner))}}
+            </a>
+            </li>
+        </ul>
+        <div class="media-body">
+            {{=H1(name)}}
+        </div>
+    </div>
+    <hr />
+    <div class="tabbable tabs-left">
+        <ul class="nav nav-tabs">
+            <li><a data-toggle="tab" href="#series_settings">Settings</a></li>
+    {{for season in keys:}}
+            <li><a data-toggle="tab" href="{{="#season_%s" % (season)}}">{{="Season %s" % (season)}}</a></li>
+    {{pass}}
+
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane" id="series_settings">
+                <div class="row-fluid">
+                    <div id="{{="settings_%s" % (request.args(0))}}" class="settings"> </div>
+                </div>
+            </div>
+            {{for season, seasondict in episodes.iteritems():}}
+                {{eps = seasondict['eps']}}
+                <div class="tab-pane" id="{{="season_%s" % (season)}}">
+                    <div class="row-fluid">
+                        <div class="btn-toolbar">
+                            <div class="btn-group">
+                                {{=A("reload", _class="btn reload", _href=URL('osi', 'check_season', args=[request.args(0), season]))}}
+                            </div>
+                            {{=myrefurlwidget(seasondict['ref_urls'])}}
+                        </div>
+                        {{=H1("Season %s" % (season))}}
+                        {{for ep in eps:}}
+                            {{=DIV(
+                                DIV("LOADING.................",_class="episode loading %s" % (ep['tba']), _id="episode_%s" % (ep['id']))
+                                ,_id="S%.2dE%.2d" % (season, ep['number']))}}
+                        {{pass}}
+                    </div>
+                </div>
+            {{pass}}
+        </div>
+    </div>
+</div>
+
+<style>
+    .missingep .well {
+         background-color: #F2DEDE;
+    }
+    .episode .icon-warning-sign {
+        display: none;
+    }
+    .missingep .episode .icon-warning-sign {
+        display: block;
+    }
+    .loading {
+        position: absolute;
+        left: -10000px;
+    }
+</style>
+
+<script type="text/javascript">
+
+    function scroll_to_ep(ep) {
+        $('html,body').animate({scrollTop: $(ep).offset().top - 60}, 'slow');
+    }
+    function check_missing(currenttab) {
+        function pad2(number) {
+            return (number < 10 ? '0' : '') + number
+        };
+        $(".missingep", currenttab).removeClass('missingep');
+        var el = $('a.reload', currenttab);
+        var href = el.attr('href');
+        var season = currenttab.attr('id').replace('season_', '');
+        $.getJSON(href, function(data) {
+            if (!data.missing) return;
+            for (var i=0; i<data.missing.length;i++) {
+                $("#S" + pad2(season) + "E" + pad2(data.missing[i])).addClass('missingep');
+            }
+        });
+    };
+
+    $(function () {
+        $('html, body').animate({ scrollTop: 0 }, 0);
+        $('a[data-toggle="tab"]').on('show', function (e) {
+            var currenttab = $(e.target).attr('href');
+            var episodes = $('.loading', currenttab);
+            var myrequests = [];
+            $.each(episodes, function() {
+                var episodeid = this.id.replace('episode_', '');
+                myrequests.push(w2p_tvseries_ajax_page('get', '/w2p_tvseries/series/episodes.load/' + episodeid, null, this.id));
+            });
+            $.when(myrequests).then(function() {
+                check_missing($(currenttab));
+            });
+            if ($(e.target).attr('href') == '#series_settings') {
+                var settings = $(".settings", currenttab);
+                var el = settings[0].id
+                w2p_tvseries_ajax_page('get', '/w2p_tvseries/manage/series_settings.load/' + el.replace('settings_', ''), null, el);
+                return
+            }
+        });
+        var season_to_show = $(document.location.hash).closest('.tab-pane').attr('id');
+        if (!(typeof season_to_show === 'undefined')) {
+            $('a[href="#' + season_to_show + '"]').tab('show');
+            setTimeout(function(){
+                scroll_to_ep(document.location.hash);
+                }, 3000);
+            } else if ($('.tba').length) {
+                var id = $('.tba:first');
+                var tab_ = id.closest('.tab-pane').attr('id');
+                $('a[href="#' + tab_ + '"]').tab('show');
+                setTimeout(function(){
+                    scroll_to_ep('#' + id.attr('id'));
+                }, 3000);
+            } else {
+                $('.nav-tabs a:last').tab('show');
+        }
+        $("a.reload").click(function() {
+            var el = $(this);
+            check_missing(el.closest('.tab-pane'));
+            return false;
+        })
+    });
+</script>

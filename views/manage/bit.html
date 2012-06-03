@@ -1,0 +1,83 @@
+{{extend 'layout.html'}}
+
+<h3>Back In Time</h3>
+
+<div class="row-fluid">
+    {{=twitter_form(form, 'form-horizontal')}}
+</div>
+
+
+
+<div id="accordion" class="accordion">
+        <div class="accordion-group">
+        {{for i, folder in enumerate(all_files_records):}}
+        <div class="accordion-heading">
+           <a href="{{="#folder_%s" % (i)}}" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle">
+                     {{=folder}} <i class="icon-resize-full pull-right"></i>
+           </a>
+        </div>
+        <div class="accordion-body collapse" id="{{="folder_%s" % (i)}}">
+                <div class="accordion-inner">
+                    <table class="table table-bordered table-condensed">
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>From</th>
+                                <th>To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{for row in all_files_records[folder]:}}
+                                <tr>
+                                    <td>{{=A('Revert last rename', _href=URL('osi', 'bit_actualizer', args=[row.id]), _class="revert btn btn-danger", _id="bit_%s" % (row.id))}}</td>
+                                    <td>{{=row.file_from}}</td>
+                                    <td>{{=row.file_to}}</td>
+                                </tr>
+                            {{pass}}
+                        </tbody>
+                    </table>
+                </div>
+              </div>
+        {{pass}}
+        </div>
+</div>
+
+
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $('a.revert').on('click', function(e) {
+        e.preventDefault();
+        var el = $(this);
+        if (el.hasClass('disabled')) return false;
+        el.addClass('disabled');
+        var tr = el.closest('tr');
+        $.PeriodicalUpdater($(this).attr('href'), {
+            data: function () {
+                return el.data()
+                },
+            type: 'json',
+            'beforeSend':function(xhr) {
+                xhr.setRequestHeader('web2py-component-location', document.location);
+                xhr.setRequestHeader('web2py-component-element', el.attr('id') );
+                },
+            },
+            function(remoteData, success, xhr, handle) {
+                    var command = xhr.getResponseHeader('web2py-component-command');
+                    if (command == 'stop') handle.stop();
+                    if (remoteData.task_id) el.data('task_id', remoteData.task_id);
+                    if (remoteData.message) {
+                        el.text(remoteData.message);
+                    }
+                    console.log(remoteData);
+                    if (remoteData.content) {
+                        tr.html(remoteData.content);
+                        if (tr.find('a').length == 0) tr.fadeOut();
+                        handle.stop();
+                    }
+                    if(command) eval(decodeURIComponent(escape(command)));
+                }
+        );
+    })
+})
+</script>

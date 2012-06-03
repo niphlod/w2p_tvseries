@@ -1,0 +1,44 @@
+
+<h3>Preview</h3>
+
+{{if len(res) == 0:}}
+<div class="alert alert-warning">
+        No torrents found! Try adjusting your settings {{=SPAN(";-)", _title=','.join(["%s = %s" % (k,v) for k,v in request.vars.iteritems()]))}}
+</div>
+{{pass}}
+
+
+<table class="table table-bordered table-condensed">
+    <thead>
+        <tr>
+            <th>Series</th>
+            <th>Season</th>
+            <th>#</th>
+            <th>Title</th>
+            <th>Size</th>
+            <th>Torrent</th>
+            <th>Magnet</th>
+            <th>Discarded for</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{for ep in res:}}
+            {{ep.episodes = ep.episodes or []}}
+            {{trclass = ep.reason and 'alert alert-error' or 'alert alert-success' }}
+            <tr class="{{=trclass}}">
+                <td>{{=ep.seriesname}}</td>
+                <td>{{="Season %s" % (ep.seasonnumber)}}</td>
+                <td>{{=",".join(["%s" % a for a in ep.episodes])}}</td>
+                <td>{{=ep.title}}</td>
+                <td>{{=int(ep.size)/1024/1024}} MB</td>
+                <td>{{=A('Download', _href=ep.link)}}</td>
+                <td>{{=A('Magnet URI', _href=ep.magnet)}}</td>
+                {{if ep.reason:}}
+                    <td>{{=w2p_icon('ko')}} {{=ep.reason}}</td>
+                {{else:}}
+                    <td> </td>
+                {{pass}}
+            </tr>
+        {{pass}}
+    </tbody>
+</table>

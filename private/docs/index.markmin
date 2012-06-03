@@ -1,7 +1,7 @@
-w2p_tvseries
-============
 
-TV Series Organizer, built with web2py
+# W2P_TVSERIES
+
+## Introduction
 
 This app was born to accomplish some objectives:
 - use as much web2py codebase as possible
@@ -10,7 +10,7 @@ This app was born to accomplish some objectives:
 - use AJAX wherever is possible: async stuff will take place probably in places where it was not necessary, but I decided to give it a shot whenever (and wherever) possible
 - make it a multi-platform app
 - combine some useful piece of scripts lying around my machine
-- play and test the requests (https://github.com/kennethreitz/requests) library for all the HTTP communications. I grew fond of urllib3 (http://code.google.com/p/urllib3/) in the past and requests is it's natural successor
+- play and test the [[requests https://github.com/kennethreitz/requests]] library for all the HTTP communications. I grew fond of [[urllib3 http://code.google.com/p/urllib3/]] in the past and requests is it's natural successor
 
 Some considerations:
 - use this at your own risk (that is: I'm NOT responsible if your world will be trashed with this application, if you'll be arrested and/or you'll find your house burnt to the grounds....)
@@ -28,36 +28,17 @@ Still, ideally the scheduler will have take the burden of do the "read the files
 Loose ends in such an application are likely to happen. I'll be more than glad to receive patches and accomodate everybody, just remember that I'm definitely NOT
 a full-time python programmer guru.
 
-##Install
-Install requests library with
-<pre>
-pip install requests
-</pre>
 
-The first thing in the todo list is a script for auto-installing it.... for a little while, please
+## Credits [[credits]]
+Let's remind who make this possible. Developers like Andrey Petrov, Massimo Di Pierro, Anthony Bastardi, Branko Vukelic,
+Bruno Rocha, Jonathan Lundell, Omi Chiba, Nathan Freeze and many others let me think that collaboration is the way to go for programming.
+Have the possibility to talk to and with them, allow yourself to grow a better programmer and generally as a better person.
+Python programs and libraries that are easy to understand even for me were (and are) a great source nonetheless:
+- [[web2py http://www.web2py.com]] of course
+- [[enzyme https://github.com/Diaoul/enzyme]] (included)
+- [[tvnamer https://github.com/dbr/tvnamer]] (thanks for all the regexes) :-P
+- [[CherryPy http://www.cherrypy.org/]]
+- [[xbmc https://github.com/xbmc/xbmc]]
+- [[CouchPotato http://couchpota.to/]]
 
-Install web2py, downloading the archive and unzipping in a directory
-
-Download this app and place it under web2py/applications/w2p_tvseries
-
-Start web2py with
-<pre>
-python web2py.py -a "yourdesiredpassword"
-</pre>
-
-go to (http://localhost:8000/w2p_tvseries/)
-
-Now, for the actual stuff to happen, you must start the worker too
-
-<pre>
-python web2py.py -K w2p_tvseries
-</pre>
-
-Once you have finished, you can stop both processes.
-
-In the private folder there is a patched scheduler, allowing it to be put in cron.
-For further details, please refer to the embedded docs that you can find at
-
-(http://127.0.0.1:8000/w2p_tvseries/docs/page/using)
-
-
+# [[Using using]]

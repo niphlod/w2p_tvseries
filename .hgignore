@@ -1,0 +1,13 @@
+glob:*.pyc
+glob:*.db
+glob:*.bak
+glob:*.BAK
+glob:*.key
+glob:*.db-journal
+glob:cache/*
+glob:sessions/*
+glob:uploads/*
+glob:errors/*
+glob:controllers/test.*
+glob:views/test/*
+glob:static/deposit/*

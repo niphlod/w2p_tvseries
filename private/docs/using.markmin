@@ -1,0 +1,114 @@
+# Using
+
+## Functionalities
+- [[Series #series]]
+- [[Operations #operations]]
+- [[Scooper #scooper]]
+- [[Search for torrents #torrents]]
+- [[Search for subtitles #subtitles]]
+- [[Organizing and renaming #organize]]
+- [[Back in time #backintime]]
+- [[Calendar #calendar]]
+- [[Scheduled tasks #scheduled]]
+
+### Series [[series]]
+You can add as many series as you want: definitions will be downloaded from thetvdb.com .
+Set your preferred language in general settings and add the series. When you search it, after the name there will be 2 letters identifying the language.
+Mind that definitions will be downloaded in the language you choose. It's up to you to arrange all other settings if you want to get torrents/subtitles in your
+preferred language.
+To add a Series you can click on "Add Series" on the left upper bar. You can search the series, w2p_media will show you the title and the overview.
+When you'll choose a series, a background operation will be fired to retrieve all series definitions.
+You'll be then redirected to the settings page, where you can disable season tracking (it won't be displayed, searched for, matched against, etc) and
+set all kinds of parameters for torrents, subtitles, scooper, etc.
+The only thing that is needed is the basepath for the series (enjoy the tab completion :-D)
+
+### Operations [[operations]]
+Every page carry a left menu, with an upper bar showing if there are ongoing operations. Ongoing operations will happen also for other things
+([[Back in Time #backintime]] just to say) but those will be clearly visible on the page itself. The upper bar shows "background" operations
+that are not displayed elsewhere (except if you read all the log)
+
+### Scooper [[scooper]]
+The Scooper is in charge for moving around files in the correct directories. Often you find yourself with one (or more) folder(s) containing all your last works
+and you want to keep them organized in multiple subdirectories.... but you don't have the time to actually move them around.
+For every season you can set "Scooper masks" and add common strings to look for in scooper paths. To preview the files the scooper will move, click on "Preview scooper".
+Scooper paths (source directories) can be set in [[Home ../../default/index]]. Files will be actually moved when running the Organize queue (need the scheduler active)
+or by the cron script.
+
+### Torrents [[torrents]]
+Torrents will be searched through ezrss.it or torrentz.eu . For every season you have some parameters to specify what to download and what not, using "Torrent Settings".
+Please be sure to tick "Torrent Tracking" as well. By default some parameters will be suggested by w2p_media, but you can tune it and preview the results in semi real-time.
+All recent feeds carry all kind of informations, and the app will try to do its best to retrieve what you want, but it has to deal with the actual data returned from the feed itself,
+and some general considerations.
+You can allow only some strings (useful for qualities), discard them (prefix with NO_), accept a minimum and a maximum size, or going mad with regexes..... pick your poison!
+
+### Subtitles [[subtitles]]
+Subtitles for now are downloaded from italiansubs.net and opensubtitles.net only. Feel free to send me patches to include other sites you want.
+You can tune the quality for the one available from italiansubs.net (Normal, WEB-DL or 720p). Opensubtitles fetching is based on
+corresponding episode filehash, so no problem there, but you can choose the language (default is english).
+
+### Organizing and renaming [[organize]]
+The center for live operations is the [[Organize ../../organize/index]] page.
+It shows:
+- a detailed log of the last operations
+- series that needs settings you forgot
+- non-existant paths that are needed
+- a button to queue operations based on your settings
+- a button to show your current library status (missing episodes and subtitles)
+The normal flow of operations is:
+- check thetvdb.com for updates
+- for every season
+- check for scooping patterns and move accordingly
+- rename episodes
+- calculate metadata (useful for other plugins coming, but for the moment, to display quality icons under the episode banner)
+- download required banner images
+- check for missing subtitles if enabled
+- check for missing torrents if enabled
+
+### Back in Time [[backintime]]
+A feature that I really wanted was the possibility to revert every filesystem change made by w2p_media.
+By default, w2p_media records every change made to the filesystem (except for non-destructive operations, like dir creation).
+You can use [[Back in Time ../../bit/index]] to Revert every operation. Filter by dates, series and/or Season Number to refine the results.
+Files will be grouped by the dir they are actually in. Expand those dirs and click on the button to move the file to it's original state.
+
+### Calendar [[calendar]]
+To give you a practical [[overview ../../calendar/index]] of what is coming, what is ready, what is missing.
+
+### Scheduled tasks [[scheduled]]
+To make w2p_tvseries functional in all features one must start the webserver serving the interface with
+``
+web2py.py -i 127.0.0.1 -a 'yourpassword' -p 8000
+``
+With this, you can reach w2p_series opening your browser to http://127.0.0.1:8000/w2p_tvseries and enjoy it.
+For write operations, and organizing files, and for quite all the stuff to happen, you must start the scheduler too ....
+``
+web2py.py -K w2p_tvseries
+``
+The scheduler will run indefinitely, so if you want to stop w2p_tvseries you'll have to stop both the webserver and the scheduler.
+Once all the series and settings are set through the interface, you'll likely want to run at specified times (let's say, every 3 hours)
+all the operations.
+To facilitate this, in web2py/applications/w2p_tvseries/private/ folder there is the script w2p_tvseries.py.
+You can then install it into cron with
+``
+python web2py/applications/w2p_tvseries/private/w2p_tvseries.py
+``
+and this will enqueue all the operations, fire the scheduler, and let it die when all the tasks are finished.
+If you'll like to avoid a subset of the operations, you can start this script with parameters, specifically:
+``
+python web2py/applications/w2p_tvseries/private/w2p_tvseries.py -s 'operation_to_avoid1,operation_to_avoid2'
+``
+and those features will be skipped.
+Let's say you'll like to rename episodes, download torrents and subtitles but not move files around (using the [[Scooper #scooper]]),
+you can disable it with
+``
+python web2py/applications/w2p_tvseries/private/w2p_tvseries.py -s scoop_season
+``
+Check with -h all the available options
+``
+python web2py/applications/w2p_tvseries/private/w2p_tvseries.py -h
+``
+
+ATM the official version of web2py's scheduler is old. You must replace it with the copy into the private folder to make
+the cron script work.
+``
+cp web2py/applications/w2p_tvseries/private/scheduler.py web2py/gluon/scheduler.py
+``

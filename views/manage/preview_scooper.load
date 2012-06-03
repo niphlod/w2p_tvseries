@@ -1,0 +1,66 @@
+<h3>Preview</h3>
+
+<div id="accordion" class="accordion">
+    <div class="accordion-group">
+    {{for i, mask in enumerate(res):}}
+    <div class="accordion-heading">
+       <a href="{{="#mask_%s" % (i)}}" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle">
+                 {{=mask}} <i class="icon-resize-full pull-right"></i>
+       </a>
+    </div>
+    <div class="accordion-body collapse" id="{{="mask_%s" % (i)}}">
+            <div class="accordion-inner">
+              {{=UL([file for file in res[mask]])}}
+            </div>
+          </div>
+    {{pass}}
+    </div>
+</div>
+
+<h3>Examples (click to add automatically)</h3>
+<table class="table table-bordered table-condensed">
+    <thead>
+        <tr>
+            <th>String</th>
+            <th>#</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{for mask in sorted(examples, key=examples.get, reverse=True):}}
+            <tr>
+                <td>{{=SPAN(mask, _class="autoadd")}}</td>
+                <td>{{=examples[mask]}}</td>
+            </tr>
+        {{pass}}
+    </tbody>
+</table>
+
+
+<script type="text/javascript">
+$(function () {
+    $('span.autoadd').click(function() {
+        function per(ul, text) {
+            var new_line = ml(ul);
+            rel(ul);
+            new_line.appendTo(ul);
+            new_line.find(":text").val(text).focus();
+            return false;
+        }
+        function ml(ul) {
+            var line = jQuery(ul).find("li:first").clone(true);
+            line.find(':text').val('');
+            return line;
+        }
+        function rel(ul) {
+            jQuery(ul).find("li").each(function() {
+                var trimmed = jQuery.trim(jQuery(this.firstChild).val());
+                if (trimmed=='') jQuery(this).remove(); else jQuery(this.firstChild).val(trimmed);
+            });
+        }
+        var el = $(this);
+        var ul = el.closest('.tab-pane').find('.scooper_settings:visible ul[id$="grow_input"]');
+        per(ul, el.text());
+        return false;
+    });
+});
+</script>

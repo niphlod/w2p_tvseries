@@ -1,0 +1,26 @@
+
+<table class="table table-striped table-bordered table-condensed">
+	<thead>
+		<tr>
+			<th>Series - Season</th>
+			<th>#</th>
+			<th>Eps</th>
+			<th>Subs</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{for id in rtn:}}
+			{{for i, season in enumerate(rtn[id]['seasons']):}}
+				<tr>
+					<td>{{=rtn[id]['name']}} - {{="Season %s" % (season['number'])}}</td>
+					<td>Missing eps....... {{=SPAN(len(season['missing']), _class="badge badge-warning")}}
+						<br/>
+						Missing subs..... {{=SPAN(len(season['missingsubs']), _class="badge badge-warning")}}
+					</td>
+					<td>{{=UL([LI(mep) for mep in season['missing']], _class="unstyled")}}</td>
+					<td>{{=UL([LI(mep) for mep in season['missingsubs']], _class="unstyled")}}</td>
+				</tr>
+			{{pass}}
+		{{pass}}
+	</tbody>
+</table>

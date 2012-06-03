@@ -1,0 +1,168 @@
+{{active_tab = None
+for i,a in enumerate(forms):
+    if a.errors:
+        active_tab = i
+        active_class = 'active'
+    pass
+pass
+if active_tab == None:
+    active_tab = request.vars.active_tab and int(request.vars.active_tab) or 0
+    active_class = request.vars.active_tab and 'active' or ''
+pass
+}}
+
+<div class="row-fluid">
+    <dl class="dl-horizontal">
+        <dt>TVDBID</dt>         <dd>{{=series.seriesid}}</dd>
+        <dt>Overview</dt>       <dd>{{=series.overview}}</dd>
+        <dt>Language</dt>       <dd>{{=series.language}}</dd>
+        <dt>Status</dt>         <dd>{{=series.status}}</dd>
+        <dt>Last Updated</dt>   <dd>{{=series.lastupdated}}</dd>
+    </dl>
+</div>
+
+<div class="row-fluid">
+
+    {{if suggested:}}
+        {{=twitter_alert(suggested)}}
+    {{pass}}
+    {{=twitter_form(form_series, 'form-horizontal')}}
+</div>
+
+<div class="row-fluid">
+    <div id="seasons_settings" class="settings">
+            <div class="tabbable">
+                <ul class="nav nav-pills">
+                    {{for i, a in enumerate(forms):}}
+                        {{_class = i == active_tab and 'active' or ''}}
+                        <li class="{{=_class}}"><a href="#{{="tab_%s" % i}}" data-toggle="pill">Season {{=season_number[i]}}</a></li>
+                    {{pass}}
+                </ul>
+                <div class="tab-content">
+                    {{for i, a in enumerate(forms):}}
+                        {{_class = i == active_tab and 'active' or ''}}
+                        <div class="{{="tab-pane %s" % _class}}" id="{{="tab_%s" % i}}">
+                            <div class="row-fluid">
+                                {{=twitter_form(a, 'form-horizontal')}}
+                            </div>
+                        </div>
+                    {{pass}}
+                </div>
+            </div>
+    </div>
+</div>
+
+
+<div id='results'></div>
+
+<script type="text/javascript">
+    $(function () {
+        $('#seasons_settings h6').addClass('btn btn-small btn-mini');
+        $('[rel=tooltip]').tooltip();
+        $('.popover.fade.top.in').on('click', function () {
+            var el = $(this);
+            el.removeClass('in');
+        });
+
+        function pill_settings(tab) {
+            var currenttab = $(tab.attr('href'));
+            var inputs = currenttab.find(':input');
+            var submit_button = $('.btn-primary', currenttab);
+            var torrent_button = $('.btn.pre_torrents', currenttab);
+            var tab_button = $('a[href=#' + currenttab.attr('id') + ']');
+
+            $('input[name=tracking]', currenttab).each(function() {
+                var el = $(this);
+                function sync_settings(el) {
+                    if (!el.is(':checked')) {
+                        el.closest('.tab-pane').find('.general_settings :input').attr('disabled', '');
+                        el.attr('disabled', null);
+                    } else {
+                        el.closest('.tab-pane').find('.general_settings :input').attr('disabled', null);
+                    }
+                };
+                sync_settings(el);
+                el.click(function() {
+                    sync_settings(el);
+                    });
+            });
+            $('input[name=torrent_tracking]', currenttab).each(function() {
+                var el = $(this);
+                function sync_settings(el) {
+                    if (!el.is(':checked')) {
+                        el.closest('.tab-pane').find('.torrents .control-group').css('opacity', 0.3).hide();
+                        torrent_button.addClass('disabled').attr('disabled', '');
+                    } else {
+                        el.closest('.tab-pane').find('.torrents .control-group').css('opacity', 1).show('slow');
+                        torrent_button.removeClass('disabled').attr('disabled', null);
+                    }
+                }
+                sync_settings(el);
+                el.click(function() {
+                    sync_settings(el);
+                    });
+            });
+            $('input[name=subtitle_tracking]', currenttab).each(function() {
+                var el = $(this);
+                function sync_settings(el) {
+                    if (!el.is(':checked')) {
+                        el.closest('.tab-pane').find('.subtitles .control-group').css('opacity', 0.3).hide();
+                    } else {
+                        el.closest('.tab-pane').find('.subtitles  .control-group').css('opacity', 1).show('slow');
+                    }
+                };
+                sync_settings(el);
+                el.click(function() {
+                    sync_settings(el);
+                    });
+            });
+            var original_data = inputs.serialize();
+            inputs.on('change', function() {
+                if (inputs.serialize() != original_data) {
+                    submit_button.addClass('btn-warning');
+                    if (!tab_button.hasClass('alert-warning')) {
+                        tab_button.addClass('alert alert-warning');
+                        tab_button.popover({
+                            trigger : 'manual',
+                            title : 'Warning',
+                            content : 'Something changed, remember to save your settings!',
+                            placement: 'top'
+                            }).popover('show');
+                    }
+                } else {
+                    submit_button.removeClass('btn-warning');
+                    tab_button.removeClass('alert alert-warning');
+                    tab_button.popover('hide');
+                }
+            });
+            submit_button.on('click', function() {
+                tab_button.popover('hide');
+            });
+
+            $(".pre_torrents", currenttab).on('click', function(e) {
+                e.preventDefault();
+                var el = $(this);
+                var url = el.attr('href') + '?' + el.closest('.tab-pane').find('.torrents :input').serialize();
+                web2py_component(url, 'results');
+                return false;
+            });
+            $(".pre_scooper", currenttab).on('click', function(e) {
+                e.preventDefault();
+                var el = $(this);
+                var url = el.attr('href') + '?' + el.closest('.tab-pane').find('.scooper_settings :input').serialize();
+                web2py_component(url, 'results');
+                return false;
+            });
+
+        }
+
+        $('a[data-toggle="pill"]').on('shown', function (e) {
+            pill_settings($(this));
+        });
+
+        pill_settings($('.nav.nav-pills li.active a'));
+
+
+    })
+
+</script>
