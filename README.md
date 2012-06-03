@@ -36,19 +36,14 @@ pip install requests
 
 The first thing in the todo list is a script for auto-installing it.... for a little while, please
 
-Install web2py, downloading the archive and unzipping in a directory
-
-Download this app and place it under web2py/applications/w2p_tvseries
-
-Start web2py with
+- Install web2py, downloading the archive and unzip it in a directory
+- Download this app and place it under web2py/applications/w2p_tvseries
+- Start web2py with
 <pre>
 python web2py.py -a "yourdesiredpassword"
 </pre>
-
-go to (http://localhost:8000/w2p_tvseries/)
-
-Now, for the actual stuff to happen, you must start the worker too
-
+- go to http://localhost:8000/w2p_tvseries/
+- now, for the actual stuff to happen, you must start the worker too
 <pre>
 python web2py.py -K w2p_tvseries
 </pre>
@@ -58,6 +53,5 @@ Once you have finished, you can stop both processes.
 In the private folder there is a patched scheduler, allowing it to be put in cron.
 For further details, please refer to the embedded docs that you can find at
 
-(http://127.0.0.1:8000/w2p_tvseries/docs/page/using)
-
+http://127.0.0.1:8000/w2p_tvseries/docs/page/using
 
