@@ -42,7 +42,7 @@ The first thing in the todo list is a script for auto-installing it.... for a li
 <pre>
 python web2py.py -a "yourdesiredpassword"
 </pre>
-- go to http://localhost:8000/w2p_tvseries/
+- go to http://127.0.0.1:8000/w2p_tvseries/
 - now, for the actual stuff to happen, you must start the worker too
 <pre>
 python web2py.py -K w2p_tvseries
