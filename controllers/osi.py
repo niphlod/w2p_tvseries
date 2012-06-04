@@ -25,6 +25,7 @@ from w2p_tvseries_tvdb import w2p_tvseries_ren_loader
 import shutil
 
 def check():
+    session.forget()
     if not request.vars.directory:
         return 0
 
@@ -40,6 +41,7 @@ def check():
         return json([])
 
 def find_matching_subdir(base, hint):
+    session.forget()
     topdirs = [name for name in os.listdir(base) if os.path.isdir(os.path.join(base, name))]
     res = []
     for a in topdirs:
@@ -71,6 +73,7 @@ def bit_actualizer():
 
 
 def check_season():
+    session.forget()
     series_id, seasonnumber = request.args(0), request.args(1)
     if not (series_id and seasonnumber):
         return json({})
@@ -84,6 +87,7 @@ def check_season():
 
 
 def check_path():
+    session.forget()
     series_id, seasonnumber = request.args(0), request.args(1)
 
     if not (series_id and seasonnumber):

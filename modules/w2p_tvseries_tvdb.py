@@ -85,8 +85,6 @@ def w2p_tvseries_ren_loader(*args, **vars):
     return w2p_tvseries_ren_loader.w2p_tvseries_ren_instance
 
 
-
-
 class w2p_tvseries_tvdb(object):
     def __init__(self):
         db = current.database
@@ -122,7 +120,6 @@ class w2p_tvseries_tvdb(object):
         self.mappers = tvdb_mappers()
         self.mirrors = []
         self.choose_mirror()
-
 
     def log(self, function, message):
         log = self.logger
@@ -315,24 +312,27 @@ class w2p_tvseries_tvdb(object):
         node = etree.fromstring(content)
         self.mappers.episode_mapper(node, language)
 
-    def season_episode_banner_update(self, series_id, seasonnumber):
+    def episodes_banner_update_global(self):
         db = current.database
         ep_tb = db.episodes
         eb_tb = db.episodes_banners
         se_tb = db.series
-        episodes_to_check = db(
-            (se_tb.id == series_id) &
+        ss_tb = db.seasons_settings
+        banners_to_check = db(
+            (ss_tb.tracking == True) &
+            (ss_tb.series_id == se_tb.id) &
+            (ss_tb.seasonnumber == ep_tb.seasonnumber) &
             (se_tb.seriesid == ep_tb.seriesid) &
-            (ep_tb.seasonnumber == seasonnumber) &
             (eb_tb.episode_id == ep_tb.id) &
             (eb_tb.url <> '') &
             (
                 (eb_tb.banner == '') |
                 (eb_tb.banner == None)
             )
-            ).select(se_tb.name, ep_tb.name, eb_tb.ALL)
-        for row in episodes_to_check:
-            self.episode_banner_update(row.episodes_banners.id)
+            ).select(eb_tb.id)
+
+        for row in banners_to_check:
+            self.episode_banner_update(row.id)
 
     def series_banner_update_global(self):
         db = current.database

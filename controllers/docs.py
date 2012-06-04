@@ -20,10 +20,11 @@
 import os
 
 def index():
+    session.forget()
     redirect(URL('page', args=['index']))
 
-
 def page():
+    session.forget()
     content = ''
     path = path_to_file(request)
     if os.path.exists(path) and os.path.isfile(path):
@@ -34,9 +35,7 @@ def page():
 
     return dict(content=content, path=path)
 
-
 def path_to_file(request):
-
     folders = request.args
     if not request.args:
         folders = ['index']

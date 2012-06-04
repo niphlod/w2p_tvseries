@@ -21,10 +21,11 @@ from gluon.contrib import simplejson as sj
 import datetime
 
 def index():
+    session.forget()
     return dict()
 
 def events():
-
+    session.forget()
     start = request.vars.start
     end = request.vars.end
 
