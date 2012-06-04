@@ -415,22 +415,13 @@ class Scheduler(MetaScheduler):
             return None
         grabbed = db(ts.assigned_worker_name==self.worker_name)\
             (ts.status==ASSIGNED)
-        task_id = grabbed._select(ts.id, limitby=(0,1), orderby=ts.next_run_time)
-        updated = db(
-            ts.id.belongs(task_id)
-            ).update(status=RUNNING,last_run_time=now) #reduces collisions?
-        #noone will touch my task!
-        db.commit()
-        if updated:
-            logging.debug('   work to do %s' % updated)
-            task = db(ts.assigned_worker_name==self.worker_name)\
-                    (ts.status==RUNNING).select().first()
-            if not task:
-                #it's very likely (almost impossible) that this will happen.
-                #please report any abnormal activity on web2py-users or file a bug
-                #about new scheduler on http://code.google.com/p/web2py/issues/list
-                logging.error('Something is not going on nicely, someone stealed my task!')
-                return None
+
+        task = grabbed.select(limitby=(0,1), orderby=ts.next_run_time).first()
+        if task:
+            task.update_record(status=RUNNING,last_run_time=now)
+            #noone will touch my task!
+            db.commit()
+            logging.debug('   work to do %s' % task.id)
         else:
             logging.debug('nothing to do')
             return None
