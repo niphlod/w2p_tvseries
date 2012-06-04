@@ -30,7 +30,7 @@
           var container = $('<ul class="unstyled help-inline"></ul>').attr('id', uniq).insertAfter(input);
         }
         container = $('#' + uniq);
-        input.keypress(function(e){
+        input.keydown(function(e){
             var code = e.keyCode || e.which;
             if(code == 9) {
                  var changed = 0;
