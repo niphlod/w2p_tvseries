@@ -110,9 +110,12 @@ def queue_ops():
         db.global_settings.insert(key='operation_key', value='now_or_never')
         operation_key = 'now_or_never'
 
+    se_tb = db.series
+    ss_tb = db.seasons_settings
+
     all_to_check = db(
-                      (db.seasons_settings.series_id == db.series.id) &
-                      (db.seasons_settings.tracking == True)
+                      (ss_tb.series_id == se_tb.id) &
+                      (ss_tb.tracking == True)
                     ).select()
 
     validvideos = []
@@ -149,6 +152,9 @@ def queue_ops():
     uniquename = "%s:down_sebanners" % (operation_key)
     st.insert(task_name=uniquename, function_name='down_sebanners', enabled=False, timeout=180)
 
+    uniquename = "%s:down_epbanners" % (operation_key)
+    st.insert(task_name=uniquename, function_name='down_epbanners', enabled=False, timeout=300)
+
     for a in validvideos:
         function_name = 'check_season'
         unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
@@ -156,9 +162,6 @@ def queue_ops():
         function_name = 'ep_metadata'
         unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
         st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False, timeout=300)
-        function_name = 'down_epbanners'
-        unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-        st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False, timeout=180)
 
     for a in validscooper:
         function_name = 'scoop_season'

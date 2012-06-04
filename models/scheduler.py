@@ -29,7 +29,6 @@ import datetime
 import time
 import shutil
 
-
 def check_season_worker(series_id , seasonnumber, mode):
     renamer = w2p_tvseries_ren_loader()
 
@@ -89,9 +88,9 @@ def down_subs(series_id, seasonnumber):
         rtn = sj.dumps(dict(ok=1))
     return rtn
 
-def down_epbanners(series_id, seasonnumber):
+def down_epbanners():
     tvdb = w2p_tvseries_tvdb_loader()
-    res = tvdb.season_episode_banner_update(series_id, seasonnumber)
+    res = tvdb.episodes_banner_update_global()
     db.commit()
     return res
 
@@ -156,7 +155,6 @@ def bit_actualizer(rename_log_id):
 
 
 def task_group_finished(group, operation_key):
-
     st = db2.scheduler_task
     #still to run
     still_to_run = db2(
@@ -164,11 +162,9 @@ def task_group_finished(group, operation_key):
        (st.times_run == 0) &
        (st.status <> 'FAILED')
        ).count()
-
     if still_to_run == 0:
         return True
     return False
-
 
 def create_path(series_id, seasonnumber):
     ren = w2p_tvseries_ren_loader()
