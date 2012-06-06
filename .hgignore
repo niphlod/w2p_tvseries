@@ -11,3 +11,4 @@ glob:errors/*
 glob:controllers/test.*
 glob:views/test/*
 glob:static/deposit/*
+glob:databases/*.table
