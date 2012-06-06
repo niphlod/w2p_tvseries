@@ -409,7 +409,7 @@ class MPEG4(core.AVContainer):
                     pass
 
             else:
-                log.info(u'unknown compression %r' % method)
+                log.debug(u'unknown compression %r' % method)
                 # unknown compression method
                 file.seek(datasize - 8, 1)
 
@@ -421,10 +421,10 @@ class MPEG4(core.AVContainer):
         elif atomtype == 'mdat':
             pos = file.tell() + atomsize - 8
             # maybe there is data inside the mdat
-            log.info(u'parsing mdat')
+            log.debug(u'parsing mdat')
             while self._readatom(file):
                 pass
-            log.info(u'end of mdat')
+            log.debug(u'end of mdat')
             file.seek(pos, 0)
 
 
@@ -460,7 +460,7 @@ class MPEG4(core.AVContainer):
 
         else:
             if not atomtype in ['wide', 'free']:
-                log.info(u'unhandled base atom %r' % atomtype)
+                log.debug(u'unhandled base atom %r' % atomtype)
 
             # Skip unknown atoms
             try:
