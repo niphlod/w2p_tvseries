@@ -99,6 +99,7 @@ if __name__ == '__main__':
     from gluon.fileutils import fix_newlines, recursive_unlink
     from gluon.shell import run
     from gluon.admin import app_compile
+    from gluon.compileapp import remove_compiled_application
     from gluon.storage import Storage
 
 
@@ -146,6 +147,7 @@ if raw_input('w2p_tvseries needs a patched scheduler to work as a cron script. C
     shutil.copy(new_scheduler, old_scheduler)
 
 if raw_input("let's create/migrate our database.... (y/n)?").lower() in ['y', 'yes']:
+    remove_compiled_application(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
     model_file = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'models', 'db.py')
     print 'setting migrate to True, just to be sure'
     with open(model_file) as g:
@@ -163,8 +165,9 @@ if raw_input("let's create/migrate our database.... (y/n)?").lower() in ['y', 'y
 
     print 'migrate set to False'
 
-if raw_input("compile application (y,n) ?").lower() in ['y','yes']:
+if raw_input("(re)compile application (y,n) ?").lower() in ['y','yes']:
     request = Storage(folder=os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries')))
+    remove_compiled_application(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
     app_compile('w2p_tvseries', request)
 
 if raw_input("copy default redirection (if this is the only app installed, it's safe to say yes) (y/n)?"
