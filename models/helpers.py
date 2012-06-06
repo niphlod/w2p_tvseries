@@ -382,8 +382,8 @@ def twitter_menu(menu, level=0, mobile=False):
                 el = LI(A(text, caret, _href=href, _class="dropdown-toggle", **{'_data-toggle' : 'dropdown'}), sub_ul, _class=li_class)
                 lis.append(el)
     if level == 0:
-        return UL(*lis, _class='nav')
+        return UL(*lis, **{'_class' : 'nav'})
     else:
         if mobile:
             return lis
-        return UL(*lis, _class="dropdown-menu")
+        return UL(*lis, **{'_class' : 'dropdown-menu'})

@@ -21,10 +21,9 @@ else:
 
 sys.path = [path]+[p for p in sys.path if not p==path]
 
-
-# import gluon.import_all ##### This should be uncommented for py2exe.py
 from gluon.widget import start
 from gluon.shell import run
+from gluon import main
 import shutil
 import logging
 
