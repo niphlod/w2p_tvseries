@@ -1,7 +1,7 @@
 w2p_tvseries
 ============
 
-TV Series Organizer, built with web2py
+TV Series Organizer, built with web2py (works with python > 2.5)
 
 This app was born to accomplish some objectives:
 - use as much web2py codebase as possible
@@ -56,4 +56,3 @@ In the private folder there is a patched scheduler, allowing it to be put in cro
 For further details, please refer to the embedded docs that you can find at
 
 http://127.0.0.1:8000/w2p_tvseries/docs/page/using
-
