@@ -25,14 +25,14 @@
 
         </ul>
         <div class="tab-content">
-            <div class="tab-pane" id="series_settings">
+            <div class="tab-pane fade" id="series_settings">
                 <div class="row-fluid">
                     <div id="{{="settings_%s" % (request.args(0))}}" class="settings"> </div>
                 </div>
             </div>
             {{for season, seasondict in episodes.iteritems():}}
                 {{eps = seasondict['eps']}}
-                <div class="tab-pane" id="{{="season_%s" % (season)}}">
+                <div class="tab-pane fade" id="{{="season_%s" % (season)}}">
                     <div class="row-fluid">
                         <div class="btn-toolbar">
                             <div class="btn-group">
@@ -53,21 +53,6 @@
     </div>
 </div>
 
-<style>
-    .missingep .well {
-         background-color: #F2DEDE;
-    }
-    .episode .icon-warning-sign {
-        display: none;
-    }
-    .missingep .episode .icon-warning-sign {
-        display: block;
-    }
-    .loading {
-        position: absolute;
-        left: -10000px;
-    }
-</style>
 
 <script type="text/javascript">
 
@@ -101,6 +86,7 @@
                 myrequests.push(w2p_tvseries_ajax_page('get', '/w2p_tvseries/series/episodes.load/' + episodeid, null, this.id));
             });
             $.when(myrequests).then(function() {
+                episodes.hide().removeClass('loading').fadeIn('slow');
                 check_missing($(currenttab));
             });
             if ($(e.target).attr('href') == '#series_settings') {

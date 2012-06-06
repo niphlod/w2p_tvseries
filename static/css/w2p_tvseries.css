@@ -179,3 +179,20 @@ margin-bottom: 10px;
     left: -12px;
 }
 /*submenus end */
+
+/*series page start*/
+.missingep .well {
+    background-color: #F2DEDE;
+}
+.episode .icon-warning-sign {
+   display: none;
+}
+.missingep .episode .icon-warning-sign {
+   display: block;
+}
+.loading {
+   position: absolute;
+   left: -10000px;
+}
+
+/*series page end*/

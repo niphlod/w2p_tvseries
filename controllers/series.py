@@ -82,8 +82,6 @@ def episodes():
         else:
             metadata = None
 
-    response.js = "$('#%s').hide().removeClass('loading').show('slow');" % (request.cid)
-
     return dict(episode=episode, banner=banner, metadata=metadata)
 
 def season():
