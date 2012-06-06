@@ -68,6 +68,18 @@ def download(url, file):
         zipball.close()
     return 0
 
+def overwrite(src, dst):
+    for src_dir, dirs, files in os.walk(src):
+        dst_dir = src_dir.replace(src, dst)
+        if not os.path.exists(dst_dir):
+            os.mkdir(dst_dir)
+        for file_ in files:
+            src_file = os.path.join(src_dir, file_)
+            dst_file = os.path.join(dst_dir, file_)
+            if os.path.exists(dst_file):
+                os.remove(dst_file)
+            shutil.move(src_file, dst_dir)
+
 if __name__ == '__main__':
     basefolder = os.getcwd()
     w2p_folder = os.path.join(basefolder, 'web2py')
@@ -128,16 +140,16 @@ if raw_input('update/download app from internet (y/n)?').lower() in ['y', 'yes']
 
     if os.path.exists(finalfolder):
         print 'backupping current from %s to %s' % (finalfolder, appbckfolder)
-        shutil.move(finalfolder, appbckfolder)
+        shutil.copytree(finalfolder, appbckfolder)
 
     print 'overwriting %s with %s' % (finalfolder, sourcefolder)
-    shutil.copytree(sourcefolder, finalfolder)
+    overwrite(sourcefolder, finalfolder)
 
     print 'cleaning %s' % (destfolder)
     recursive_unlink(destfolder)
 
-    print 'fixing newlines in %s' % (destfolder)
-    fix_newlines(destfolder)
+    print 'fixing newlines in %s' % (finalfolder)
+    fix_newlines(finalfolder)
 
 
 if raw_input('w2p_tvseries needs a patched scheduler to work as a cron script. Can I overwrite it (y/n)?'
