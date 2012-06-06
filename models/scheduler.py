@@ -160,7 +160,7 @@ def task_group_finished(group, operation_key):
     still_to_run = db2(
        (st.task_name.startswith("%s:%s" % (operation_key, group))) &
        (st.times_run == 0) &
-       (st.status <> 'FAILED')
+       (~st.status.belongs(('FAILED', 'TIMEOUT')))
        ).count()
     if still_to_run == 0:
         return True
@@ -184,9 +184,13 @@ def the_boss():
 
     steps = ['maintenance', 'update', 'down_sebanners', 'scoop_season', 'check_season', 'ep_metadata', 'down_epbanners', 'check_subs', 'down_subs', 'queue_torrents', 'down_torrents']
     res = []
-    for a in steps:
-        res.append((a, task_group_finished(a, operation_key)))
 
+    try:
+        for a in steps:
+            res.append((a, task_group_finished(a, operation_key)))
+    except:
+        rtn.append('exception')
+        return rtn
     steps_todo = [a[0] for a in res if not a[1]]
 
     rtn = []
@@ -195,18 +199,17 @@ def the_boss():
         rtn.append('activating %s' % (step))
         try:
             db2(st.task_name.startswith("%s:%s" % (operation_key, step))).update(enabled=True)
-            db2(
-                (st.task_name.startswith("%s:%s" % (operation_key, step))) &
-                (st.status == 'TIMEOUT')
-                ).update(enabled=True, status='QUEUED')
         except:
             rtn.append('exception')
     else:
-        tasks_to_delete = (st.task_name.startswith("%s:" % (operation_key)))
-        db2(sr.scheduler_task.belongs(db2(tasks_to_delete)._select(st.id))).delete()
-        db2(tasks_to_delete).delete()
-        db(db.global_settings.key=='operation_key').delete()
-        db.commit()
+        try:
+            tasks_to_delete = (st.task_name.startswith("%s:" % (operation_key)))
+            db2(sr.scheduler_task.belongs(db2(tasks_to_delete)._select(st.id))).delete()
+            db2(tasks_to_delete).delete()
+            db(db.global_settings.key=='operation_key').delete()
+            db.commit()
+        except:
+            rtn.append('exception')
     db2.commit()
     return rtn
 
