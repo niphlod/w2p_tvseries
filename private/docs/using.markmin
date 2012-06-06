@@ -112,3 +112,6 @@ the cron script work.
 ``
 cp web2py/applications/w2p_tvseries/private/scheduler.py web2py/gluon/scheduler.py
 ``
+
+If you installed w2p_tvseries with the provided script, you'll find two scripts under the installation folder, containing
+templates to run the web interface along with the scheduler and the cron script.

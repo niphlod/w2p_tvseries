@@ -10,7 +10,7 @@ This app was born to accomplish some objectives:
 - use AJAX wherever is possible: async stuff will take place probably in places where it was not necessary, but I decided to give it a shot whenever (and wherever) possible
 - make it a multi-platform app
 - combine some useful piece of scripts lying around my machine
-- play and test the [[requests https://github.com/kennethreitz/requests]] library for all the HTTP communications. I grew fond of [[urllib3 http://code.google.com/p/urllib3/]] in the past and requests is it's natural successor
+- play and test the [[requests https://github.com/kennethreitz/requests]] library for all the HTTP communications (included). I grew fond of [[urllib3 http://code.google.com/p/urllib3/]] in the past and requests is it's natural successor
 
 Some considerations:
 - use this at your own risk (that is: I'm NOT responsible if your world will be trashed with this application, if you'll be arrested and/or you'll find your house burnt to the grounds....)

@@ -29,14 +29,16 @@ Loose ends in such an application are likely to happen. I'll be more than glad t
 a full-time python programmer guru.
 
 ##Install
-Install requests library with
-<pre>
-pip install requests
-</pre>
+There is a script in private folder, w2p_tvseries_installer.py, to put in an empty directory.
+It tries to:
+- download the last stable web2py release
+- download the source of w2p_tvseries
+- ease default redirection (http://127.0.0.1:8000/ instead of http://127.0.0.1:8000/w2p_tvseries/)
+- create template scripts to run w2p_tvseries and the cron task
 
-The first thing in the todo list is a script for auto-installing it.... for a little while, please
+While it becomes stable (needs testing), here's how install w2p_tvseries manually
 
-- Install web2py, downloading the archive and unzip it in a directory
+- Install web2py (downloading the archive and unzipping it in a directory)
 - Download this app and place it under web2py/applications/w2p_tvseries
 - Start web2py with
 <pre>
