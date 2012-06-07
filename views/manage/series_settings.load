@@ -59,11 +59,10 @@ pass
     $(function () {
         $('#seasons_settings h6').addClass('btn btn-small btn-mini');
         $('[rel=tooltip]').tooltip();
-        $('.popover.fade.top.in').on('click', function () {
+        $('body').on('click', '.popover.fade.top.in', function () {
             var el = $(this);
             el.removeClass('in');
         });
-
         function pill_settings(tab) {
             var currenttab = $(tab.attr('href'));
             var inputs = currenttab.find(':input');
