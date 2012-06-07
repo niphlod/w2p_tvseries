@@ -182,6 +182,7 @@ def the_boss():
         db.commit()
         return "No op key found"
 
+    rtn = []
     steps = ['maintenance', 'update', 'down_sebanners', 'scoop_season', 'check_season', 'ep_metadata', 'down_epbanners', 'check_subs', 'down_subs', 'queue_torrents', 'down_torrents']
     res = []
 
@@ -193,7 +194,7 @@ def the_boss():
         return rtn
     steps_todo = [a[0] for a in res if not a[1]]
 
-    rtn = []
+
     if len(steps_todo) > 0:
         step = steps_todo[0]
         rtn.append('activating %s' % (step))
