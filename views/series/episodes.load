@@ -1,5 +1,5 @@
 
-<div class="well">
+<div class="media-box">
     {{if banner:}}
     <div class="media">
         {{=UL(
