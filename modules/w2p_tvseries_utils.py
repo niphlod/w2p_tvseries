@@ -720,11 +720,10 @@ class Hasher(object):
     def gen_stats(self):
         self.stats = Storage()
         finfo = os.stat(self.filename)
-        self.stats.atime = finfo.st_atime
         self.stats.mtime = finfo.st_mtime
         self.stats.size  = finfo.st_size
         c = hashlib.sha1()
-        c.update("%s %s" % (self.filename, self.stats))
+        c.update("%s %s %s" % (self.filename, self.stats.mtime, self.stats.size))
         self.guid = c.hexdigest()
 
     def gen_hashes(self):
