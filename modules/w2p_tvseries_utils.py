@@ -457,7 +457,7 @@ class Scooper(object):
                             try:
                                 db.commit()
                                 db.rename_log.insert(file_from=source, file_to=dest, series_id=seriesid, seasonnumber=seasonnumber)
-                                self.log('fname', 'moving %s --> %s' % (filename, path))
+                                self.log(fname, 'moving %s --> %s' % (filename, path))
                                 shutil.move(source, dest)
                             except:
                                 db.rollback()
