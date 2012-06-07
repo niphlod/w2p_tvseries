@@ -190,9 +190,25 @@ margin-bottom: 10px;
 .missingep .episode .icon-warning-sign {
    display: block;
 }
+
+/*
 .loading {
    position: absolute;
    left: -10000px;
+}
+*/
+
+.loading {
+    min-height: 200px;
+    display : block;
+}
+
+span.spinner {
+    background: url(/w2p_tvseries/static/spinner.gif) no-repeat 50% 50%;
+    display: block;
+    height : 130px;
+    content: ".";
+    color: transparent;
 }
 
 /*series page end*/

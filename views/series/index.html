@@ -43,7 +43,7 @@
                         {{=H1("Season %s" % (season))}}
                         {{for ep in eps:}}
                             {{=DIV(
-                                DIV("LOADING.................",_class="episode loading %s" % (ep['tba']), _id="episode_%s" % (ep['id']))
+                                DIV(SPAN(".", _class="spinner"),_class="episode loading %s" % (ep['tba']), _id="episode_%s" % (ep['id']))
                                 ,_id="S%.2dE%.2d" % (season, ep['number']))}}
                         {{pass}}
                     </div>
@@ -88,10 +88,8 @@
             // thanks to http://stackoverflow.com/questions/9865586/jquery-when-troubleshooting-with-variable-number-of-arguments
             var defer = $.when.apply($, myrequests);
             defer.then(function(){
-                console.log('aaaaa');
                 episodes.hide().removeClass('loading').fadeIn('slow');
                 check_missing($(currenttab));
-                console.log('bbbb')
             });
             if ($(e.target).attr('href') == '#series_settings') {
                 var settings = $(".settings", currenttab);
