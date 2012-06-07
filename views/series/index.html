@@ -85,9 +85,13 @@
                 var episodeid = this.id.replace('episode_', '');
                 myrequests.push(w2p_tvseries_ajax_page('get', '/w2p_tvseries/series/episodes.load/' + episodeid, null, this.id));
             });
-            $.when(myrequests).then(function() {
+            // thanks to http://stackoverflow.com/questions/9865586/jquery-when-troubleshooting-with-variable-number-of-arguments
+            var defer = $.when.apply($, myrequests);
+            defer.then(function(){
+                console.log('aaaaa');
                 episodes.hide().removeClass('loading').fadeIn('slow');
                 check_missing($(currenttab));
+                console.log('bbbb')
             });
             if ($(e.target).attr('href') == '#series_settings') {
                 var settings = $(".settings", currenttab);
