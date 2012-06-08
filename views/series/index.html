@@ -79,23 +79,23 @@
         $('html, body').animate({ scrollTop: 0 }, 0);
         $('a[data-toggle="tab"]').on('show', function (e) {
             var currenttab = $(e.target).attr('href');
-            var episodes = $('.loading', currenttab);
-            var myrequests = [];
-            $.each(episodes, function() {
-                var episodeid = this.id.replace('episode_', '');
-                myrequests.push(w2p_tvseries_ajax_page('get', '/w2p_tvseries/series/episodes.load/' + episodeid, null, this.id));
-            });
-            // thanks to http://stackoverflow.com/questions/9865586/jquery-when-troubleshooting-with-variable-number-of-arguments
-            var defer = $.when.apply($, myrequests);
-            defer.then(function(){
-                episodes.hide().removeClass('loading').fadeIn('slow');
-                check_missing($(currenttab));
-            });
             if ($(e.target).attr('href') == '#series_settings') {
                 var settings = $(".settings", currenttab);
                 var el = settings[0].id
                 w2p_tvseries_ajax_page('get', '/w2p_tvseries/manage/series_settings.load/' + el.replace('settings_', ''), null, el);
-                return
+            } else {
+                var episodes = $('.loading', currenttab);
+                var myrequests = [];
+                $.each(episodes, function() {
+                    var episodeid = this.id.replace('episode_', '');
+                    myrequests.push(w2p_tvseries_ajax_page('get', '/w2p_tvseries/series/episodes.load/' + episodeid, null, this.id));
+                });
+                // thanks to http://stackoverflow.com/questions/9865586/jquery-when-troubleshooting-with-variable-number-of-arguments
+                var defer = $.when.apply($, myrequests);
+                defer.then(function(){
+                    episodes.hide().removeClass('loading').fadeIn('slow');
+                    check_missing($(currenttab));
+                });
             }
         });
         var season_to_show = $(document.location.hash).closest('.tab-pane').attr('id');
