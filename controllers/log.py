@@ -29,7 +29,6 @@ def index():
         last_records = db(db.global_log.id>session.refresh_log_lastid).select(orderby=~db.global_log.id, limitby=(0,20))
         session.refresh_log_lastid = last_records.first() and last_records.first().id or session.refresh_log_lastid
     rtn = []
-    verbose = request.vars.verbose
     for row in last_records:
         type = 'ok'
         if row.error:
