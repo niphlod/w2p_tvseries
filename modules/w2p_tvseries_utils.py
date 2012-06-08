@@ -826,7 +826,7 @@ class Brewer(object):
         if isinstance(element, dict):
             new = {}
             for k, v in element.iteritems():
-                if v:
+                if v and k not in ('codec_private',):
                     new[k] = self.cleanup(v)
             return new
 
