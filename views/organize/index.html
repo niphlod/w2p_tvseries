@@ -65,9 +65,10 @@
             .animate({opacity: 0}, 700)
             .fadeOut('slow', function() {$(this).remove();});
     }
+    var refresh = 0;
     $.PeriodicalUpdater('/w2p_tvseries/log/index', {
         method: 'get',
-        data: {'verbose' : 1},
+        data: function() {  if (refresh == 0) { refresh = 1 ; return {'refresh' : 1} } else {return {}} },
         minTimeout: 1000,
         maxTimeout: 8000,
         multiplier: 2,

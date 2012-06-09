@@ -21,13 +21,13 @@ from gluon.serializers import json
 
 def index():
     last_time = session.refresh_log
-    if not last_time or request.vars.refresh == '0':
+    if not last_time or request.vars.refresh == '1':
         last_records = db(db.global_log.id>0).select(orderby=~db.global_log.id, limitby=(0,20))
         session.refresh_log_lastid = last_records.first() and last_records.first().id or 0
-        #rtn = dict(last_records=last_records)
     else:
         last_records = db(db.global_log.id>session.refresh_log_lastid).select(orderby=~db.global_log.id, limitby=(0,20))
         session.refresh_log_lastid = last_records.first() and last_records.first().id or session.refresh_log_lastid
+
     rtn = []
     for row in last_records:
         type = 'ok'
@@ -45,8 +45,8 @@ def index():
                    )
                    )
     rtn = json(rtn)
-    session.refresh_log = request.vars.refresh
-    return  rtn #dict(last_records=last_records)
+    session.refresh_log = 1
+    return  rtn
 
 def op_status():
     session.forget()
