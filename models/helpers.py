@@ -193,14 +193,18 @@ def validate_seasons(seriesid):
     seasons_to_insert = db(base & (ep_tb.seriesid == se_tb.seriesid)).select(se_tb.id, ep_tb.seasonnumber, distinct=True)
 
     for row in seasons_to_insert:
-        settings.update_or_insert(
-                                  (
-                                   (settings.series_id == row.series.id) &
-                                   (settings.seasonnumber == row.episodes.seasonnumber)
-                                  ),
-                                  series_id = row.series.id,
-                                  seasonnumber = row.episodes.seasonnumber
-                                  )
+        try:
+            settings.update_or_insert(
+                (
+                 (settings.series_id == row.series.id) &
+                 (settings.seasonnumber == row.episodes.seasonnumber)
+                ),
+                series_id = row.series.id,
+                seasonnumber = row.episodes.seasonnumber
+                )
+            db.commit()
+        except:
+            db.rollback()
 
 
 def twitter_widget(fi, form, style):
