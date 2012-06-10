@@ -183,7 +183,7 @@ class w2p_tvseries_torrent(object):
                 to_insert.series_id = seriesid
                 to_insert.seasonnumber = seasonnumber
                 db.downloads.update_or_insert(db.downloads.guid==to_insert.guid, **to_insert)
-        if len(avoiding) > 0:
+        if len(eps_to_avoid) > 0:
             #prune relevant downloads records
             episodes_ids = db(
                 (db.episodes.number.belongs(avoiding)) &
@@ -221,51 +221,86 @@ class w2p_tvseries_torrent(object):
         db = current.database
         dw = db.downloads
         gs = db.global_settings
-        torrent_path = db(gs.key == 'torrent_path').select().first()
-        torrent_path = torrent_path and torrent_path.value or None
-        #find torrents to download
-        res = db(
-            (dw.queued == False) &
-            (dw.down_file == None) &
-            (dw.series_id == seriesid) &
-            (dw.seasonnumber == seasonnumber)
-            ).select()
-        for row in res:
-            if not row.link:
-                row.link = self.get_torrent_from_magnet(row.magnet)
-                row.update_record(link=row.link)
-            content = self.downloader(row.link)
-            if content == None:
-                newurl = self.get_torrent_from_magnet(row.magnet)
-                if newurl:
-                    content = self.downloader(newurl)
-            if content == None:
-                self.error(fname, "Can't download %s " % row.link)
-            else:
-                row.update_record(down_file=content)
-        db.commit()
+
+        ts = db(gs.key.belongs(('torrent_magnet', 'torrent_path'))).select()
+        for row in ts:
+            if row.key == 'torrent_path':
+                torrent_path = row.value
+            elif row.key == 'torrent_magnet':
+                torrent_magnet = row.value
+
+        torrent_magnet = torrent_magnet or 'N'
+
         if not torrent_path:
             self.error(fname, "torrent_path not set")
             return
         if not os.path.exists(torrent_path):
             self.error(fname, "torrent_path %s not found" % (torrent_path))
             return
-        res = db(
-            (dw.queued == False) &
-            (dw.down_file != None) &
-            (dw.series_id == seriesid) &
-            (dw.seasonnumber == seasonnumber)
-            ).select()
-        for row in res:
-            filename = row.link.split('/')[-1]
-            filename = os.path.join(torrent_path, filename)
-            try:
-                with open(filename, 'wb') as g:
-                    g.write(row.down_file)
-                row.update_record(queued=True)
-            except:
-                self.error(fname, "Cannot write to %s" % (filename))
-        db.commit()
+        if torrent_magnet == 'N':
+            #find torrents to download
+            res = db(
+                (dw.queued == False) &
+                (dw.down_file == None) &
+                (dw.series_id == seriesid) &
+                (dw.seasonnumber == seasonnumber)
+                ).select()
+            for row in res:
+                if not row.link:
+                    row.link = self.get_torrent_from_magnet(row.magnet)
+                    row.update_record(link=row.link)
+                content = self.downloader(row.link)
+                if content == None:
+                    newurl = self.get_torrent_from_magnet(row.magnet)
+                    if newurl:
+                        content = self.downloader(newurl)
+                if content == None:
+                    self.error(fname, "Can't download %s " % row.link)
+                else:
+                    row.update_record(down_file=content)
+            db.commit()
+
+        if torrent_magnet <> 'N':
+            #find magnets to serialize
+            res = db(
+                (dw.queued == False) &
+                (dw.magnet != None) &
+                (dw.magnet != '') &
+                (dw.series_id == seriesid) &
+                (dw.seasonnumber == seasonnumber)
+                ).select()
+            filename = os.path.join(torrent_path, "catalog.magnet")
+            for row in res:
+                print row.magnet
+                if torrent_magnet == 'MF':
+                    filename = os.path.join(torrent_path, "%s.magnet" % (row.id))
+                try:
+                    with open(filename, 'a') as g:
+                        g.write(row.magnet + '\n')
+                    row.update_record(queued=True)
+                    db.commit()
+                except:
+                    self.error(fname, "Cannot write to %s" % (filename))
+                    db.rollback()
+        elif torrent_magnet == 'N':
+            res = db(
+                (dw.queued == False) &
+                (dw.down_file != None) &
+                (dw.series_id == seriesid) &
+                (dw.seasonnumber == seasonnumber)
+                ).select()
+            for row in res:
+                filename = row.link.split('/')[-1]
+                filename = os.path.join(torrent_path, filename)
+                try:
+                    with open(filename, 'wb') as g:
+                        g.write(row.down_file)
+                    row.update_record(queued=True)
+                    db.commit()
+                except:
+                    self.error(fname, "Cannot write to %s" % (filename))
+                    db.rollback()
+
 
 
 class w2p_tvseries_feed(object):

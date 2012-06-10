@@ -34,7 +34,7 @@ def index():
                 settings.defaults[row.key].append(row.value)
         else:
             settings.defaults[row.key] = row.value
-
+    
     fi = [
         Field(k, settings.types.get(k, 'string'), comment=settings.comments[k],
               default=settings.defaults[k], widget=settings.widgets[k], requires=settings.requires[k])
@@ -55,7 +55,7 @@ def index():
         ),
         dict(
             title="Torrent Defaults",
-            fields=['torrent_path','torrent_default_feed','torrent_default_quality','torrent_default_minsize', 'torrent_default_maxsize']
+            fields=['torrent_path', 'torrent_magnet', 'torrent_default_feed','torrent_default_quality','torrent_default_minsize', 'torrent_default_maxsize']
         ),
         dict(
             title="Subtitles Settings",
