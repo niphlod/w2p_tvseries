@@ -207,15 +207,15 @@ cd web2py
 """  % dict(executable=sys.executable, cronfile=os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'w2p_tvseries.py'))
 
     if sys.platform.startswith('win'):
-        with open(os.path.join(basefolder, 'start_web_and_scheduler.bat'), 'w') as g:
+        with open(os.path.join(basefolder, 'start_web_and_scheduler.template.bat'), 'w') as g:
             g.write(startfiledos)
-        with open(os.path.join(basefolder, 'cronscript.bat'), 'w') as g:
+        with open(os.path.join(basefolder, 'cronscript.template.bat'), 'w') as g:
             g.write(cronscript)
 
     elif sys.platform.startswith('linux'):
-        with open(os.path.join(basefolder, 'start_web_and_scheduler.sh'), 'w') as g:
+        with open(os.path.join(basefolder, 'start_web_and_scheduler.template.sh'), 'w') as g:
             g.write(startfilelinux)
-        with open(os.path.join(basefolder, 'cronscript.sh'), 'w') as g:
+        with open(os.path.join(basefolder, 'cronscript.template.sh'), 'w') as g:
             g.write(cronscript)
 
 print "Enjoy w2p_tvseries"
