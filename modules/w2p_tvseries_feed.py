@@ -26,6 +26,7 @@ except:
 import re
 from email.utils import parsedate_tz, mktime_tz
 import datetime
+import urllib
 
 try:
   from lxml import etree
@@ -90,6 +91,7 @@ class w2p_tvseries_torrent(object):
         self.logger = tvdb_logger('torrent')
         self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'})
         self.magnetr = re.compile(r'xt=urn:btih:([\w]{40})&')
+        self.magnetdnr = re.compile(r'&dn=.*')
 
     def log(self, function, message):
         log = self.logger
@@ -221,6 +223,7 @@ class w2p_tvseries_torrent(object):
         db = current.database
         dw = db.downloads
         gs = db.global_settings
+        ep = db.episodes
 
         ts = db(gs.key.belongs(('torrent_magnet', 'torrent_path'))).select()
         for row in ts:
@@ -271,6 +274,11 @@ class w2p_tvseries_torrent(object):
                 ).select()
             filename = os.path.join(torrent_path, "catalog.magnet")
             for row in res:
+                if not self.magnetdnr.search(row.magnet):
+                    ep_name = db(ep.id == row.episode_id).select(ep.name).first()
+                    ep_name = ep_name and ep_name.name or row.episode_id
+                    ep_name = urllib.urlencode({'dn' : ep_name})
+                    row.magnet = "%s&%s" % (row.magnet, ep_name)
                 if torrent_magnet == 'MF':
                     filename = os.path.join(torrent_path, "%s.magnet" % (row.id))
                 try:
