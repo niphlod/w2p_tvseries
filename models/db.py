@@ -94,10 +94,10 @@ db.define_table("rename_log",
                 )
 
 db.define_table("global_log",
-                Field("module"),
-                Field("function"),
-                Field("operation", 'text'),
-                Field("error", 'text'),
+                Field("log_module"),
+                Field("log_function"),
+                Field("log_operation", 'text'),
+                Field("log_error", 'text'),
                 Field("dat_insert", 'datetime', default=request.utcnow)
                 )
 

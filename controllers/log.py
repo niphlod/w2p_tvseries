@@ -31,22 +31,22 @@ def index():
     rtn = []
     for row in last_records:
         type = 'ok'
-        if row.error:
+        if row.log_error:
             type = 'ko'
-            row.operation = row.error
+            row.log_operation = row.log_error
         rtn.append(str(TR(
                           TD(
-                             SPAN(w2p_icon(type), "%s %s : %s - %s " % (row.id, row.dat_insert, row.module, row.function)),
+                             SPAN(w2p_icon(type), "%s %s : %s - %s " % (row.id, row.dat_insert, row.log_module, row.log_function)),
                              ),
                           TD(
-                             SPAN(row.operation)
+                             SPAN(row.log_operation)
                               )
                            )
                    )
                    )
     rtn = json(rtn)
     session.refresh_log = 1
-    return  rtn
+    return rtn
 
 def op_status():
     session.forget()

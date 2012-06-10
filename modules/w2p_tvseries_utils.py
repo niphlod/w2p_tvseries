@@ -92,6 +92,10 @@ jQuery(document).ready(function(){
     attributes['_id']=_id+'_grow_input'
     return TAG[''](UL(*items,_class="unstyled", **attributes),script)
 
+def myradiowidgetvertical(field,value,**attributes):
+    attributes['type'] = ''
+    return myradiowidget(field, value, **attributes)
+
 def myradiowidget(field, value, **attributes):
     """
     <div class="control-group">
@@ -110,6 +114,11 @@ def myradiowidget(field, value, **attributes):
           </div>
     """
     _id = "%s_%s" % (field._tablename, field.name)
+    #print 'aaa', value
+    #if not value:
+    #    value = field.default
+    #print 'bbb', value
+
     requires = field.requires
     if not isinstance(requires, (list, tuple)):
         requires = [requires]
@@ -122,11 +131,11 @@ def myradiowidget(field, value, **attributes):
     options = [(k, v) for k, v in options if str(v)]
     labels_and_inputs = []
     for i, a in options:
-        checked={'_checked':'checked'} if a==value else {}
+        checked={'_checked':'checked'} if i==value else {}
         labels_and_inputs.extend([
             LABEL(a,
-                INPUT(_type="radio", _name=field.name, _value=a, _id="%s%s" % (_id, i), **checked),
-                _class="radio inline")
+                INPUT(_type="radio", _name=field.name, _value=i, _id="%s%s" % (_id, i), **checked),
+                _class="radio%s" % (attributes.get('type', ' inline')))
             ])
 
     return TAG[''](
@@ -200,11 +209,17 @@ class w2p_tvseries_settings(object):
             ('no' , 'Norsk')
         ]
 
+        self.magnet_options = [
+            ('N', "Dont' handle them, try to download torrent files instead"),
+            ('SF', "Create a catalog.magnet file into into torrent folder, with a line for every link"),
+            ('MF', "Download into torrent folder, create a .magnet file for every link")
+        ]
+
     def general_settings(self):
         settings = Storage()
 
         settings.fields = ['series_basefolder', 'series_language', 'season_path', 'itasa_username', 'itasa_password',
-            'torrent_path', 'scooper_path', 'subtitles_default_method',
+            'torrent_path', 'torrent_magnet', 'scooper_path', 'subtitles_default_method',
             'subtitles_default_quality', 'subtitles_default_language',
             'torrent_default_feed', 'torrent_default_quality',
             'torrent_default_feed', 'torrent_default_quality', 'torrent_default_minsize',
@@ -223,6 +238,7 @@ class w2p_tvseries_settings(object):
         settings.defaults.itasa_password = ''
         settings.defaults.torrent_path = ''
         settings.defaults.scooper_path = []
+        settings.defaults.torrent_magnet = 'N'
         settings.defaults.subtitles_default_method = 'opensubtitles'
         settings.defaults.subtitles_default_quality = 'Normal'
         settings.defaults.subtitles_default_language = 'ita'
@@ -245,7 +261,7 @@ class w2p_tvseries_settings(object):
         settings.comments.torrent_default_quality = 'Like HD,DSRIP,TVRIP,PDTV,DVD,HR,HDTV,720p, etc, prefix with NO_ to discard (NO_720p)'
         settings.comments.torrent_default_minsize = 'Minimum allowed size for torrents, in MB'
         settings.comments.torrent_default_maxsize = 'Maximum allowed size for torrents, in MB'
-
+        settings.comments.torrent_magnet = 'How should I handle magnet links ?'
 
         settings.types.itasa_password = 'password'
         settings.types.torrent_default_minsize = 'integer'
@@ -257,12 +273,14 @@ class w2p_tvseries_settings(object):
         settings.widgets.subtitles_default_method = myradiowidget
         settings.widgets.subtitles_default_quality = myradiowidget
         settings.widgets.torrent_default_feed = myradiowidget
+        settings.widgets.torrent_magnet = myradiowidgetvertical
 
         settings.requires.series_language = IS_IN_SET(self.langs)
         settings.requires.subtitles_default_method = IS_IN_SET(('itasa', 'opensubtitles'))
         settings.requires.subtitles_default_quality = IS_IN_SET(('Normal', 'WEB-DL', '720p'))
         settings.requires.torrent_default_feed = IS_IN_SET(('Eztv_feed', 'Torrentz_feed'))
         settings.requires.subtitles_default_language = IS_IN_SET(self.sub_langs)
+        settings.requires.torrent_magnet = IS_IN_SET(self.magnet_options)
 
         return settings
 
@@ -338,11 +356,11 @@ class tvdb_logger(object):
 
     def log(self, function, message):
         db = current.database
-        db.global_log.insert(module=self.module, function=function, operation=message)
+        db.global_log.insert(log_module=self.module, log_function=function, log_operation=message)
 
     def error(self, function, message):
         db = current.database
-        db.global_log.insert(module=self.module, function=function, error=message)
+        db.global_log.insert(log_module=self.module, log_function=function, log_error=message)
 
 class Scooper(object):
     def __init__(self):
