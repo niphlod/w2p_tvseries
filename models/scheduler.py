@@ -178,8 +178,6 @@ def the_boss():
     sr = db2.scheduler_run
 
     if not operation_key:
-        db2(st.id>0).delete()
-        db.commit()
         return "No op key found"
 
     rtn = []
@@ -200,6 +198,7 @@ def the_boss():
         rtn.append('activating %s' % (step))
         try:
             db2(st.task_name.startswith("%s:%s" % (operation_key, step))).update(enabled=True)
+            db2.commit()
         except:
             rtn.append('exception')
     else:
@@ -209,9 +208,10 @@ def the_boss():
             db2(tasks_to_delete).delete()
             db(db.global_settings.key=='operation_key').delete()
             db.commit()
+            db2.commit()
         except:
             rtn.append('exception')
-    db2.commit()
+    
     return rtn
 
 def ep_metadata(series_id, seasonnumber):
