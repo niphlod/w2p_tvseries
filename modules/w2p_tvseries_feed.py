@@ -271,7 +271,6 @@ class w2p_tvseries_torrent(object):
                 ).select()
             filename = os.path.join(torrent_path, "catalog.magnet")
             for row in res:
-                print row.magnet
                 if torrent_magnet == 'MF':
                     filename = os.path.join(torrent_path, "%s.magnet" % (row.id))
                 try:
