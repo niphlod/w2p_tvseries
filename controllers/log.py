@@ -50,7 +50,7 @@ def index():
 
 def op_status():
     session.forget()
-    operation_key = db(db.global_settings.key=='operation_key').select().first()
+    operation_key = db(db.global_settings.kkey=='operation_key').select().first()
     operation_key = operation_key and operation_key.value or None
     if not operation_key:
         rtn = dict(status='complete', text='0/0', perc=0)
@@ -61,7 +61,6 @@ def op_status():
                     ).select()
 
     if not operations.first():
-        #db(db.global_settings.key=='operation_key').delete()
         rtn = dict(status='complete', text='0/0', perc=0)
         return json(rtn)
 

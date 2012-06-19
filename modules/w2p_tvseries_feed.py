@@ -51,7 +51,7 @@ except ImportError:
 
 import urllib
 from gluon.contrib import simplejson as sj
-from w2p_tvseries_utils import tvdb_logger, Meddler
+from w2p_tvseries_utils import tvdb_logger, Meddler, w2p_tvseries_settings
 import hashlib
 import os
 
@@ -148,10 +148,10 @@ class w2p_tvseries_torrent(object):
         settings.minsize = int(settings.minsize)
         settings.maxsize = int(settings.maxsize)
         eps = feed.search(settings.show_name, settings.season, settings.quality, settings.minsize, settings.maxsize, settings.regex, settings.lower_attention)
-        eps_to_avoid = eps_to_avoid.select(db.episodes.number)
-        downloaded = downloaded.select(db.episodes.number)
-        avoiding = [row.number for row in eps_to_avoid]
-        avoiding.extend([row.number for row in downloaded])
+        eps_to_avoid = eps_to_avoid.select(db.episodes.epnumber)
+        downloaded = downloaded.select(db.episodes.epnumber)
+        avoiding = [row.epnumber for row in eps_to_avoid]
+        avoiding.extend([row.epnumber for row in downloaded])
         try:
             missing = sj.loads(rec.seasons_settings.season_status)
             missing = missing.get('missing', [])
@@ -170,12 +170,12 @@ class w2p_tvseries_torrent(object):
         for ep in to_catch:
             #find db.episodes.id
             episodes_ids = db(
-                (db.episodes.number.belongs(ep.episodes)) &
+                (db.episodes.epnumber.belongs(ep.episodes)) &
                 (db.episodes.seriesid == rec.series.seriesid) &
                 (db.episodes.seasonnumber == seasonnumber)
                 ).select()
             for row in episodes_ids:
-                self.log(fname, "adding to queue %s - S%.2dE%.2d" % (rec.series.name, row.seasonnumber, row.number))
+                self.log(fname, "adding to queue %s - S%.2dE%.2d" % (rec.series.name, row.seasonnumber, row.epnumber))
                 to_insert = Storage()
                 to_insert.type = 'torrent'
                 to_insert.episode_id = row.id
@@ -188,7 +188,7 @@ class w2p_tvseries_torrent(object):
         if len(eps_to_avoid) > 0:
             #prune relevant downloads records
             episodes_ids = db(
-                (db.episodes.number.belongs(avoiding)) &
+                (db.episodes.epnumber.belongs(avoiding)) &
                 (db.episodes.seriesid == rec.series.seriesid) &
                 (db.episodes.seasonnumber == seasonnumber)
                 )._select(db.episodes.id)
@@ -201,7 +201,7 @@ class w2p_tvseries_torrent(object):
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-        cached = db((ct.key == cachekey) & (ct.inserted_on > timelimit)).select().first()
+        cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
         if cached:
             self.log('downloader', '%s fetched from cache' % (url))
             return cached.value
@@ -210,7 +210,7 @@ class w2p_tvseries_torrent(object):
                 r = self.req.get(url)
                 r.raise_for_status()
                 content = r.content
-                ct.update_or_insert(ct.key==cachekey, value=content, inserted_on=datetime.datetime.utcnow(), key=cachekey)
+                ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=datetime.datetime.utcnow(), kkey=cachekey)
                 db.commit()
                 self.log('downloader', '%s fetched from internet' % (url))
             except:
@@ -222,17 +222,11 @@ class w2p_tvseries_torrent(object):
         fname = "down_torrents"
         db = current.database
         dw = db.downloads
-        gs = db.global_settings
         ep = db.episodes
 
-        ts = db(gs.key.belongs(('torrent_magnet', 'torrent_path'))).select()
-        for row in ts:
-            if row.key == 'torrent_path':
-                torrent_path = row.value
-            elif row.key == 'torrent_magnet':
-                torrent_magnet = row.value
-
-        torrent_magnet = torrent_magnet or 'N'
+        gs = w2p_tvseries_settings().global_settings()
+        torrent_path = gs.torrent_path
+        torrent_magnet = gs.torrent_magnet or 'N'
 
         if not torrent_path:
             self.error(fname, "torrent_path not set")
@@ -284,7 +278,7 @@ class w2p_tvseries_torrent(object):
                 try:
                     with open(filename, 'a') as g:
                         g.write(row.magnet + '\n')
-                    row.update_record(queued=True)
+                    row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
                     db.commit()
                 except:
                     self.error(fname, "Cannot write to %s" % (filename))
@@ -302,7 +296,7 @@ class w2p_tvseries_torrent(object):
                 try:
                     with open(filename, 'wb') as g:
                         g.write(row.down_file)
-                    row.update_record(queued=True)
+                    row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
                     db.commit()
                 except:
                     self.error(fname, "Cannot write to %s" % (filename))
@@ -355,7 +349,7 @@ class w2p_tvseries_feed(object):
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(seconds=3*60)
-        cached = db((ct.key == cachekey) & (ct.inserted_on > timelimit)).select().first()
+        cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
         if cached:
             self.log('downloader', '%s fetched from cache' % (url))
             return cached.value
@@ -365,7 +359,7 @@ class w2p_tvseries_feed(object):
                 r.raise_for_status()
                 content = r.content
                 inserted_on = self.retrieve_ttl(content)
-                ct.update_or_insert(ct.key==cachekey, value=content, inserted_on=inserted_on, key=cachekey)
+                ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=inserted_on, kkey=cachekey)
                 db.commit()
                 self.log('downloader', '%s fetched from internet' % (url))
             except:

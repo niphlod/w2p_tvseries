@@ -26,7 +26,7 @@ except:
 
 import os
 import datetime
-from w2p_tvseries_utils import myfolderwidget, myfolderwidgetmultiple, myradiowidget
+from w2p_tvseries_utils import w2p_tvseries_settings, myfolderwidget, myfolderwidgetmultiple, myradiowidget
 import unicodedata
 
 DEPOSIT_RE = re.compile(r"^([^\.]*\.[^\.]*)\.(.{2}).*$")
@@ -310,9 +310,8 @@ def twitter_alert(alert, _class='alert alert-error'):
 
 
 def get_season_path(series_id, seasonnumber):
-    gs_tb = db.global_settings
-    path_format = db(gs_tb.key == 'season_path').select(gs_tb.value).first()
-    path_format = path_format and path_format.value or '%(seasonnumber).2d'
+    gs = w2p_tvseries_settings().global_settings()
+    path_format = gs.season_path or '%(seasonnumber).2d'
 
     #season_setting
     rec = db(
@@ -352,8 +351,8 @@ def w2p_deposit(file):
 
 
 def get_series_path(series_id):
-    gs_tb = db.global_settings
-    basefolder = db(gs_tb.key == 'series_basefolder').select(gs_tb.value).first()
+    gs = w2p_tvseries_settings().global_settings()
+    basefolder = gs.series_basefolder
     series = db.series(series_id)
     last = filenamelify(series.name)
     return os.path.join(basefolder.value, last, '').strip()

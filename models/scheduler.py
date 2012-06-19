@@ -172,7 +172,7 @@ def create_path(series_id, seasonnumber):
     return rtn
 
 def the_boss():
-    operation_key = db(db.global_settings.key=='operation_key').select().first()
+    operation_key = db(db.global_settings.kkey=='operation_key').select().first()
     operation_key = operation_key and operation_key.value or None
     st = db2.scheduler_task
     sr = db2.scheduler_run
@@ -206,12 +206,12 @@ def the_boss():
             tasks_to_delete = (st.task_name.startswith("%s:" % (operation_key)))
             db2(sr.scheduler_task.belongs(db2(tasks_to_delete)._select(st.id))).delete()
             db2(tasks_to_delete).delete()
-            db(db.global_settings.key=='operation_key').delete()
+            db(db.global_settings.kkey=='operation_key').delete()
             db.commit()
             db2.commit()
         except:
             rtn.append('exception')
-    
+
     return rtn
 
 def ep_metadata(series_id, seasonnumber):
@@ -246,7 +246,7 @@ def ep_metadata(series_id, seasonnumber):
                 newr.sha1 = h.hashes.sha1
                 newr.md5 = h.hashes.md5
                 newr.osdb = h.hashes.osdb
-                newr.size = h.stats.size
+                newr.filesize = h.stats.size
                 newr.infos = sj.dumps(b)
                 me_tb.update_or_insert(me_tb.episode_id == newr.episode_id, **newr)
                 db.commit()

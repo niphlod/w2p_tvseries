@@ -33,8 +33,8 @@ def index():
     redirect(URL('series', 'index'))
 
 def add():
-    language = db(db.global_settings.key == 'series_language').select().first()
-    language = language and language.value or 'en'
+    gs = w2p_tvseries_settings().global_settings()
+    language = gs.language or 'en'
     error = None
     res = []
     form = SQLFORM.factory(Field("series_name", requires=IS_NOT_EMPTY()), showid=False)
@@ -167,9 +167,9 @@ def series_settings():
 
     global_settings = db(db.global_settings.id>0).select()
     starts = 'torrent_default_'
-    tor_global_settings = dict([(row.key.replace(starts,''), row.value) for row in global_settings if row.key.startswith(starts)])
+    tor_global_settings = dict([(row.kkey.replace(starts,''), row.value) for row in global_settings if row.kkey.startswith(starts)])
     starts = 'subtitles_default_'
-    sub_global_settings = dict([(row.key.replace(starts,''), row.value) for row in global_settings if row.key.startswith(starts)])
+    sub_global_settings = dict([(row.kkey.replace(starts,''), row.value) for row in global_settings if row.kkey.startswith(starts)])
 
     season_number = {}
 
@@ -368,7 +368,8 @@ def series_settings_validate(form):
                         return
 
 def stop_operations():
-    operations = db2(db2.scheduler_task.status <> 'RUNNING').delete()
+    db2(db2.scheduler_task.status <> 'RUNNING').delete()
+    db(db.global_settings.kkey == 'operation_key').delete()
     return 1
 
 def episode_tracking():

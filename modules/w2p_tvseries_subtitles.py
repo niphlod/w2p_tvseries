@@ -33,7 +33,7 @@ except:
     from StringIO import StringIO
 import zipfile
 import gzip
-from w2p_tvseries_utils import tvdb_logger
+from w2p_tvseries_utils import tvdb_logger, w2p_tvseries_settings
 from xmlrpclib import ServerProxy
 import thread
 locker = thread.allocate_lock()
@@ -76,9 +76,9 @@ class SubDownloader(object):
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         if mode == 'insert':
-            ct.update_or_insert(ct.key==cachekey, value=content, inserted_on=datetime.datetime.utcnow(), key=cachekey)
+            ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=datetime.datetime.utcnow(), kkey=cachekey)
         else:
-            db(ct.key == cachekey).delete()
+            db(ct.kkey == cachekey).delete()
         db.commit()
 
     def downloader(self, url, hours=3):
@@ -86,7 +86,7 @@ class SubDownloader(object):
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=hours)
-        cached = db((ct.key == cachekey) & (ct.inserted_on > timelimit)).select().first()
+        cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
         if cached:
             if self.verbose:
                 self.log('downloader', "Cache (%s): Getting url: %s" % (cachekey, url))
@@ -105,10 +105,9 @@ class SubDownloader(object):
         fname = 'get_missing'
         ss_tb = db.seasons_settings
         se_tb = db.series
-        gs_tb = db.global_settings
+        gs = w2p_tvseries_settings().global_settings()
 
-        path_format = db(gs_tb.key == 'season_path').select(gs_tb.value).first()
-        path_format = path_format and path_format.value or '%(seasonnumber).2d'
+        path_format = gs.path_format or '%(seasonnumber).2d'
 
         season = db(
            (ss_tb.series_id == seriesid) &
@@ -228,7 +227,7 @@ class OpenSubtitlesDownloader(SubDownloader):
                 continue
             matches[row.episodes_metadata.osdb] = dict(
                     seasonnumber=seasonnumber,
-                    number=row.episodes.number,
+                    number=row.episodes.epnumber,
                 )
             searchlist.append(
                 dict(
@@ -304,13 +303,9 @@ class ItasaDownloader(SubDownloader):
         db = current.database
         self.main_url = "http://www.italiansubs.net/"
         self.req = req.session(headers={'Referer': self.main_url, 'User-Agent' : 'w2p_tvdb'}, config={}) #{'verbose': sys.stderr})
-        gs_tb = db.global_settings
-        res = db(db.global_settings.key.belongs(['itasa_username', 'itasa_password'])).select()
-        for row in res:
-            if row.key == 'itasa_username':
-                self.username = row.value
-            elif row.key == 'itasa_password':
-                self.password = row.value
+        gs = w2p_tvseries_settings().global_settings()
+        self.username = gs.itasa_username
+        self.password = gs.itasa_password
 
         self.logged_in = False
 

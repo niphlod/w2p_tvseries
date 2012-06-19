@@ -37,7 +37,6 @@ STATIC_FOLDER = os.path.join(request.folder, 'static', 'deposit')
 
 #from gluon.custom_import import track_changes; track_changes(True)
 
-
 db.define_table("series",
                 Field("seriesid", "integer"),
                 Field("language", length=3),
@@ -57,7 +56,7 @@ db.define_table("episodes",
                 Field("language", length=3),
                 Field("seasonnumber", "integer"),
                 Field("name"),
-                Field("number", "integer"),
+                Field("epnumber", "integer"),
                 Field("tracking", "boolean", default=True),
                 Field("absolute_number", "integer"),
                 Field("overview", 'text'),
@@ -68,7 +67,7 @@ db.define_table("episodes",
                 )
 
 db.define_table("global_settings",
-                Field("key"),
+                Field("kkey"),
                 Field("value")
                 )
 
@@ -90,7 +89,7 @@ db.define_table("rename_log",
                 Field("seasonnumber", "integer"),
                 Field("file_from", 'text'),
                 Field("file_to", "text"),
-                Field("dat_insert", 'datetime', default=request.utcnow)
+                Field("dat_insert", 'datetime', default=request.utcnow, update=request.utcnow)
                 )
 
 db.define_table("global_log",
@@ -102,7 +101,7 @@ db.define_table("global_log",
                 )
 
 db.define_table("urlcache",
-                Field("key", length=512),
+                Field("kkey", length=512),
                 Field("value", 'blob'),
                 Field("inserted_on", 'datetime')
                 )
@@ -129,12 +128,12 @@ db.define_table("episodes_metadata",
                 Field("md5"),
                 Field("sha1"),
                 Field("osdb"),
-                Field("size", 'integer'),
+                Field("filesize", 'integer'),
                 Field("infos", 'text')
                 )
 
 db.define_table("downloads",
-                Field("type", default="torrent"),
+                Field("category", default="torrent"),
                 Field("episode_id", requires=IS_IN_DB(db, 'episodes.id', 'episodes.name')),
                 Field("series_id", "integer"),
                 Field("seasonnumber", "integer"),
@@ -142,5 +141,6 @@ db.define_table("downloads",
                 Field("link"),
                 Field("magnet"),
                 Field("down_file", "blob"),
-                Field("queued", "boolean", default=False)
+                Field("queued", "boolean", default=False),
+                Field("queued_at", "datetime", default=request.utcnow, update=request.utcnow)
                 )

@@ -36,9 +36,9 @@ def index():
                  (db.seasons_settings.tracking == True) &
                  (db.seasons_settings.seasonnumber == db.episodes.seasonnumber)
                  ).select(db.series.name, db.series.overview, db.seasons_settings.ref_urls,
-                          db.episodes.id, db.episodes.number, db.episodes.seasonnumber,
+                          db.episodes.id, db.episodes.epnumber, db.episodes.seasonnumber,
                           db.episodes.firstaired,
-                          orderby=db.episodes.seasonnumber|db.episodes.number)
+                          orderby=db.episodes.seasonnumber|db.episodes.epnumber)
 
     episodes = {}
     now = request.utcnow.date()
@@ -46,10 +46,10 @@ def index():
         tba = ep.episodes.firstaired > now and 'tba' or ''
         if not episodes.get(ep.episodes.seasonnumber):
             episodes[ep.episodes.seasonnumber] = dict(ref_urls=ep.seasons_settings.ref_urls,
-                                                      eps=[dict(id=ep.episodes.id, number=ep.episodes.number, tba=tba)]
+                                                      eps=[dict(id=ep.episodes.id, number=ep.episodes.epnumber, tba=tba)]
                                                       )
         else:
-            episodes[ep.episodes.seasonnumber]['eps'].append(dict(id=ep.episodes.id, number=ep.episodes.number, tba=tba))
+            episodes[ep.episodes.seasonnumber]['eps'].append(dict(id=ep.episodes.id, number=ep.episodes.epnumber, tba=tba))
 
     banner = db(db.series_banners.series_id == series_id).select()
     banner = banner.first() and banner.first().banner or ''

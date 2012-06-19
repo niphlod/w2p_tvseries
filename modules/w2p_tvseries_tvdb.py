@@ -58,7 +58,7 @@ import re
 import datetime
 import time
 from gluon.contrib import simplejson
-from w2p_tvseries_utils import tvdb_logger_loader, Meddler
+from w2p_tvseries_utils import tvdb_logger_loader, Meddler, w2p_tvseries_settings
 
 import thread
 
@@ -134,7 +134,7 @@ class w2p_tvseries_tvdb(object):
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-        cached = db((ct.key == cachekey) & (ct.inserted_on > timelimit)).select().first()
+        cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
         if cached:
             self.log('downloader', '%s fetched from cache' % (url))
             return cached.value
@@ -145,7 +145,7 @@ class w2p_tvseries_tvdb(object):
                 content = r.text
             else:
                 content = r.content
-            ct.update_or_insert(ct.key==cachekey, value=content, inserted_on=datetime.datetime.utcnow(), key=cachekey)
+            ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=datetime.datetime.utcnow(), kkey=cachekey)
             db.commit()
         if not raw:
             content = content.encode('utf-8')
@@ -201,17 +201,17 @@ class w2p_tvseries_tvdb(object):
             self.log('global_reset', "Re-add Series (%s)" % (id))
             self.add_series(id, language)
         now = int(time.mktime(datetime.datetime.utcnow().timetuple()))
-        db(gs_tb.key == 'update_time').update(value=now)
+        db(gs_tb.kkey == 'update_time').update(value=now)
         self.log('global_reset', "Finished")
 
     def global_update(self, mode='auto'):
         db = current.database
         self.log('global_update', "Global update (%s)" % (mode))
         gs_tb = db.global_settings
-        lastupdate = db(gs_tb.key == 'update_time').select().first()
+        lastupdate = db(gs_tb.kkey == 'update_time').select().first()
         lastupdate = lastupdate and int(lastupdate.value) or None
         if lastupdate == None:
-            gs_tb.insert(key='update_time', value=0)
+            gs_tb.insert(kkey='update_time', value=0)
             lastupdate = 0
         #guess what update is more suited (day, week, month)
         daydur = 24*60*60
@@ -277,7 +277,7 @@ class w2p_tvseries_tvdb(object):
                 self.episode_update(a)
 
         self.log('global_update', 'updating update_time')
-        db(gs_tb.key == 'update_time').update(value=lastupdated)
+        db(gs_tb.kkey == 'update_time').update(value=lastupdated)
         db.commit()
         return mode
 
@@ -453,7 +453,7 @@ class tvdb_mappers(object):
             record.language = language
             record.seasonnumber = episode.findtext('SeasonNumber')
             record.name = episode.findtext('EpisodeName')
-            record.number = episode.findtext('EpisodeNumber')
+            record.epnumber = episode.findtext('EpisodeNumber')
             record.absolute_number = episode.findtext('absolute_number')
             record.overview = episode.findtext('Overview')
             record.lastupdated = episode.findtext('lastupdated')
@@ -493,7 +493,7 @@ class w2p_tvseries_tvren(object):
 
     def __init__(self):
         print 'istantiated tvren'
-        self.video_ext = ['.avi', '.mkv', '.mp4']
+        self.video_ext = ['.avi', '.mkv', '.mp4', '.3gp']
         self.subs_ext = ['.srt', '.ass']
         self.logger = tvdb_logger_loader('tvren')
         self.meddler = Meddler()
@@ -524,15 +524,14 @@ class w2p_tvseries_tvren(object):
         se_tb = db.series
         ep_tb = db.episodes
         ss_tb = db.seasons_settings
-        gs_tb = db.global_settings
+        gs = w2p_tvseries_settings().global_settings()
 
         if mode == 'video':
             check_exts = self.video_ext
         elif mode == 'subs':
             check_exts = self.subs_ext
 
-        path_format = db(gs_tb.key == 'season_path').select(gs_tb.value).first()
-        path_format = path_format and path_format.value or '%(seasonnumber).2d'
+        path_format = gs.path_format or '%(seasonnumber).2d'
 
         rec = db((se_tb.id == seriesid) &
                        (ss_tb.tracking == True) &
@@ -560,7 +559,6 @@ class w2p_tvseries_tvren(object):
                 if os.path.splitext(file)[1] in check_exts:
                   lista.append(file)
 
-
         ep_tb = db.episodes
         se_tb = db.series
         eplist = db(
@@ -569,10 +567,10 @@ class w2p_tvseries_tvren(object):
                 (ep_tb.seasonnumber == seasonnumber) &
                 (ep_tb.firstaired < datetime.datetime.utcnow()) &
                 (ep_tb.tracking == True)
-                    ).select(ep_tb.seasonnumber, ep_tb.number, ep_tb.name)
+                    ).select(ep_tb.seasonnumber, ep_tb.epnumber, ep_tb.name)
         eplist_dict = {}
         for row in eplist:
-            eplist_dict[row.number] = row.name
+            eplist_dict[row.epnumber] = row.name
         self.default_format = "%(seriesname)s - S%(seasonnumber).2dE%(number)s - %(name)s%(ext)s"
 
         to_rename = []
@@ -635,7 +633,7 @@ class w2p_tvseries_tvren(object):
                                                  )
             if mode == 'video':
                 db(
-                    (ep_tb.number.belongs(match.episodes)) &
+                    (ep_tb.epnumber.belongs(match.episodes)) &
                     (ep_tb.seasonnumber == seasonnumber) &
                     (ep_tb.seriesid == rec.series.seriesid)
                 ).update(filename=newname)
@@ -649,10 +647,9 @@ class w2p_tvseries_tvren(object):
         db = current.database
         se_tb = db.series
         ss_tb = db.seasons_settings
-        gs_tb = db.global_settings
+        gs = w2p_tvseries_settings().global_settings()
 
-        path_format = db(gs_tb.key == 'season_path').select(gs_tb.value).first()
-        path_format = path_format and path_format.value or '%(seasonnumber).2d'
+        path_format = gs.path_format or '%(seasonnumber).2d'
 
         #check path existance and writability
         season = db(

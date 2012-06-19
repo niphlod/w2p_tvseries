@@ -21,20 +21,14 @@ from gluon.storage import Storage
 from w2p_tvseries_utils import w2p_tvseries_settings
 
 def index():
-    settings = w2p_tvseries_settings()
-    settings = settings.general_settings()
 
-    recs = db(db.global_settings.key.belongs(settings.fields)).select()
+    settings_ = w2p_tvseries_settings()
+    settings = settings_.general_settings()
+    gsettings = settings_.global_settings()
 
-    for row in recs:
-        if not row.value:
-            continue
-        if row.key == 'scooper_path':
-            if row.value not in settings.defaults[row.key]:
-                settings.defaults[row.key].append(row.value)
-        else:
-            settings.defaults[row.key] = row.value
-    
+    for k,v in gsettings.iteritems():
+        settings.defaults[k] = v
+
     fi = [
         Field(k, settings.types.get(k, 'string'), comment=settings.comments[k],
               default=settings.defaults[k], widget=settings.widgets[k], requires=settings.requires[k])
@@ -67,25 +61,26 @@ def index():
         for a in form.vars:
             if a == 'itasa_password':
                 if form.vars[a] <> 8*('*'):
-                    db.global_settings.update_or_insert(db.global_settings.key == a, value = form.vars[a], key=a)
+                    db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a], kkey=a)
             elif a == 'series_basefolder':
-                db.global_settings.update_or_insert(db.global_settings.key == a, value = form.vars[a].strip(), key=a) ##FIXME
+                db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a].strip(), kkey=a) ##FIXME
             elif a == 'scooper_path':
                 values = form.vars[a]
                 if not isinstance(values, (tuple,list)):
                     values = [values]
                 values = [a.strip() for a in values] #FIXME
                 db(
-                    (db.global_settings.key=='scooper_path') &
+                    (db.global_settings.kkey=='scooper_path') &
                     (~db.global_settings.value.belongs(values))
                   ).delete()
                 for b in values:
                     if b and b not in settings.defaults['scooper_path']:
-                        db.global_settings.insert(key='scooper_path', value=b)
+                        db.global_settings.insert(kkey='scooper_path', value=b)
             else:
-                db.global_settings.update_or_insert(db.global_settings.key == a, value = form.vars[a], key=a)
+                db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a], kkey=a)
 
-        session.flash = 'success'
+        settings_.global_settings(refresh=True)
+        session.flash = 'settings updated correctly'
         redirect(URL(r=request, args=request.args))
     elif form.errors:
         response.flash = 'errors in form, please check'

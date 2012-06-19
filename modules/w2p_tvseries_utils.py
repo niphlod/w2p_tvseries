@@ -215,6 +215,29 @@ class w2p_tvseries_settings(object):
             ('MF', "Download into torrent folder, create a .magnet file for every link")
         ]
 
+    def _global_settings(self):
+        cache = current.cache
+        db = current.database
+        settings = Storage()
+        gs_tb = db.global_settings
+        all_settings = db(gs_tb.id>0).select()
+        for row in all_settings:
+            if row.kkey <> 'scooper_path':
+                settings[row.kkey] = row.value
+            else:
+                if row.kkey in settings:
+                    settings[row.kkey].append(row.value)
+                else:
+                    settings[row.kkey] = [row.value]
+        return settings
+
+    def global_settings(self, refresh=False):
+        cache = current.cache
+        if refresh:
+            gs = cache.disk('w2p_tvseries_gsettings', None)
+        gs = cache.disk('w2p_tvseries_gsettings', lambda : self._global_settings(), time_expire=1500)
+        return gs
+
     def general_settings(self):
         settings = Storage()
 
@@ -350,6 +373,7 @@ class w2p_tvseries_settings(object):
         return settings
 
 
+
 class tvdb_logger(object):
     def __init__(self, module):
         self.module = module
@@ -368,8 +392,9 @@ class Scooper(object):
         self.counter = {}
         self.collector = {}
         self.logger = tvdb_logger('scooper')
-        folders = db(db.global_settings.key=='scooper_path').select()
-        self.folders = [row.value for row in folders if os.path.exists(row.value)]
+        self.gs = w2p_tvseries_settings().global_settings()
+        folders = self.gs.scooper_path
+        self.folders = [a for a in folders if os.path.exists(a)]
 
     def log(self, function, message):
         log = self.logger
@@ -438,11 +463,9 @@ class Scooper(object):
 
         se_tb = db.series
         ss_tb = db.seasons_settings
-        gs_tb = db.global_settings
 
         #retrieve strings
-        path_format = db(gs_tb.key == 'season_path').select(gs_tb.value).first()
-        path_format = path_format and path_format.value or '%(seasonnumber).2d'
+        path_format = self.gs.path_format or '%(seasonnumber).2d'
 
         rec = db((se_tb.id == seriesid) &
                        (ss_tb.tracking == True) &

@@ -18,6 +18,7 @@
 # along with w2p_tvseries. If not, see <http://www.gnu.org/licenses/>.
 
 from gluon.contrib import simplejson as sj
+from gluon.storage import Storage
 import datetime
 
 def index():
@@ -46,8 +47,7 @@ def events():
         (db.episodes.firstaired > start) &
         (db.seasons_settings.series_id == db.series.id) &
         (db.episodes.seasonnumber == db.seasons_settings.seasonnumber)
-        ).select(db.series.ALL, db.seasons_settings.ALL, db.episodes.ALL, db.downloads.ALL,
-                 left=db.downloads.on(db.episodes.id==db.downloads.episode_id))
+        ).select(db.series.ALL, db.seasons_settings.ALL, db.episodes.ALL)
 
     missing = {}
 
@@ -60,19 +60,23 @@ def events():
             except:
                 pass
         try:
-            icon = row.episodes.number in missing[key]['missing'] and 'icon-remove' or 'icon-ok'
+            icon = row.episodes.epnumber in missing[key]['missing'] and 'icon-remove' or 'icon-ok'
         except:
             icon = 'icon-remove'
         if icon == 'icon-remove':
-            if row.downloads.episode_id:
+            #check if we have a record in db.downloads
+            rec = db(db.downloads.episode_id == row.episodes.id).select(limitby=(0,1), orderby=~db.downloads.id).first()
+            if not rec:
+                rec = Storage()
+            if rec.episode_id:
                 icon = 'icon-magnet'
         evts.append(
             dict(
                 id=row.episodes.id,
-                title="%s - S%.2dE%.2d - %s" % (row.series.name, row.episodes.seasonnumber, row.episodes.number, row.episodes.name),
+                title="%s - S%.2dE%.2d - %s" % (row.series.name, row.episodes.seasonnumber, row.episodes.epnumber, row.episodes.name),
                 start=row.episodes.firstaired.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 url=URL('series', 'index', args=[row.series.id], anchor="episode_%s" % (row.episodes.id)),
-                icon = str(XML(A(I(_class="%s icon-white" % icon),_rel="tooltip", _href=row.downloads.magnet, _title=row.downloads.magnet)))
+                icon = str(XML(A(I(_class="%s icon-white" % icon),_rel="tooltip", _href=rec.magnet, _title=rec.magnet)))
             )
         )
     return sj.dumps(evts)

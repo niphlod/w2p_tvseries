@@ -16,7 +16,7 @@
     {{pass}}
 
     {{=H6(I(_title="missing", _class="icon-warning-sign"),"Aired %s" % (episode.firstaired), _class="pull-right")}}
-    {{=H4("S%.2dE%.2d - %s" % (episode.seasonnumber, episode.number, episode.name))}}
+    {{=H4("S%.2dE%.2d - %s" % (episode.seasonnumber, episode.epnumber, episode.name))}}
     {{=P(episode.overview)}}
     {{trackingclass = episode.tracking and 'btn btn-success' or 'btn btn-danger'}}
     {{trackingtext = episode.tracking and 'Episode Tracking: On' or 'Episode Tracking: Off'}}

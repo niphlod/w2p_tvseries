@@ -75,9 +75,9 @@ def missing():
         missing = db(
                      (db.episodes.seriesid == row.series.seriesid) &
                      (db.episodes.seasonnumber == row.seasons_settings.seasonnumber) &
-                     (db.episodes.number.belongs(data['missing']))
+                     (db.episodes.epnumber.belongs(data['missing']))
                      ).select()
-        missing = ["E%.2d - %s" % (rec.number, rec.name) for rec in missing]
+        missing = ["E%.2d - %s" % (rec.epnumber, rec.name) for rec in missing]
         if len(missing) == 0:
             continue
         if row.series.id not in rtn:
@@ -104,10 +104,10 @@ def missing():
 
 #web2py/web2py.py -S "w2p_tvseries/organize/queue_ops" -M -N
 def queue_ops():
-    operation_key = db(db.global_settings.key=='operation_key').select().first()
+    operation_key = db(db.global_settings.kkey=='operation_key').select().first()
     operation_key = operation_key and operation_key.value or None
     if not operation_key:
-        db.global_settings.insert(key='operation_key', value='now_or_never')
+        db.global_settings.insert(kkey='operation_key', value='now_or_never')
         operation_key = 'now_or_never'
 
     se_tb = db.series
