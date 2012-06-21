@@ -50,7 +50,6 @@ def events():
         ).select(db.series.ALL, db.seasons_settings.ALL, db.episodes.ALL)
 
     missing = {}
-
     for row in all_episodes:
         series_id, seasonnumber = row.seasons_settings.series_id, row.seasons_settings.seasonnumber
         key = "%s_%s" % (series_id, seasonnumber)
@@ -60,23 +59,23 @@ def events():
             except:
                 pass
         try:
-            icon = row.episodes.epnumber in missing[key]['missing'] and 'icon-remove' or 'icon-ok'
+            icon = row.episodes.epnumber in missing[key]['missing'] and 'icon-remove' or row.episodes.firstaired > request.now.date() and 'icon-calendar' or 'icon-ok'
         except:
             icon = 'icon-remove'
+        rec_ = Storage()
         if icon == 'icon-remove':
             #check if we have a record in db.downloads
             rec = db(db.downloads.episode_id == row.episodes.id).select(limitby=(0,1), orderby=~db.downloads.id).first()
-            if not rec:
-                rec = Storage()
-            if rec.episode_id:
+            if rec and rec.episode_id:
                 icon = 'icon-magnet'
+                rec_ = rec
         evts.append(
             dict(
                 id=row.episodes.id,
                 title="%s - S%.2dE%.2d - %s" % (row.series.name, row.episodes.seasonnumber, row.episodes.epnumber, row.episodes.name),
                 start=row.episodes.firstaired.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 url=URL('series', 'index', args=[row.series.id], anchor="episode_%s" % (row.episodes.id)),
-                icon = str(XML(A(I(_class="%s icon-white" % icon),_rel="tooltip", _href=rec.magnet, _title=rec.magnet)))
+                icon = str(XML(A(I(_class="%s icon-white" % icon),_rel="tooltip", _href=rec_.magnet, _title=rec_.magnet)))
             )
         )
     return sj.dumps(evts)
