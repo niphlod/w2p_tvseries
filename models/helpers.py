@@ -355,7 +355,7 @@ def get_series_path(series_id):
     basefolder = gs.series_basefolder
     series = db.series(series_id)
     last = filenamelify(series.name)
-    return os.path.join(basefolder.value, last, '').strip()
+    return os.path.join(basefolder, last, '').strip()
 
 
 def twitter_menu(menu, level=0, mobile=False):
