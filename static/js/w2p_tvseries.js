@@ -21,7 +21,7 @@
           jQuery(this).trigger({ type: 'keypress', which: character.charCodeAt(0) });
     };
     $.fn.scanfolders = function() {
-        var uniq = 'id' + (new Date()).getTime();
+        var uniq = 'id' + (new Date()).getTime() + Math.floor(Math.random() * 10);
         var input = $(this);
         var ainput = input.next('a');
         if (ainput.length) {
@@ -100,7 +100,7 @@ function w2p_tvseries_ajax_page(method,action,data,target) {
 }
 jQuery(document).ready(function(){
      var path = location.pathname.substring(1);
-     if ( path ) $('div.navbar li a[href$="' + path + '"]').closest('li').addClass('active');
+     if ( path ) $('div.navbar li a[href$="' + path + '"]').closest('li').addClass('active').closest('ul.dropdown-menu').closest('li').addClass('active');
      $(document).on('hover', "[rel=tooltip]", function (event) {
         $(this).tooltip();
         })
