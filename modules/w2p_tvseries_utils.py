@@ -215,6 +215,11 @@ class w2p_tvseries_settings(object):
             ('MF', "Download into torrent folder, create a .magnet file for every link")
         ]
 
+        self.series_metadata_options = [
+            ('N', 'Do not write series info'),
+            ('XB', 'Write series info for XBMC')
+        ]
+
     def _global_settings(self):
         cache = current.cache
         db = current.database
@@ -246,7 +251,7 @@ class w2p_tvseries_settings(object):
             'subtitles_default_quality', 'subtitles_default_language',
             'torrent_default_feed', 'torrent_default_quality',
             'torrent_default_feed', 'torrent_default_quality', 'torrent_default_minsize',
-            'torrent_default_maxsize']
+            'torrent_default_maxsize', 'series_metadata']
 
         settings.defaults = Storage()
         settings.comments = Storage()
@@ -269,6 +274,7 @@ class w2p_tvseries_settings(object):
         settings.defaults.torrent_default_quality = ''
         settings.defaults.torrent_default_minsize = 100
         settings.defaults.torrent_default_maxsize = 4780
+        settings.defaults.series_metadata = 'N'
 
         settings.comments.series_basefolder = 'w2p_tvseries will suggest a default folder for new added series in this path'
         settings.comments.series_language = 'w2p_tvseries will download series definitions from thetvdb.com using this language'
@@ -285,6 +291,7 @@ class w2p_tvseries_settings(object):
         settings.comments.torrent_default_minsize = 'Minimum allowed size for torrents, in MB'
         settings.comments.torrent_default_maxsize = 'Maximum allowed size for torrents, in MB'
         settings.comments.torrent_magnet = 'How should I handle magnet links ?'
+        settings.comments.series_metadata = 'Should I help some program with my data?'
 
         settings.types.itasa_password = 'password'
         settings.types.torrent_default_minsize = 'integer'
@@ -297,6 +304,7 @@ class w2p_tvseries_settings(object):
         settings.widgets.subtitles_default_quality = myradiowidget
         settings.widgets.torrent_default_feed = myradiowidget
         settings.widgets.torrent_magnet = myradiowidgetvertical
+        settings.widgets.series_metadata = myradiowidget
 
         settings.requires.series_language = IS_IN_SET(self.langs)
         settings.requires.subtitles_default_method = IS_IN_SET(('itasa', 'opensubtitles'))
@@ -304,6 +312,7 @@ class w2p_tvseries_settings(object):
         settings.requires.torrent_default_feed = IS_IN_SET(('Eztv_feed', 'Torrentz_feed'))
         settings.requires.subtitles_default_language = IS_IN_SET(self.sub_langs)
         settings.requires.torrent_magnet = IS_IN_SET(self.magnet_options)
+        settings.requires.series_metadata = IS_IN_SET(self.series_metadata_options)
 
         return settings
 

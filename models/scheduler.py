@@ -25,6 +25,7 @@ from w2p_tvseries_tvdb import w2p_tvseries_ren_loader, w2p_tvseries_tvdb_loader
 from w2p_tvseries_subtitles import w2p_tvseries_sub_loader
 from w2p_tvseries_feed import w2p_tvseries_torrent_loader
 from w2p_tvseries_utils import tvdb_scooper_loader, Hasher, Brewer
+from w2p_tvseries_serializers import w2p_tvseries_serializers_loader
 import datetime
 import time
 import shutil
@@ -181,7 +182,8 @@ def the_boss():
         return "No op key found"
 
     rtn = []
-    steps = ['maintenance', 'update', 'down_sebanners', 'scoop_season', 'check_season', 'ep_metadata', 'down_epbanners', 'check_subs', 'down_subs', 'queue_torrents', 'down_torrents']
+    steps = ['maintenance', 'update', 'down_sebanners', 'scoop_season', 'check_season', 'ep_metadata',
+             'xbmc_metadata', 'down_epbanners', 'check_subs', 'down_subs', 'queue_torrents', 'down_torrents']
     res = []
 
     try:
@@ -252,6 +254,12 @@ def ep_metadata(series_id, seasonnumber):
                 db.commit()
     return 1
 
+def series_metadata(series_id, seasonnumber):
+    xbmc = w2p_tvseries_serializers_loader()
+    xbmc.season_metadata(series_id, seasonnumber)
+    return 1
+
+
 myscheduler = Scheduler(db2,
     dict(
         check_season=check_season,
@@ -268,6 +276,7 @@ myscheduler = Scheduler(db2,
         queue_torrents=queue_torrents,
         down_torrents=down_torrents,
         scoop_season=scoop_season,
+        series_metadata=series_metadata,
         the_boss=the_boss
     ),
     migrate=MIGRATE,
