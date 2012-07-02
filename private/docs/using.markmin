@@ -1,6 +1,7 @@
 # Using
 
 ## Functionalities
+- [[Home page #homepage]]
 - [[Series #series]]
 - [[Operations #operations]]
 - [[Scooper #scooper]]
@@ -11,9 +12,16 @@
 - [[Calendar #calendar]]
 - [[Scheduled tasks #scheduled]]
 
+### Home page [[homepage]]
+The [[Home page ../../default/index]] redirects to [[Settings ../../default/settings]] if no settings are yet saved.
+Normally, it displays an "overview" page of what is missing (grouped by series-season). Only episodes that are yet aired are considered.
+Pretty much like in [[calendar #calendar]] you'll obtain a general "grasp" of what is going on with your series, but only for those episodes
+you don't have already. You can directly disable episode tracking if you're not interested, and if you click on the season you'll be redirected
+to the corresponding series page. Status shown here is pretty much "freezed" as the last time a "Organize" run has been made.
+
 ### Series [[series]]
 You can add as many series as you want: definitions will be downloaded from thetvdb.com .
-Set your preferred language in general settings and add the series. When you search it, after the name there will be 2 letters identifying the language.
+Set your preferred language in [[Settings ../../default/settings]] and add the series. When you search it, after the name there will be 2 letters identifying the language.
 Mind that definitions will be downloaded in the language you choose. It's up to you to arrange all other settings if you want to get torrents/subtitles in your
 preferred language.
 To add a Series you can click on "Add Series" on the left upper bar. You can search the series, w2p_media will show you the title and the overview.
@@ -31,7 +39,7 @@ that are not displayed elsewhere (except if you read all the log)
 The Scooper is in charge for moving around files in the correct directories. Often you find yourself with one (or more) folder(s) containing all your last works
 and you want to keep them organized in multiple subdirectories.... but you don't have the time to actually move them around.
 For every season you can set "Scooper masks" and add common strings to look for in scooper paths. To preview the files the scooper will move, click on "Preview scooper".
-Scooper paths (source directories) can be set in [[Home ../../default/index]]. Files will be actually moved when running the Organize queue (need the scheduler active)
+Scooper paths (source directories) can be set in [[Settings ../../default/settings]]. Files will be actually moved when running the Organize queue (need the scheduler active)
 or by the cron script.
 
 ### Torrents [[torrents]]
