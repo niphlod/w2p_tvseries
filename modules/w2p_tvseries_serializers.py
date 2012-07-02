@@ -140,14 +140,15 @@ class w2p_tvseries_xbmc(object):
                     eproot = etree.SubElement(root, 'episodedetails')
                 else:
                     eproot = root
-                etree.SubElement(eproot, 'title').text = ep.name
+                etree.SubElement(eproot, 'title').text = ep.name.decode('utf-8')
                 etree.SubElement(eproot, 'season').text = "%s" % ep.seasonnumber
                 etree.SubElement(eproot, 'episode').text = "%s" % ep.epnumber
-                etree.SubElement(eproot, 'plot').text = ep.overview
+                etree.SubElement(eproot, 'plot').text = ep.overview.decode('utf-8')
                 etree.SubElement(eproot, 'aired').text = "%s" % ep.firstaired
-
+            if not ep.filename:
+                return
             ep_nfo = os.path.join(season_path, "%s.nfo" % os.path.splitext(ep.filename)[0])
-            if os.path.exists(ep_nfo) and os.stat(ep_nfo).st_mtime < ep.lastupdated:
+            if os.path.exists(ep_nfo) and os.stat(ep_nfo).st_mtime > ep.lastupdated:
                 return
             #for multi-eps banner is from last ep only
             banner_img = "%s.tbn" % os.path.splitext(ep_nfo)[0]
@@ -161,8 +162,10 @@ class w2p_tvseries_xbmc(object):
 
             with open(ep_nfo, 'w') as g:
                 self.indent(root)
-                content = etree.tostring(root, encoding='utf-8',xml_declaration=True)
-                g.write(content)
+                if etree.__package__ == 'lxml':
+                    etree.ElementTree(root).write(g, encoding='UTF-8', xml_declaration=True)
+                else:
+                    etree.ElementTree(root).write(g, encoding='UTF-8')
             self.log(fname, "Written ep info to %s" % (ep_nfo))
 
 
@@ -179,14 +182,16 @@ class w2p_tvseries_xbmc(object):
             return
 
         root = etree.Element('tvshow')
-        etree.SubElement(root, 'title').text = infos.name
-        etree.SubElement(root, 'plot').text = infos.overview
-        etree.SubElement(root, 'genre').text = " / ".join(infos.genre)
-        etree.SubElement(root, 'status').text = infos.status
+        etree.SubElement(root, 'title').text = infos.name.decode('utf-8')
+        etree.SubElement(root, 'plot').text = infos.overview.decode('utf-8')
+        etree.SubElement(root, 'genre').text = " / ".join(infos.genre).decode('utf-8')
+        etree.SubElement(root, 'status').text = infos.status.decode('utf-8')
         self.indent(root)
         with open(series_nfo, 'w') as g:
-            content = etree.tostring(root, encoding='utf-8', xml_declaration=True)
-            g.write(content)
+            if etree.__package__ == 'lxml':
+                etree.ElementTree(root).write(g, encoding='UTF-8', xml_declaration=True)
+            else:
+                etree.ElementTree(root).write(g, encoding='UTF-8')
         self.log('series_nfo', "Written series info to %s" % (series_nfo))
         sb_tb = db.series_banners
         banner_img = os.path.join(infos.basepath, 'folder.tbn')
