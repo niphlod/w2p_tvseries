@@ -177,7 +177,7 @@ class w2p_tvseries_torrent(object):
             for row in episodes_ids:
                 self.log(fname, "adding to queue %s - S%.2dE%.2d" % (rec.series.name, row.seasonnumber, row.epnumber))
                 to_insert = Storage()
-                to_insert.type = 'torrent'
+                to_insert.category = 'torrent'
                 to_insert.episode_id = row.id
                 to_insert.guid = ep.guid
                 to_insert.magnet = ep.magnet
