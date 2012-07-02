@@ -72,12 +72,20 @@ def missing():
     rtn = {}
     for row in all_to_check:
         data = sj.loads(row.seasons_settings.season_status)
-        missing = db(
+        missing_eps = db(
                      (db.episodes.seriesid == row.series.seriesid) &
                      (db.episodes.seasonnumber == row.seasons_settings.seasonnumber) &
-                     (db.episodes.epnumber.belongs(data['missing']))
+                     (db.episodes.tracking == True) &
+                     (db.episodes.firstaired < request.now.date()) &
+                     (db.episodes.epnumber.belongs(data.get('missing', [])))
                      ).select()
-        missing = ["E%.2d - %s" % (rec.epnumber, rec.name) for rec in missing]
+        missing = [
+            SPAN(
+            A("Disable Tracking",
+              _href=URL('manage', 'episode_tracking', args=[rec.id]), _class='ep_tracking')
+            ," E%.2d - %s" % (rec.epnumber, rec.name)
+            )
+            for rec in missing_eps]
         if len(missing) == 0:
             continue
         if row.series.id not in rtn:
@@ -87,6 +95,9 @@ def missing():
                                                     number=row.seasons_settings.seasonnumber,
                                                     missing=missing,
                                                     missingsubs=data.get('missingsubs', []),
+                                                    link=URL('series', 'index', args=[row.series.id],
+                                                             anchor="episode_%s" % (missing_eps[0].id),
+                                                             extension='')
                                                     )
                                                ]
                                       )
@@ -96,6 +107,9 @@ def missing():
                                                       number=row.seasons_settings.seasonnumber,
                                                       missing=missing,
                                                       missingsubs=data.get('missingsubs', []),
+                                                      link=URL('series', 'index', args=[row.series.id],
+                                                               anchor="episode_%s" % (missing_eps[0].id)
+                                                               ,extension='')
                                                      )
                                                  )
 
@@ -112,6 +126,9 @@ def queue_ops():
 
     se_tb = db.series
     ss_tb = db.seasons_settings
+
+    series_metadata = db(db.global_settings.kkey=='series_metadata').select().first()
+    series_metadata = series_metadata and series_metadata.value or 'N'
 
     all_to_check = db(
                       (ss_tb.series_id == se_tb.id) &
@@ -162,6 +179,10 @@ def queue_ops():
         function_name = 'ep_metadata'
         unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
         st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False, timeout=300)
+        if series_metadata <> 'N':
+            function_name = 'series_metadata'
+            unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
+            st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False)
 
     for a in validscooper:
         function_name = 'scoop_season'
