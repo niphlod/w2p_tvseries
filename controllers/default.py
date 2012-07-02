@@ -21,7 +21,14 @@ from gluon.storage import Storage
 from w2p_tvseries_utils import w2p_tvseries_settings
 
 def index():
+    settings_ = w2p_tvseries_settings()
+    gsettings = settings_.global_settings()
+    if len(gsettings) < 7:
+        session.flash = "Please adjust your preferences"
+        redirect(URL('settings'))
+    return dict()
 
+def settings():
     settings_ = w2p_tvseries_settings()
     settings = settings_.general_settings()
     gsettings = settings_.global_settings()
@@ -41,7 +48,7 @@ def index():
     form.wells = [
         dict(
             title="General Settings",
-            fields=['series_language', 'season_path', 'series_basefolder']
+            fields=['series_language', 'season_path', 'series_basefolder', 'series_metadata']
         ),
         dict(
             title="Scooper Settings",

@@ -1,7 +1,5 @@
 {{extend 'layout.html'}}
 
-<h3>Settings</h3>
+<h3>Missing</h3>
 
-<div class="span8">
-{{=twitter_form(form, 'form-horizontal')}}
-</div>
+{{=LOAD('organize', 'missing.load', ajax=True, target="missing_overview", content=SPAN(".", _class="spinner"))}}
