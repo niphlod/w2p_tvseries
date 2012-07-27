@@ -57,10 +57,12 @@ def delete():
         return dict(rec=rec, message="Series not found")
     if not request.vars.confirm:
         return dict(rec=rec, message="Are you sure ?")
-    try:
+    if 1:
         #retrieve_eplist
-        eplist = db(db.episodes.seriesid == rec.seriesid)._select(db.episodes.id)
+        eplist = db(db.episodes.seriesid == rec.seriesid).select(db.episodes.id)
 
+        eplist = [row.id for row in eplist]
+        
         #delete downloads
         down =  db(db.downloads.episode_id.belongs(eplist)).delete()
 
@@ -82,7 +84,7 @@ def delete():
 
         #delete series
         db(db.series.id == rec.id).delete()
-    except:
+    else:
         return dict(rec=rec, message="Series couldn't be deleted")
 
     return dict(rec=rec, message="Series deleted correctly")
