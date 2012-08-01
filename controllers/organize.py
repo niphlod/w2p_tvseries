@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with w2p_tvseries. If not, see <http://www.gnu.org/licenses/>.
 
+from gluon.storage import Storage
 from gluon.contrib import simplejson as sj
 from gluon.serializers import json
 from w2p_tvseries_tvdb import w2p_tvseries_ren_loader
@@ -79,13 +80,22 @@ def missing():
                      (db.episodes.firstaired < request.now.date()) &
                      (db.episodes.epnumber.belongs(data.get('missing', [])))
                      ).select()
-        missing = [
-            SPAN(
-            A("Disable Tracking",
-              _href=URL('manage', 'episode_tracking', args=[rec.id]), _class='ep_tracking')
-            ," E%.2d - %s" % (rec.epnumber, rec.name)
+        missing = []
+        #check if we have a record in db.downloads
+        for mep in missing_eps:
+            rec = db(db.downloads.episode_id == mep.id).select(limitby=(0,1), orderby=~db.downloads.id).first()
+            icon = rec and 'icon-magnet' or 'icon-remove'
+            if not rec:
+                rec = Storage()
+            icon = A(I(_class=icon),_rel="tooltip", _href=rec.magnet, _title=rec.magnet)
+            missing.append(
+                SPAN(icon,
+                    A("Disable Tracking",
+                    _href=URL('manage', 'episode_tracking', args=[mep.id]), _class='ep_tracking')
+                    ," E%.2d - %s" % (mep.epnumber, mep.name)
+                )
             )
-            for rec in missing_eps]
+
         if len(missing) == 0:
             continue
         if row.series.id not in rtn:
@@ -112,7 +122,6 @@ def missing():
                                                                ,extension='')
                                                      )
                                                  )
-
     return dict(rtn=rtn)
 
 
