@@ -109,9 +109,12 @@ def update():
     return sj.dumps(res)
 
 def maintenance():
+    unparsed_date = datetime.datetime(2000, 1, 1)
+    max_date = datetime.datetime(2050, 1, 1)
     limit = datetime.datetime.utcnow() - datetime.timedelta(days=5)
     db(db.urlcache.inserted_on < limit).delete()
     db(db.global_log.dat_insert < limit).delete()
+    db(db.episodes.firstaired == unparsed_date).update(firstaired = max_date)
     db.commit()
 
 def down_torrents(series_id, seasonnumber):
@@ -183,7 +186,7 @@ def the_boss():
 
     rtn = []
     steps = ['maintenance', 'update', 'down_sebanners', 'scoop_season', 'check_season', 'ep_metadata',
-             'series_metadata', 'down_epbanners', 'check_subs', 'down_subs', 'queue_torrents', 'down_torrents']
+             'down_epbanners', 'series_metadata', 'check_subs', 'down_subs', 'queue_torrents', 'down_torrents']
     res = []
 
     try:

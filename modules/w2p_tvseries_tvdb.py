@@ -463,7 +463,7 @@ class tvdb_mappers(object):
             try:
                 record.firstaired = datetime.datetime.strptime(record.firstaired, '%Y-%m-%d')
             except ValueError:
-                record.firstaired = datetime.datetime(2000, 1, 1)
+                record.firstaired = datetime.datetime(2050, 1, 1)
             condition = (ep_tb.episodeid == record.episodeid)
             id = ep_tb.update_or_insert(condition, **record)
             if not id:
