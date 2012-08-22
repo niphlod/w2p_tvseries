@@ -57,7 +57,7 @@ pass
 
 <script type="text/javascript">
     $(function () {
-        $('#seasons_settings h6').addClass('btn btn-small btn-mini');
+        $('#seasons_settings h6').addClass('btn btn-small');
         $('[rel=tooltip]').tooltip();
         $('body').on('click', '.popover.fade.top.in', function () {
             var el = $(this);
@@ -135,6 +135,8 @@ pass
                 }
             });
             submit_button.on('click', function() {
+                submit_button.addClass('disabled');
+                submit_button.text('Saving...');
                 tab_button.popover('hide');
             });
 
@@ -157,6 +159,14 @@ pass
 
         $('a[data-toggle="pill"]').on('shown', function (e) {
             pill_settings($(this));
+        });
+        $('a[data-toggle="pill"]').on('show', function (e) {
+            var tab = $(e.relatedTarget).attr('href');
+            var subm_tab = $('.btn-primary', tab);
+            if (subm_tab.hasClass('disabled')) {
+                w2p_tvseries_message('Saving your preferences...');
+                e.preventDefault();
+            }
         });
 
         pill_settings($('.nav.nav-pills li.active a'));

@@ -98,6 +98,11 @@ function w2p_tvseries_ajax_page(method,action,data,target) {
       }
     });
 }
+function w2p_tvseries_message(message) {
+   var flash = jQuery('.flash');
+   flash.html(message);
+   flash.slideDown();
+}
 jQuery(document).ready(function(){
      var path = location.pathname.substring(1);
      if ( path ) $('div.navbar li a[href$="' + path + '"]').closest('li').addClass('active').closest('ul.dropdown-menu').closest('li').addClass('active');
