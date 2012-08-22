@@ -438,8 +438,8 @@ def bit():
         Field('date_from', 'datetime', default=vars['date_from']),
         Field('date_to', 'datetime', default=vars['date_to']),
         buttons=[
-                BUTTON(w2p_icon('filter', variant='white'), "Filter Results", _class="btn btn-primary"),
-                A(w2p_icon('reset', variant='white'), "Reset Filters", _class="btn btn-info",
+                BUTTON(w2p_icon('filter', variant='white'), " Filter Results", _class="btn btn-primary"),
+                A(w2p_icon('reset', variant='white'), " Reset Filters", _class="btn btn-info",
                   _href=URL('bit', vars={}))
         ],
         _method = 'GET',

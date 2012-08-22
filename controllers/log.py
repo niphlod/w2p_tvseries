@@ -31,17 +31,19 @@ def index():
     rtn = []
     for row in last_records:
         type = 'ok'
+        trclass = 'info'
         if row.log_error:
             type = 'ko'
+            trclass = 'error'
             row.log_operation = row.log_error
         rtn.append(str(TR(
                           TD(
-                             SPAN(w2p_icon(type), "%s %s : %s - %s " % (row.id, row.dat_insert, row.log_module, row.log_function)),
+                             SPAN(w2p_icon(type), "%s: %s - %s " % (row.dat_insert, row.log_module, row.log_function)),
                              ),
                           TD(
                              SPAN(row.log_operation)
-                              )
-                           )
+                              ),
+                           _class=trclass)
                    )
                    )
     rtn = json(rtn)
