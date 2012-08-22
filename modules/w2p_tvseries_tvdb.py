@@ -271,7 +271,7 @@ class w2p_tvseries_tvdb(object):
         myepisodes_set = set(myepisodes.keys())
 
         for a in ep_updated_set & myepisodes_set:
-            #if lastupdate from updates file is greater, I have to update the series
+            #if lastupdate from updates file is greater, I have to update the episode
             if ep_updated[a] > myepisodes[a]:
                 self.log('global_update', 'updating episode %s' % (a))
                 self.episode_update(a)

@@ -32,25 +32,28 @@ import unicodedata
 DEPOSIT_RE = re.compile(r"^([^\.]*\.[^\.]*)\.(.{2}).*$")
 
 ICON_MAPPING = {
-                   'Continuing' : 'icon-repeat',
-                   'Ended' : 'icon-off',
-                   'ok' : 'icon-ok',
-                   'ko' : 'icon-remove',
-                   'question' : 'icon-question-sign',
-                   'downloading_magnet' : 'icon-magnet',
-                   'add' : 'icon-plus',
-                   'delete' : 'icon-remove',
-                   'filter' : 'icon-filter',
-                   'reset' : 'icon-repeat',
-                   }
+    'Continuing' : 'icon-repeat',
+    'Ended' : 'icon-off',
+    'ok' : 'icon-ok',
+    'ko' : 'icon-remove',
+    'question' : 'icon-question-sign',
+    'downloading_magnet' : 'icon-magnet',
+    'add' : 'icon-plus',
+    'delete' : 'icon-remove',
+    'filter' : 'icon-filter',
+    'reset' : 'icon-repeat',
+    'trash' : 'icon-trash',
+    'settings' : 'icon-wrench'
+    }
 
 def w2p_icon(status, variant=None):
     variant = variant and ' icon-white' or ''
     return TAG[''](' ',I(_class="%s%s" % (ICON_MAPPING[status], variant), _title=status))
 
 
-def wp2tv_sidebar(genre):
 
+def wp2tv_sidebar(genre):
+    inizio = time.time()
     if genre:
         basecond = db.series.genre.contains(genre)
     else:
@@ -77,7 +80,9 @@ $(function () {
         });
 
     });
-    $.PeriodicalUpdater('/w2p_tvseries/log/op_status', {
+    if (typeof $('#smarthandle').data('handle') !== 'undefined') $('#smarthandle').data('handle').stop();
+
+    el.PeriodicalUpdater('/w2p_tvseries/log/op_status', {
         method: 'get',
         data: '',
         minTimeout: 1000,
@@ -92,6 +97,7 @@ $(function () {
         },
     },
     function(remoteData, success, xhr, handle) {
+            $('#smarthandle').data('handle', handle);
             var command = xhr.getResponseHeader('web2py-component-command');
             if (command == 'stop') handle.stop();
             el.button(remoteData.status).text(remoteData.text);
@@ -101,10 +107,10 @@ $(function () {
     )
 })"""
     delete_button = request.controller == 'series' and request.function == 'index' and True or False
+    add_del = [LI(A(w2p_icon('add'), ' Add Series', _href=URL(r=request, c='manage', f='add')))]
     if delete_button:
-        delete_button = A(w2p_icon('delete', variant='white'), 'Delete Series', _href=URL(r=request, c='manage', f='delete', args=[request.args(0)]), _class="btn btn-large btn-danger")
-    else:
-        delete_button = ''
+        add_del += LI(A(w2p_icon('trash'), ' Delete Series', _href=URL(r=request, c='manage', f='delete', args=[request.args(0)])))
+
 
     return TAG[''](
         DIV(
@@ -113,11 +119,17 @@ $(function () {
                    _class="progress progress-striped active"
                    ),
                DIV(
-                   A(w2p_icon('Continuing', variant='white'),_id="operation_button", _href=URL('manage', 'stop_operations'), _class="btn btn-large btn-info",
+                   DIV(
+                   A(w2p_icon('Continuing', variant='white'),_id="operation_button", _href=URL('manage', 'stop_operations'), _class="btn btn-info",
                      _autocomplete="off", **{'_data-original-title' : 'background operations, click to stop them'}),
-                   A(w2p_icon('add', variant='white'), 'Add Series', _href=URL(r=request, c='manage', f='add'), _class="btn btn-large btn-primary"),
-                   delete_button,
-                   _class="btn-group"
+                     _class="btn-group"),
+                   DIV(
+                        BUTTON(w2p_icon('settings', variant='white'), ' Add/Del Series', _class="btn btn-primary"),
+                        BUTTON(SPAN(_class="caret"), _class="btn btn-primary dropdown-toggle", **{'_data-toggle' : 'dropdown'}),
+                        UL(*add_del,
+                            _class="dropdown-menu"),
+                    _class="btn-group"),
+                   _class="btn-toolbar"
                    ),
             _class='well'),
         DIV(
@@ -148,7 +160,6 @@ $(function () {
         ),
             SCRIPT(script)
             )
-
 
 
 def myrefurlwidget(urllist):

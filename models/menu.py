@@ -6,7 +6,7 @@
 #########################################################################
 
 response.title = 'w2p_tvseries'
-response.subtitle = T('Another TV Series Organizer!')
+response.subtitle = 'Another TV Series Organizer!'
 
 ## read more at http://dev.w3.org/html5/markup/meta.name.html
 response.meta.author = 'Niphlod'
