@@ -3,6 +3,19 @@ body {
     padding-top: 60px;
     padding-bottom: 40px;
 }
+
+.navbar-form .select2-container {
+    margin-top: 5px;
+}
+
+.input-prepend ul li, .input-prepend a {
+    font-size: 14px;
+}
+
+ul.unstyled.help-inline {
+    display: block;
+}
+
 #global_log {
     font-size: 11px;
     max-height : 200px;
