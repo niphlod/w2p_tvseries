@@ -103,6 +103,7 @@ pass
             });
             $('input[name=subtitle_tracking]', currenttab).each(function() {
                 var el = $(this);
+                $('select[name=sub_language]', currenttab).select2({'width' : 'element'});
                 function sync_settings(el) {
                     if (!el.is(':checked')) {
                         el.closest('.tab-pane').find('.subtitles .control-group').css('opacity', 0.3).hide();

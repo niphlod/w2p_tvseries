@@ -46,6 +46,7 @@
 
 <script type="text/javascript">
 $(document).ready(function() {
+    $('select').select2({'width' : 'element'});
     $('a.revert').on('click', function(e) {
         e.preventDefault();
         var el = $(this);
