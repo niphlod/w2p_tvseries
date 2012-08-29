@@ -84,6 +84,9 @@
           </li>
 
         </ul>
+            <div class="navbar-form pull-right span3">
+                <input type="hidden" style="width: 100%; min-width: 100%;" id="global_search">
+            </div>
       </div><!--/.nav-collapse -->
 
     </div>
@@ -121,6 +124,43 @@
   </footer>
 
 </div><!--/.fluid-container-->
+<script type="text/javascript">
+$(document).ready(function() {
+    function movieFormatResult(movie) {
+        var markup = "<table class='movie-result'><tr>";
+        if (movie.src) markup+= "<td><img src='" + movie.src + "' height='100' width='100'></img></td>";
+        markup += "<td class='movie-info'>"
+        markup+= "<div class='movie-title'>" + movie.text + "</div>";
+        markup += "</td></tr></table>"
+        return markup;
+    }
 
+    function movieFormatSelection(movie) {
+        return movie.title;
+    }
+
+    $("#global_search").select2({
+        minimumInputLength: 4,
+        ajax: {
+            url: "/w2p_tvseries/series/search.json",
+            dataType: 'json',
+            data: function (term, page) {
+                return {
+                    q: term
+                };
+            },
+            results: function (data, page) {
+                return {results: data};
+            }
+        },
+        formatResult: movieFormatResult, // omitted for brevity, see the source of this page
+        dropdownCssClass: "bigdrop" // apply css that makes the dropdown taller
+    });
+    $('#global_search').on('change', function(e) {
+        window.location = $(this).select2('data').url;
+        }
+    )
+});
+</script>
   </body>
 </html>

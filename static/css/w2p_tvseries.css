@@ -8,6 +8,11 @@ body {
     margin-top: 5px;
 }
 
+.navbar-form .select2-container .select2-choice div {
+    background: #FFFFFF;
+    border: none;
+}
+
 .input-prepend ul li, .input-prepend a {
     font-size: 14px;
 }

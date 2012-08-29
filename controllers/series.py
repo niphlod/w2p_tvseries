@@ -98,3 +98,31 @@ def season():
 
 def sidebar():
     return wp2tv_sidebar(request.vars.genre)
+
+def search():
+    term = request.vars.q
+    series = db(db.series.name.contains(term)).select(db.series.id, db.series.name)
+    rtn = []
+    for row in series:
+        rtn.append(dict(id="se_%s" % row.id, text=row.name, t="series", url=URL('series', 'index', args=[row.id], extension='')))
+    eps = db(
+        (db.episodes.name.contains(term)) &
+        (db.series.seriesid == db.episodes.seriesid) &
+        (db.episodes.tracking == True)
+        ).select(db.episodes.id, db.episodes.seasonnumber, db.episodes.epnumber, db.episodes.name, db.series.id, db.series.name)
+    for row in eps:
+        banner = db((db.episodes_banners.episode_id == row.episodes.id) & (db.episodes_banners.banner <> '')).select().first()
+        rtn.append(dict(id="ep_%s" % row.episodes.id,
+                        text="%s - S%.2dE%.2d - %s" % (
+                            row.series.name, row.episodes.seasonnumber,
+                            row.episodes.epnumber, row.episodes.name
+                            ),
+                        t="episodes",
+                        url=URL('series', 'index',
+                                args=[row.series.id],
+                                anchor="episode_%s" % row.episodes.id,
+                                extension=''),
+                        src=banner and w2p_deposit(banner.banner) or None
+                        )
+                   )
+    return sj.dumps(rtn)

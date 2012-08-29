@@ -124,8 +124,7 @@ $(function () {
                      _autocomplete="off", **{'_data-original-title' : 'background operations, click to stop them'}),
                      _class="btn-group"),
                    DIV(
-                        BUTTON(w2p_icon('settings', variant='white'), ' Add/Del Series', _class="btn btn-primary"),
-                        BUTTON(SPAN(_class="caret"), _class="btn btn-primary dropdown-toggle", **{'_data-toggle' : 'dropdown'}),
+                        BUTTON(w2p_icon('settings', variant='white'), ' Add/Del Series ', SPAN(_class="caret"), _class="btn btn-primary dropdown-toggle", **{'_data-toggle' : 'dropdown'}),
                         UL(*add_del,
                             _class="dropdown-menu"),
                     _class="btn-group"),

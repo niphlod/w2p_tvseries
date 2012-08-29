@@ -56,6 +56,7 @@
     function scroll_to_ep(ep) {
         $('html,body').animate({scrollTop: $(ep).offset().top - 60}, 'slow');
     }
+
     function check_missing(currenttab) {
         function pad2(number) {
             return (number < 10 ? '0' : '') + number
@@ -71,6 +72,25 @@
             }
         });
     };
+
+    function manage_scrolling() {
+        var season_to_show = $(document.location.hash).closest('.tab-pane').attr('id');
+        if (!(typeof season_to_show === 'undefined')) {
+            $('a[href="#' + season_to_show + '"]').tab('show');
+            setTimeout(function(){
+                scroll_to_ep(document.location.hash);
+                }, 1000);
+            } else if ($('.tba').length) {
+                var id = $('.tba:first');
+                var tab_ = id.closest('.tab-pane').attr('id');
+                $('a[href="#' + tab_ + '"]').tab('show');
+                setTimeout(function(){
+                    scroll_to_ep('#' + id.attr('id'));
+                }, 1000);
+            } else {
+                $('.nav-tabs a:last').tab('show');
+        }
+    }
 
     $(function () {
         $('html, body').animate({ scrollTop: 0 }, 0);
@@ -95,22 +115,8 @@
                 });
             }
         });
-        var season_to_show = $(document.location.hash).closest('.tab-pane').attr('id');
-        if (!(typeof season_to_show === 'undefined')) {
-            $('a[href="#' + season_to_show + '"]').tab('show');
-            setTimeout(function(){
-                scroll_to_ep(document.location.hash);
-                }, 3000);
-            } else if ($('.tba').length) {
-                var id = $('.tba:first');
-                var tab_ = id.closest('.tab-pane').attr('id');
-                $('a[href="#' + tab_ + '"]').tab('show');
-                setTimeout(function(){
-                    scroll_to_ep('#' + id.attr('id'));
-                }, 3000);
-            } else {
-                $('.nav-tabs a:last').tab('show');
-        }
+        manage_scrolling();
+        window.addEventListener("hashchange", manage_scrolling);
         $("a.reload").click(function() {
             var el = $(this);
             check_missing(el.closest('.tab-pane'));
