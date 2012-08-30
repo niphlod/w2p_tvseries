@@ -89,7 +89,7 @@ class w2p_tvseries_torrent(object):
 
     def __init__(self):
         self.logger = tvdb_logger('torrent')
-        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'})
+        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'}, config= {'max_retries': 5}, timeout=3)
         self.magnetr = re.compile(r'xt=urn:btih:([\w]{40})&')
         self.magnetdnr = re.compile(r'&dn=.*')
 
@@ -212,7 +212,6 @@ class w2p_tvseries_torrent(object):
                 content = r.content
                 ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=datetime.datetime.utcnow(), kkey=cachekey)
                 db.commit()
-                self.log('downloader', '%s fetched from internet' % (url))
             except:
                 self.error('downloader', '%s failed to fetch from internet' % (url))
                 content = None
@@ -307,8 +306,9 @@ class w2p_tvseries_torrent(object):
 class w2p_tvseries_feed(object):
     def __init__(self):
         self.logger = tvdb_logger('feeds')
-        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'})
+        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'}, config= {'max_retries': 5}, timeout=3)
         self.meddler = Meddler()
+        self.errors = None
 
     def log(self, function, message):
         log = self.logger
@@ -377,13 +377,14 @@ class w2p_tvseries_feed(object):
         guid
         """
         content = self.downloader(self.feed_url)
+        if not content:
+            self.errors = "No content fetched"
+            self.error('parse_feed', 'Unable to download feed')
         root = etree.fromstring(content)
         eps = []
         for item in root.findall('channel/item'):
             eps.append(self.parse_item(item))
         self.eps = eps
-
-
 
     def parse_item(self, item):
         """return a dict

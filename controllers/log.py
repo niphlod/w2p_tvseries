@@ -18,6 +18,7 @@
 # along with w2p_tvseries. If not, see <http://www.gnu.org/licenses/>.
 
 from gluon.serializers import json
+import datetime
 
 def index():
     last_time = session.refresh_log
@@ -75,3 +76,32 @@ def op_status():
     perc = "%s%%" % ((operations - todo) * 1.0 / operations * 100)
     rtn = dict(status='loading', text=text, perc=perc)
     return json(rtn)
+
+def show():
+    start = request.utcnow - datetime.timedelta(days=1)
+    if request.vars.start:
+        start = datetime.datetime.strptime(request.vars.start, T('%Y-%m-%d %H:%M:%S', lazy=False))
+    end = request.utcnow
+    if request.vars.end:
+        end = datetime.datetime.strptime(request.vars.end, T('%Y-%m-%d %H:%M:%S', lazy=False))
+    form = SQLFORM.factory(
+        Field('start', 'datetime', default=start),
+        Field('end', 'datetime', default=end),
+        Field('module', default=request.vars.module),
+        Field('function', default=request.vars.function),
+        buttons=[
+                BUTTON(w2p_icon('filter', variant='white'), " Filter Results", _class="btn btn-primary"),
+                A(w2p_icon('reset', variant='white'), " Reset Filters", _class="btn btn-info",
+                  _href=URL('show', vars={}))
+        ],
+        _method = 'GET',
+        _enctype = 'application/x-www-form-urlencoded'
+    )
+    gl = db.global_log
+    recs = db((gl.dat_insert >= start) & (gl.dat_insert <= end))
+    if request.vars.module:
+        recs = recs(gl.log_module.contains(request.vars.module))
+    if request.vars.function:
+        recs = recs(gl.log_function.contains(request.vars.function))
+    recs = recs.select()
+    return dict(recs=recs, form=form)

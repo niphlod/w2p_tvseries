@@ -60,7 +60,7 @@ def w2p_tvseries_sub_loader(*args, **vars):
 class SubDownloader(object):
     def __init__(self, verbose=False):
         self.logger = tvdb_logger('subs')
-        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'})
+        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'}, config= {'max_retries': 5}, timeout=3)
         self.verbose = verbose
 
     def log(self, function, message):
@@ -302,7 +302,7 @@ class ItasaDownloader(SubDownloader):
         super(ItasaDownloader, self).__init__(verbose)
         db = current.database
         self.main_url = "http://www.italiansubs.net/"
-        self.req = req.session(headers={'Referer': self.main_url, 'User-Agent' : 'w2p_tvdb'}, config={}) #{'verbose': sys.stderr})
+        self.req = req.session(headers={'Referer': self.main_url, 'User-Agent' : 'w2p_tvdb'}, config={'max_retries': 5}, timeout=3) #{'verbose': sys.stderr})
         gs = w2p_tvseries_settings().global_settings()
         self.username = gs.itasa_username
         self.password = gs.itasa_password

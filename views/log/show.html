@@ -1,0 +1,11 @@
+{{extend 'layout.html'}}
+
+<h3>Log</h3>
+
+<div class="row-fluid">
+    {{=twitter_form(form, 'form-horizontal')}}
+</div>
+<pre>
+{{for rec in recs:}}
+{{="%s - %s - %s - %s - %s" % (rec.dat_insert, "ERROR" if rec.log_error else "INFO", rec.log_module, rec.log_function, rec.log_operation or rec.log_error)}}{{pass}}
+</pre>
