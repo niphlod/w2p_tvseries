@@ -1,9 +1,14 @@
 
 <h3>Preview</h3>
 
-{{if len(res) == 0:}}
+{{if len(res) == 0 and not error:}}
 <div class="alert alert-warning">
         No torrents found! Try adjusting your settings {{=SPAN(";-)", _title=','.join(["%s = %s" % (k,v) for k,v in request.vars.iteritems()]))}}
+</div>
+{{pass}}
+{{if error:}}
+<div class="alert alert-warning">
+    Unable to download feed. Retry in a few minutes
 </div>
 {{pass}}
 

@@ -132,8 +132,8 @@ def preview_torrents():
 
     ez = w2p_tvseries_feed_loader(vars.feed)
     res = ez.search(vars.show_name, vars.season, vars.quality, vars.minsize, vars.maxsize, vars.regex, vars.lower_attention)
-
-    return dict(res=res)
+    error = ez.errors
+    return dict(res=res, error=error)
 
 def preview_scooper():
     scoop = tvdb_scooper_loader()
