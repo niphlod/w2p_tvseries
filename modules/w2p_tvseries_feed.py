@@ -65,25 +65,25 @@ def w2p_tvseries_feed_loader(*args, **vars):
     type = args[0]
     args = args[1:]
     try:
-        if not hasattr(w2p_tvseries_feed_loader, 'w2p_tvseries_feed_loader_instance_%s' % (type)):
+        if not hasattr(w2p_tvseries_feed_loader, 'instance_%s' % (type)):
             types = dict(
                 Eztv_feed=Eztv_feed,
                 Torrentz_feed=Torrentz_feed,
             )
-            setattr(w2p_tvseries_feed_loader, 'w2p_tvseries_feed_loader_instance_%s' % (type),  types[type](*args, **vars))
+            setattr(w2p_tvseries_feed_loader, 'instance_%s' % (type),  types[type](*args, **vars))
     finally:
         locker.release()
-    return getattr(w2p_tvseries_feed_loader, 'w2p_tvseries_feed_loader_instance_%s' % (type))
+    return getattr(w2p_tvseries_feed_loader, 'instance_%s' % (type))
 
 
 def w2p_tvseries_torrent_loader(*args, **vars):
     locker.acquire()
     try:
-        if not hasattr(w2p_tvseries_torrent_loader, 'w2p_tvseries_torrent_instance'):
-            w2p_tvseries_torrent_loader.w2p_tvseries_torrent_instance = w2p_tvseries_torrent(*args, **vars)
+        if not hasattr(w2p_tvseries_torrent_loader, 'instance'):
+            w2p_tvseries_torrent_loader.instance = w2p_tvseries_torrent(*args, **vars)
     finally:
         locker.release()
-    return w2p_tvseries_torrent_loader.w2p_tvseries_torrent_instance
+    return w2p_tvseries_torrent_loader.instance
 
 class w2p_tvseries_torrent(object):
 
@@ -256,6 +256,12 @@ class w2p_tvseries_torrent(object):
                     row.update_record(down_file=content)
             db.commit()
 
+        if torrent_magnet == 'ST':
+            #retrieve current torrent client configured
+            tclient = gs.tclient
+            from w2p_tvseries_clients import w2p_tvseries_torrent_client_loader
+            tc = w2p_tvseries_torrent_client_loader(tclient, gsettings=gs)
+
         if torrent_magnet <> 'N':
             #find magnets to serialize
             res = db(
@@ -265,23 +271,30 @@ class w2p_tvseries_torrent(object):
                 (dw.series_id == seriesid) &
                 (dw.seasonnumber == seasonnumber)
                 ).select()
-            filename = os.path.join(torrent_path, "catalog.magnet")
             for row in res:
                 if not self.magnetdnr.search(row.magnet):
                     ep_name = db(ep.id == row.episode_id).select(ep.name).first()
                     ep_name = ep_name and ep_name.name or row.episode_id
                     ep_name = urllib.urlencode({'dn' : ep_name})
                     row.magnet = "%s&%s" % (row.magnet, ep_name)
-                if torrent_magnet == 'MF':
-                    filename = os.path.join(torrent_path, "%s.magnet" % (row.id))
-                try:
-                    with open(filename, 'a') as g:
-                        g.write(row.magnet + '\n')
-                    row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
-                    db.commit()
-                except:
-                    self.error(fname, "Cannot write to %s" % (filename))
-                    db.rollback()
+                if torrent_magnet == 'ST':
+                    if tc.add_magnet(row.magnet):
+                        row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
+                        db.commit()
+                    else:
+                        db.rollback()
+                else:
+                    filename = os.path.join(torrent_path, "catalog.magnet")
+                    if torrent_magnet == 'MF':
+                        filename = os.path.join(torrent_path, "%s.magnet" % (row.id))
+                    try:
+                        with open(filename, 'a') as g:
+                            g.write(row.magnet + '\n')
+                        row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
+                        db.commit()
+                    except:
+                        self.error(fname, "Cannot write to %s" % (filename))
+                        db.rollback()
         elif torrent_magnet == 'N':
             res = db(
                 (dw.queued == False) &
