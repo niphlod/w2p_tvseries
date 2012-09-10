@@ -2,6 +2,8 @@
 
 ## Functionalities
 - [[Home page #homepage]]
+- [[Manage #manage]]
+- [[Clients #clients]]
 - [[Series #series]]
 - [[Operations #operations]]
 - [[Scooper #scooper]]
@@ -17,14 +19,27 @@ The [[Home page ../../default/index]] redirects to [[Settings ../../default/sett
 Normally, it displays an "overview" page of what is missing (grouped by series-season). Only episodes that are yet aired are considered.
 Pretty much like in [[calendar #calendar]] you'll obtain a general "grasp" of what is going on with your series, but only for those episodes
 you don't have already. You can directly disable episode tracking if you're not interested, and if you click on the season you'll be redirected
-to the corresponding series page. Status shown here is pretty much "freezed" as the last time a "Organize" run has been made.
+to the corresponding page. The status shown here is pretty much "freezed" as the last time a "Organize" run has been made.
+
+### Manage [[manage]]
+Here you can find [[Settings ../../default/settings]], that are somewhat general, [[Client Settings ../../default/client_settings]] where you can configure
+your torrent clients and [[Log ../../log/show]] where you can see the detailed log of all operations done by w2p_tvseries
+
+### Clients [[clients]]
+By default the supported torrent clients are [[Deluge http://deluge-torrent.org/]], [[Transmission http://www.transmissionbt.com/]] and [[uTorrent http://www.utorrent.com/]].
+When setting the preferred client, the default configuration for everyone is suggested directly by w2p_tvseries. Please note that every client must enable "something" to let w2p_tvseries
+interact with it:
+- Deluge: needs the Web-UI plugin (follow [[this http://dev.deluge-torrent.org/wiki/UserGuide/ThinClient#WebUI]] guide)
+- Transmission: needs the [[web-interface https://trac.transmissionbt.com/wiki/WebInterface]]
+- uTorrent: needs the [[WebUI http://www.utorrent.com/help/guides/webui]]
+You can see the status of your torrents right in w2p_tvseries at [[Torrents ../../organize/torrents]]
 
 ### Series [[series]]
 You can add as many series as you want: definitions will be downloaded from thetvdb.com .
 Set your preferred language in [[Settings ../../default/settings]] and add the series. When you search it, after the name there will be 2 letters identifying the language.
 Mind that definitions will be downloaded in the language you choose. It's up to you to arrange all other settings if you want to get torrents/subtitles in your
 preferred language.
-To add a Series you can click on "Add Series" on the left upper bar. You can search the series, w2p_media will show you the title and the overview.
+To add a Series you can click on "Add Series" on the left upper bar. You can search the series, w2p_tvseries will show you the title and the overview.
 When you'll choose a series, a background operation will be fired to retrieve all series definitions.
 You'll be then redirected to the settings page, where you can disable season tracking (it won't be displayed, searched for, matched against, etc) and
 set all kinds of parameters for torrents, subtitles, scooper, etc.
@@ -44,7 +59,7 @@ or by the cron script.
 
 ### Torrents [[torrents]]
 Torrents will be searched through ezrss.it or torrentz.eu . For every season you have some parameters to specify what to download and what not, using "Torrent Settings".
-Please be sure to tick "Torrent Tracking" as well. By default some parameters will be suggested by w2p_media, but you can tune it and preview the results in semi real-time.
+Please be sure to tick "Torrent Tracking" as well. By default some parameters will be suggested by w2p_tvseries, but you can tune it and preview the results in semi real-time.
 All recent feeds carry all kind of informations, and the app will try to do its best to retrieve what you want, but it has to deal with the actual data returned from the feed itself,
 and some general considerations.
 You can allow only some strings (useful for qualities), discard them (prefix with NO_), accept a minimum and a maximum size, or going mad with regexes..... pick your poison!
@@ -73,8 +88,8 @@ The normal flow of operations is:
 - check for missing torrents if enabled
 
 ### Back in Time [[backintime]]
-A feature that I really wanted was the possibility to revert every filesystem change made by w2p_media.
-By default, w2p_media records every change made to the filesystem (except for non-destructive operations, like dir creation).
+A feature that I really wanted was the possibility to revert every filesystem change made by w2p_tvseries.
+By default, w2p_tvseries records every change made to the filesystem (except for non-destructive operations, like dir creation).
 You can use [[Back in Time ../../bit/index]] to Revert every operation. Filter by dates, series and/or Season Number to refine the results.
 Files will be grouped by the dir they are actually in. Expand those dirs and click on the button to move the file to it's original state.
 
