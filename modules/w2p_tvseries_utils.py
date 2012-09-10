@@ -212,7 +212,8 @@ class w2p_tvseries_settings(object):
         self.magnet_options = [
             ('N', "Dont' handle them, try to download torrent files instead"),
             ('SF', "Create a catalog.magnet file into into torrent folder, with a line for every link"),
-            ('MF', "Download into torrent folder, create a .magnet file for every link")
+            ('MF', "Download into torrent folder, create a .magnet file for every link"),
+            ('ST', "Send magnet links directly to the torrent client configured (won't work if torrent client is not online or not configured)")
         ]
 
         self.series_metadata_options = [
@@ -346,7 +347,7 @@ class w2p_tvseries_settings(object):
 
         #requires
         settings.requires.tclient = IS_IN_SET(['None', 'utorrent', 'deluge', 'transmission'])
-        settings.requires.turl = IS_URL()
+        settings.requires.turl = IS_EMPTY_OR(IS_URL())
 
         return settings
 
