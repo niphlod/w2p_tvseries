@@ -55,14 +55,15 @@ def w2p_tvseries_torrent_client_loader(*args, **vars):
 
 
 class w2p_tvseries_client(object):
-    def __init__(self):
-        pass
+    def __init__(self, gsettings=None):
+        self.gsettings = gsettings
 
     def access_settings(self):
-        gs = w2p_tvseries_settings().global_settings()
-        self.url = gs.turl
-        self.username = gs.tusername
-        self.password = gs.tpassword
+        if not self.gsettings:
+            self.gsettings = w2p_tvseries_settings().global_settings()
+        self.url = self.gsettings.turl
+        self.username = self.gsettings.tusername
+        self.password = self.gsettings.tpassword
 
     def get_status(self):
         """list of dicts
@@ -119,9 +120,9 @@ class w2p_Amule(w2p_tvseries_client):
         return res
 
 class w2p_Utorrent(w2p_tvseries_client):
-    def __init__(self):
+    def __init__(self, *args, **vars):
         self.logger = tvdb_logger('utclient')
-        super(w2p_Utorrent, self).__init__()
+        super(w2p_Utorrent, self).__init__(*args, **vars)
         self.access_settings()
         self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'},
                                config= {'max_retries': 5},
@@ -216,11 +217,24 @@ class w2p_Utorrent(w2p_tvseries_client):
             files.append(Storage(parsed))
         return files
 
+    def add_magnet(self, magnet):
+        self.token = self.get_token()
+        if not self.token:
+            return None
+        payload = {'token': self.token, 'action' : 'add-url', 's' : magnet}
+        try:
+            r = self.req.get(self.url, params=payload, auth=(self.username, self.password))
+            r.raise_for_status()
+        except:
+            self.error('add_magnet', 'Unable to add magnet')
+            return None
+        return True
+
 
 class w2p_Deluge(w2p_tvseries_client):
-    def __init__(self):
+    def __init__(self, *args, **vars):
         self.logger = tvdb_logger('declient')
-        super(w2p_Deluge, self).__init__()
+        super(w2p_Deluge, self).__init__(*args, **vars)
         self.access_settings()
         self.req = req.session(
             headers = {'User-Agent' : 'w2p_tvdb',
@@ -284,10 +298,31 @@ class w2p_Deluge(w2p_tvseries_client):
             files.append(self.normalize(parsed))
         return files
 
+    def add_magnet(self, magnet):
+        data = {"method": "core.add_torrent_magnet", "params": [magnet, {}], "id": 1}
+        while True:
+            try:
+                r = self.req.post(self.url, data=sj.dumps(data))
+                r.raise_for_status()
+                content = sj.loads(r.content)
+            except:
+                self.error('add_magnet', 'Unable to add magnet')
+                break
+            err = content.get('error')
+            if err and err.get('message'):
+                if self.init_session():
+                    continue
+                else:
+                    self.error('add_magnet', 'Unable to add magnet')
+                    break
+            else:
+                break
+        return True
+
 class w2p_Transmission(w2p_tvseries_client):
-    def __init__(self):
+    def __init__(self, *args, **vars):
         self.logger = tvdb_logger('trclient')
-        super(w2p_Transmission, self).__init__()
+        super(w2p_Transmission, self).__init__(*args, **vars)
         self.access_settings()
 
     def decode_status(self, statuscode,rpc_version):
@@ -376,6 +411,37 @@ class w2p_Transmission(w2p_tvseries_client):
         for file in content['arguments']['torrents']:
             files.append(self.normalize(file, rpc_version))
         return files
+
+    def add_magnet(self, magnet):
+        sess = req.session(headers = {'User-Agent' : 'w2p_tvdb',
+                                      'Content-Type' : 'application/json'
+                                      },
+                           config= {'max_retries': 5},
+                           timeout=3,
+                           auth=(self.username, self.password)
+                           )
+        data = dict(method='torrent-add', arguments={'filename' : magnet})
+        while True:
+            try:
+                r = sess.post(self.url, data=sj.dumps(data))
+            except:
+                self.error('add_magnet', 'Unable to add magnet')
+                return None
+            if r.status_code == 409:
+                sess.headers['X-Transmission-Session-Id'] = r.headers['X-Transmission-Session-Id']
+            else:
+                break
+        try:
+            r.raise_for_status()
+        except:
+            self.error('add magnet', 'Unable to add magnet')
+            return None
+        content = sj.loads(r.content)
+        if content['result'] == 'success':
+            return True
+        else:
+            return False
+
 
 if __name__ == '__main__':
     amule = Amule()

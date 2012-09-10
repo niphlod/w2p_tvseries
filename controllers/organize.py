@@ -26,11 +26,10 @@ from w2p_tvseries_utils import w2p_tvseries_settings
 import os
 
 def index():
-
     all_to_check = db(
-                      (db.seasons_settings.series_id == db.series.id) &
-                      (db.seasons_settings.tracking == True)
-                    ).select()
+        (db.seasons_settings.series_id == db.series.id) &
+        (db.seasons_settings.tracking == True)
+        ).select()
 
     invalid = dict(path=[])
     invpath = {}
