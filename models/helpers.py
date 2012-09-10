@@ -53,7 +53,6 @@ def w2p_icon(status, variant=None):
 
 
 def wp2tv_sidebar(genre):
-    inizio = time.time()
     if genre:
         basecond = db.series.genre.contains(genre)
     else:
@@ -367,6 +366,12 @@ def get_series_path(series_id):
     last = filenamelify(series.name)
     return os.path.join(basefolder, last, '').strip()
 
+def nice_filesize(num):
+    if num >= 1000000000:
+        return '%.2f GB' % (num / 1000000000.0)
+    if num >= 1000000:
+        return '%.2f MB' % (num / 1000000.0)
+    return '%.2f KB' % (num / 1000.0)
 
 def twitter_menu(menu, level=0, mobile=False):
     """
