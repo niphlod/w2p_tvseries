@@ -21,19 +21,63 @@ import os
 import subprocess
 import re
 import sys
+try:
+    import requests as req
+except:
+    raise ImportError , "requests module is needed: http://docs.python-requests.org"
 
+from gluon.contrib import simplejson as sj
 from gluon.storage import Storage
+from w2p_tvseries_utils import tvdb_logger, w2p_tvseries_settings
+UTORRENT_TOKEN = re.compile("<div id='token' style='display:none;'>(.+?)</div>")
+
+
+from gluon import current
+import thread
+
+locker = thread.allocate_lock()
+
+def w2p_tvseries_torrent_client_loader(*args, **vars):
+    locker.acquire()
+    type = args[0]
+    args = args[1:]
+    try:
+        if not hasattr(w2p_tvseries_torrent_client_loader, 'instance_%s' % (type)):
+            types = dict(
+                utorrent=w2p_Utorrent,
+                deluge=w2p_Deluge,
+                transmission=w2p_Transmission,
+            )
+            setattr(w2p_tvseries_torrent_client_loader, 'instance_%s' % (type),  types[type](*args, **vars))
+    finally:
+        locker.release()
+    return getattr(w2p_tvseries_torrent_client_loader, 'instance_%s' % (type))
+
 
 class w2p_tvseries_client(object):
     def __init__(self):
         pass
+
+    def access_settings(self):
+        gs = w2p_tvseries_settings().global_settings()
+        self.url = gs.turl
+        self.username = gs.tusername
+        self.password = gs.tpassword
 
     def get_status(self):
         """list of dicts
         id, hash, filename, perc, status, addinfo
         """
 
-class Amule(w2p_tvseries_client):
+    def log(self, function, message):
+        log = self.logger
+        log.log(function, message)
+
+    def error(self, function, message):
+        log = self.logger
+        log.error(function, message)
+
+class w2p_Amule(w2p_tvseries_client):
 
     def __init__(self):
         self.executable = "amulecmd"
@@ -74,12 +118,264 @@ class Amule(w2p_tvseries_client):
                 )
         return res
 
-class Utorrent(w2p_tvseries_client):
+class w2p_Utorrent(w2p_tvseries_client):
     def __init__(self):
-        pass
+        self.logger = tvdb_logger('utclient')
+        super(w2p_Utorrent, self).__init__()
+        self.access_settings()
+        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'},
+                               config= {'max_retries': 5},
+                               timeout=3,
+                               )
+
+    def get_token(self):
+        token_url = self.url + 'token.html'
+        content = ''
+        try:
+            r = self.req.get(token_url, auth=(self.username, self.password))
+            r.raise_for_status()
+            content = r.content
+        except:
+            self.error('get_token', 'failed to connect')
+            return None
+        match = UTORRENT_TOKEN.search(content)
+        if match:
+            return match.group(1)
+
+    def decode_status(self, parsed):
+        stcode = parsed['status']
+        percent = parsed['percent']
+        statuses = {1:'Started',
+                    2:'Checking',
+                    4:'Start after check',
+                    8:'Checked',
+                    16:'Error',
+                    32:'Paused',
+                    64:'Queued',
+                    128:'Loaded'}
+        fstatus = []
+        for k,v in statuses.iteritems():
+            if k & stcode:
+                fstatus.append(v)
+        if 'Loaded' not in fstatus:
+            return 'Not Loaded'
+        if 'Error' in fstatus:
+            return 'Error'
+        if 'Checking' in fstatus:
+            return 'Checking'
+        if 'Paused' in fstatus:
+            if 'Queued' in fstatus:
+                return 'Paused'
+            else:
+                return 'Forced Pause'
+        if percent == 100:
+            if 'Queued' in fstatus:
+                if 'Started' in fstatus:
+                    return 'Seeding'
+                else:
+                    return 'Queued Seed'
+            else:
+                if 'Started' in fstatus:
+                    return 'Forced Seed'
+                else:
+                    return 'Finished'
+        else:
+            if 'Queued' in fstatus:
+                if 'Started' in fstatus:
+                    return 'Downloading'
+                if 'Queued' in fstatus:
+                    if 'Started' in fstatus:
+                        return 'Dowloading'
+                    else:
+                        return 'Queued'
+                else:
+                    if 'Started' in fstatus:
+                        return 'Forced Download'
 
     def get_status(self):
-        pass
+        self.token = self.get_token()
+        if not self.token:
+            return None
+        list_url = "%s?token=%s&list=1" % (self.url, self.token)
+        try:
+            r = self.req.get(list_url, auth=(self.username, self.password))
+            r.raise_for_status()
+        except:
+            self.error('get_status', 'unable to retrieve status')
+            return None
+        list = sj.loads(r.content)
+        filemap = {0 : 'hash',1:'status', 2:'name',3:'size',4:'percent',
+                   7:'ratio',8:'up', 9:'down', 10:'eta'}
+        files = []
+        for file in list['torrents']:
+            parsed = {}
+            for i, chunk in enumerate(file):
+                if i in filemap:
+                    parsed[filemap[i]] = chunk
+            parsed['status'] = self.decode_status(parsed)
+            files.append(Storage(parsed))
+        return files
+
+
+class w2p_Deluge(w2p_tvseries_client):
+    def __init__(self):
+        self.logger = tvdb_logger('declient')
+        super(w2p_Deluge, self).__init__()
+        self.access_settings()
+        self.req = req.session(
+            headers = {'User-Agent' : 'w2p_tvdb',
+                       'Content-Type' : 'application/json'
+                       },
+            config= {'max_retries': 5},
+            timeout=3
+            )
+
+    def init_session(self):
+        data = dict(id=1, method='auth.login', params=[self.password])
+        try:
+            r = self.req.post(self.url, data=sj.dumps(data))
+            r.raise_for_status()
+        except:
+            self.error('auth', 'Unable to login')
+            return None
+        content = sj.loads(r.content)['result']
+        if content == False:
+            self.error('auth', 'Unable to login')
+            return None
+        return content
+
+    def normalize(self, parsed):
+        mapping = dict(
+            hash='hash',
+            state='status',
+            name='name',
+            total_size='size',
+            progress='percent',
+            eta='eta',
+            download_payload_rate='down',
+            upload_payload_rate='up',
+            ratio='ratio'
+            )
+        file = {}
+        for k,v in mapping.iteritems():
+            file[v] = parsed[k]
+        return Storage(file)
+
+    def get_status(self):
+        #put the cookie in
+        if not self.init_session():
+            return None
+        retrieve_keys = ['hash', 'ratio', 'total_size','state', 'progress',
+                         'name', 'eta', 'upload_payload_rate',
+                         'total_payload_upload', 'download_payload_rate',
+                         'total_payload_download']
+        data = dict(id=2, method='web.update_ui', params=[retrieve_keys, {}])
+        try:
+            r = self.req.post(self.url, data=sj.dumps(data))
+            r.raise_for_status()
+        except:
+            self.error('get_status', 'Unable to retrieve status')
+            return None
+        stats = sj.loads(r.content)
+        stats = stats['result']
+        files = []
+        for file in stats['torrents']:
+            parsed = stats['torrents'][file]
+            files.append(self.normalize(parsed))
+        return files
+
+class w2p_Transmission(w2p_tvseries_client):
+    def __init__(self):
+        self.logger = tvdb_logger('trclient')
+        super(w2p_Transmission, self).__init__()
+        self.access_settings()
+
+    def decode_status(self, statuscode,rpc_version):
+        if rpc_version >= 14:
+            mapping = {
+                0: 'stopped',
+                1: 'check pending',
+                2: 'checking',
+                3: 'download pending',
+                4: 'downloading',
+                5: 'seed pending',
+                6: 'seeding'
+                }
+        else:
+            mapping = {
+                (1<<0): 'check pending',
+                (1<<1): 'checking',
+                (1<<2): 'downloading',
+                (1<<3): 'seeding',
+                (1<<4): 'stopped'
+                }
+        return mapping.get(statuscode, 'Unknown')
+
+    def normalize(self, parsed,rpc_version):
+        mapping = {
+            'name' : 'name',
+            'hash' : 'hashString',
+            'eta' : 'eta',
+            'ratio' : 'uploadRatio',
+            'up' : 'rateUpload',
+            'down' : 'rateDownload',
+            'size' : 'totalSize',
+            'status' : 'status',
+            'percent' : 'percentDone'
+        }
+        file = {}
+        for k,v in mapping.iteritems():
+            file[k] = parsed[v]
+        file['status'] = self.decode_status(file['status'],rpc_version)
+        return Storage(file)
+
+    def get_status(self):
+        sess = req.session(headers = {'User-Agent' : 'w2p_tvdb',
+                                      'Content-Type' : 'application/json'
+                                      },
+                           config= {'max_retries': 5},
+                           timeout=3,
+                           auth=(self.username, self.password)
+                           )
+        fields = ['eta', 'hashString', 'name', 'rateDownload', 'rateUpload', 'totalSize', 'status', 'uploadRatio', 'percentDone']
+        #get transmission-id header and rpc version (status decoding needs it)
+        data = dict(method='session-get', arguments=[])
+        while True:
+            try:
+                r = sess.post(self.url, data=sj.dumps(data))
+            except:
+                self.error('get_status', 'Unable to retrieve status')
+                return None
+            if r.status_code == 409:
+                sess.headers['X-Transmission-Session-Id'] = r.headers['X-Transmission-Session-Id']
+            else:
+                break
+        try:
+            r.raise_for_status()
+        except:
+            self.error('get_status', 'Unable to retrieve status')
+            return None
+        content = sj.loads(r.content)
+        rpc_version = content['arguments']['rpc-version']
+        data = dict(method='torrent-get', arguments={'fields' : fields})
+        while True:
+            print sess.headers
+            r = sess.post(self.url, data=sj.dumps(data))
+            if r.status_code == 409:
+                sess.headers['X-Transmission-Session-Id'] = r.headers['X-Transmission-Session-Id']
+            else:
+                break
+        try:
+            r.raise_for_status()
+        except:
+            self.error('get_status', 'Unable to retrieve status')
+            return None
+        content = r.content
+        content = sj.loads(content)
+        files = []
+        for file in content['arguments']['torrents']:
+            files.append(self.normalize(file, rpc_version))
+        return files
 
 if __name__ == '__main__':
     amule = Amule()

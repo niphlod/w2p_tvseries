@@ -13,6 +13,12 @@ body {
     border: none;
 }
 
+.progress span.percentage {
+    color: #333333;
+    font-size: 14px;
+    margin-left: 5px;
+}
+
 .input-prepend ul li, .input-prepend a {
     font-size: 14px;
 }
