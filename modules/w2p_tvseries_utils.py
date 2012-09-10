@@ -316,6 +316,41 @@ class w2p_tvseries_settings(object):
 
         return settings
 
+    def torrent_client_settings(self):
+        settings = Storage()
+        settings.fields = ['tclient', 'turl', 'tusername', 'tpassword']
+        settings.defaults = Storage()
+        settings.labels = Storage()
+        settings.comments = Storage()
+        settings.types = Storage()
+        settings.widgets = Storage()
+        settings.requires = Storage()
+
+        #labels
+        settings.labels.tclient = "Program"
+        settings.labels.turl = "Address"
+        settings.labels.tusername = "Username"
+        settings.labels.tpassword = "Password"
+
+        #comments
+        settings.comments.tclient = "Program used to manage torrents"
+        settings.comments.turl = "URL of the client's web-interface"
+        settings.comments.tusername = "Username to access the web-interface (Deluge doesn't need this)"
+        settings.comments.tpassword = "Password to access the web-interface"
+
+        #type
+        settings.types.tport = 'integer'
+
+        #defaults
+        settings.defaults.tclient = 'None'
+
+        #requires
+        settings.requires.tclient = IS_IN_SET(['None', 'utorrent', 'deluge', 'transmission'])
+        settings.requires.turl = IS_URL()
+
+        return settings
+
+
     def torrent_settings(self):
         settings = Storage()
 
