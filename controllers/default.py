@@ -87,8 +87,12 @@ def settings():
                         db.global_settings.insert(kkey='scooper_path', value=b)
             else:
                 db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a], kkey=a)
-
+        db.commit()
         settings_.global_settings(refresh=True)
+        if form.vars.torrent_magnet == 'ST':
+            if settings.tclient == None:
+                session.flash = 'You need to configure your torrent client'
+                redirect(URL('default', 'client_settings'))
         session.flash = 'settings updated correctly'
         redirect(URL(r=request, args=request.args))
     elif form.errors:
