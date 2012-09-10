@@ -21,6 +21,8 @@ from gluon.storage import Storage
 from gluon.contrib import simplejson as sj
 from gluon.serializers import json
 from w2p_tvseries_tvdb import w2p_tvseries_ren_loader
+from w2p_tvseries_clients import w2p_tvseries_torrent_client_loader
+from w2p_tvseries_utils import w2p_tvseries_settings
 import os
 
 def index():
@@ -218,3 +220,22 @@ def queue_ops():
     db.commit()
 
     return 'started'
+
+def torrents():
+    settings_ = w2p_tvseries_settings()
+    gsettings = settings_.global_settings()
+    if gsettings.tclient == 'None':
+        session.flash = 'no client configured'
+        redirect(URL('default', 'client_settings'))
+    return dict()
+
+def torrents_status():
+    settings_ = w2p_tvseries_settings()
+    gsettings = settings_.global_settings()
+    tclient = w2p_tvseries_torrent_client_loader(gsettings.tclient)
+    res = tclient.get_status()
+    if not res:
+        response.flash = 'Unable to connect'
+        res = []
+    #res = []
+    return dict(res=res)
