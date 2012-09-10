@@ -1,0 +1,3 @@
+{{klass = 'alert-success' if status=='ok' else 'alert-error'}}
+
+{{=DIV(message, _class="alert %s" % klass)}}

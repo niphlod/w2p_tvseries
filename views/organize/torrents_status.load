@@ -1,0 +1,27 @@
+
+<table class="table table-bordered table-condensed">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Percentage</th>
+            <th>Ratio</th>
+            <th>Up/Down</th>
+            <th>Size</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{for file in res:}}
+            <tr>
+                <td>{{=file.name}}</td>
+                <td>{{=file.status}}</td>
+                <td>
+                    <div class="progress progress-striped active"><div style="width: {{="%.3f" % file.percent}}%;" class="bar"><span class="percentage">{{="%.3f" % file.percent}}%</span></div></div>
+                </td>
+                <td>{{="%.3f" % file.ratio}}</td>
+                <td>{{="%s/%s" % (nice_filesize(file.up), nice_filesize(file.down))}}</td>
+                <td>{{=nice_filesize(file.size)}}</td>
+            </tr>
+        {{pass}}
+    </tbody>
+</table>

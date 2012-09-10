@@ -1,0 +1,44 @@
+{{extend 'layout.html'}}
+
+<h3>Client Settings</h3>
+
+<div class="row">
+<div class="span8" id="client_settings_container">
+{{=twitter_form(form, 'form-horizontal')}}
+</div>
+</div>
+
+<div class="row"><div id="results"></div></div>
+
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        var cont = $('#client_settings_container');
+        var validate_btn = $('button.tclient_validate', cont);
+        inputs = $('form', cont).find('.w2p_tvserieswell :input');
+        var original_data = inputs.serialize();
+        validate_btn.on('click', function(e) {
+            e.preventDefault();
+            var el = $(this);
+            var url = el.attr('href') + '?' + inputs.serialize();
+            web2py_component(url, 'results');
+        });
+        inputs.on('change', function() {
+            if (inputs.serialize() != original_data) {
+                var subm_btn = $('form .btn-primary', cont);
+                if (!subm_btn.hasClass('btn-warning')) {
+                    w2p_tvseries_message('Something changed, remember to save your settings!');
+                    subm_btn.addClass('btn-warning');
+                }
+            }
+        });
+        $('form select').select2({'width' : 'element'});
+        $('form select').on('change', function(e) {
+            settings = $.getJSON('{{=URL('default', 'client_settings_helper')}}' + '/' + e.val, function(data) {
+                $('input[name=tusername]').val(data[0]);
+                $('input[name=tpassword]').val(data[1]);
+                $('input[name=turl]').val(data[2]);
+                });
+            })
+        })
+</script>

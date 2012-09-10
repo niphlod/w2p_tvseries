@@ -1,0 +1,38 @@
+{{extend 'layout.html'}}
+
+<div id="counter"></div>
+
+<div id="tor_status"></div>
+
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+    var el = $('#tor_status');
+    el.PeriodicalUpdater(
+        '{{=URL('organize', 'torrents_status.load')}}',
+        {
+            method : 'get',
+            minTimeout: 1000,
+            maxTimeout: 10000,
+            multiplier: 10,
+            maxCalls: 0,
+            autoStop: 0,
+        'beforeSend':function(xhr) {
+            xhr.setRequestHeader('web2py-component-location', document.location);
+            xhr.setRequestHeader('web2py-component-element', el.attr('id') );
+            },
+        },
+        function(remoteData, success, xhr, handle) {
+                var command = xhr.getResponseHeader('web2py-component-command');
+                var message = xhr.getResponseHeader('web2py-component-flash');
+                if (message) w2p_tvseries_message(message);
+                if (command == 'stop') handle.stop();
+                if (remoteData) {
+                    el.html(remoteData);
+                }
+                if(command) eval(decodeURIComponent(escape(command)));
+            }
+    )
+})
+</script>
