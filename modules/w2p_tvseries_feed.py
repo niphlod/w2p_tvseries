@@ -69,6 +69,7 @@ def w2p_tvseries_feed_loader(*args, **vars):
             types = dict(
                 Eztv_feed=Eztv_feed,
                 Torrentz_feed=Torrentz_feed,
+                ShowRSS_feed=ShowRSS_feed
             )
             setattr(w2p_tvseries_feed_loader, 'instance_%s' % (type),  types[type](*args, **vars))
     finally:
@@ -196,9 +197,11 @@ class w2p_tvseries_torrent(object):
 
         db.commit()
 
-    def downloader(self, url):
+    def downloader(self, url, inserted_on=None):
         db = current.database
         ct = db.urlcache
+        if not inserted_on:
+            inserted_on = datetime.datetime.utcnow()
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
         cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
@@ -210,7 +213,7 @@ class w2p_tvseries_torrent(object):
                 r = self.req.get(url)
                 r.raise_for_status()
                 content = r.content
-                ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=datetime.datetime.utcnow(), kkey=cachekey)
+                ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=inserted_on, kkey=cachekey)
                 db.commit()
             except:
                 self.error('downloader', '%s failed to fetch from internet' % (url))
@@ -314,8 +317,6 @@ class w2p_tvseries_torrent(object):
                     self.error(fname, "Cannot write to %s" % (filename))
                     db.rollback()
 
-
-
 class w2p_tvseries_feed(object):
     def __init__(self):
         self.logger = tvdb_logger('feeds')
@@ -356,7 +357,7 @@ class w2p_tvseries_feed(object):
         ttl = datetime.datetime.utcnow() + datetime.timedelta(seconds=ttl)
         return ttl
 
-    def downloader(self, url):
+    def downloader(self, url, inserted_on=None):
         """manage ttl"""
         db = current.database
         ct = db.urlcache
@@ -371,7 +372,8 @@ class w2p_tvseries_feed(object):
                 r = self.req.get(url)
                 r.raise_for_status()
                 content = r.content
-                inserted_on = self.retrieve_ttl(content)
+                if not inserted_on:
+                    inserted_on = self.retrieve_ttl(content)
                 ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=inserted_on, kkey=cachekey)
                 db.commit()
                 self.log('downloader', '%s fetched from internet' % (url))
@@ -393,6 +395,8 @@ class w2p_tvseries_feed(object):
         if not content:
             self.errors = "No content fetched"
             self.error('parse_feed', 'Unable to download feed')
+            self.eps = []
+            return
         root = etree.fromstring(content)
         eps = []
         for item in root.findall('channel/item'):
@@ -592,4 +596,75 @@ class Torrentz_feed(w2p_tvseries_feed):
         ep.guid = item.findtext('guid')
         if not ep.link and ep.hash:
             ep.link = self.get_torrent_from_hash(ep.hash)
+        return ep
+
+
+class ShowRSS_feed(w2p_tvseries_feed):
+    def __init__(self, *args):
+        super(ShowRSS_feed, self).__init__(*args)
+        self.refresh_showlist()
+
+    def refresh_showlist(self):
+        main_url = 'http://showrss.karmorra.info/?cs=feeds'
+        inserted_on = datetime.datetime.utcnow() + datetime.timedelta(days=7)
+        content = self.downloader(main_url, inserted_on=inserted_on)
+        #help ourselves with regexes without needing lxml
+        shows_select = re.search("""<select name="show">.*</select>""", content).group()
+        shows = re.findall("""<option value="([\d]+)">([^<]+)?</option>""", shows_select)
+        mapping = Storage()
+        for k,v in shows:
+            mapping[v] = k
+        self.mapping = mapping
+
+    def series_helper(self, show_name):
+        key = None
+        for name in self.mapping:
+            if show_name.lower() in name.lower():
+                key = name
+                break
+        return key
+
+    def calc_url_feed(self, show_name, seasonnumber, lower_attention='Verified'):
+        #http://showrss.karmorra.info/feeds/403.rss
+        self.feed_url = None
+        feed = "http://showrss.karmorra.info/feeds/%s.rss" % self.mapping.get(show_name, "")
+
+        if len(feed)>=40:
+            self.feed_url = feed
+
+    def parse_feed(self):
+        """return a list of dicts
+        title
+        seasonnumber
+        episodenumber
+        torrenturl
+        magneturl
+        guid
+        """
+        if not self.feed_url:
+            self.eps = []
+            return
+        else:
+            content = self.downloader(self.feed_url)
+            if not content:
+                self.errors = "No content fetched"
+                self.error('parse_feed', 'Unable to download feed')
+            root = etree.fromstring(content)
+            eps = []
+            for item in root.findall('channel/item'):
+                eps.append(self.parse_item(item))
+            self.eps = eps
+
+    def parse_item(self, item):
+        ep = Storage()
+        ep.title = item.findtext('title')
+        info = self.parse_title(ep.title)
+        ep.update(info)
+        ep.link = item.findtext('link')
+        ep.pubdate = item.findtext('pubDate')
+        ep.filename = item.findtext('title')
+        ep.pubdate = datetime.datetime.utcfromtimestamp(mktime_tz(parsedate_tz(ep.pubdate)))
+        ep.filterwith = ep.title
+        ep.size = 300*1024*1024
+        ep.guid = item.findtext('guid')
         return ep

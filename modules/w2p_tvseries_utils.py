@@ -114,10 +114,7 @@ def myradiowidget(field, value, **attributes):
           </div>
     """
     _id = "%s_%s" % (field._tablename, field.name)
-    #print 'aaa', value
-    #if not value:
-    #    value = field.default
-    #print 'bbb', value
+
 
     requires = field.requires
     if not isinstance(requires, (list, tuple)):
@@ -310,7 +307,7 @@ class w2p_tvseries_settings(object):
         settings.requires.series_language = IS_IN_SET(self.langs)
         settings.requires.subtitles_default_method = IS_IN_SET(('itasa', 'opensubtitles'))
         settings.requires.subtitles_default_quality = IS_IN_SET(('Normal', 'WEB-DL', '720p'))
-        settings.requires.torrent_default_feed = IS_IN_SET(('Eztv_feed', 'Torrentz_feed'))
+        settings.requires.torrent_default_feed = IS_IN_SET(('Eztv_feed', 'Torrentz_feed', 'ShowRSS_feed'))
         settings.requires.subtitles_default_language = IS_IN_SET(self.sub_langs)
         settings.requires.torrent_magnet = IS_IN_SET(self.magnet_options)
         settings.requires.series_metadata = IS_IN_SET(self.series_metadata_options)
@@ -385,7 +382,7 @@ class w2p_tvseries_settings(object):
         settings.widgets.lower_attention = myradiowidget
 
         #requires
-        settings.requires.feed = IS_IN_SET(('Eztv_feed', 'Torrentz_feed'))
+        settings.requires.feed = IS_IN_SET(('Eztv_feed', 'Torrentz_feed', 'ShowRSS_feed'))
         settings.requires.lower_attention = IS_IN_SET(('Verified', 'Unverified'))
 
         return settings

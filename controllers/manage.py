@@ -135,6 +135,13 @@ def preview_torrents():
     error = ez.errors
     return dict(res=res, error=error)
 
+def showrss_helper():
+    if not request.vars.show_name:
+        return ''
+    t = w2p_tvseries_feed_loader('ShowRSS_feed')
+    mapping = t.series_helper(request.vars.show_name)
+    return mapping
+
 def preview_scooper():
     scoop = tvdb_scooper_loader()
     scoop.scoop()
@@ -148,8 +155,6 @@ def preview_scooper():
 
     examples = scoop.find_patterns()
     return dict(form='', res=res, examples=examples)
-
-
 
 def series_settings():
     series_id = request.args(0)

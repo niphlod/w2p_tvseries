@@ -69,7 +69,23 @@ pass
             var submit_button = $('.btn-primary', currenttab);
             var torrent_button = $('.btn.pre_torrents', currenttab);
             var tab_button = $('a[href=#' + currenttab.attr('id') + ']');
-
+            var autoinput = $('input[name=tor_show_name]', currenttab);
+            $('input[name=tor_feed]', currenttab).on('change', function() {
+                if ($(this).val() == 'ShowRSS_feed') {
+                    autoinput.addClass('w2p_autocomplete');
+                    autoinput.on('change', function() {
+                        if (!autoinput.hasClass('w2p_autocomplete')) return;
+                        $.get('/w2p_tvseries/manage/showrss_helper',
+                              {'show_name' : $(this).val()},
+                              function(data) {
+                                autoinput.val(data);
+                              }
+                        )
+                    })
+                } else {
+                    autoinput.removeClass('w2p_autocomplete');
+                }
+            });
             $('input[name=tracking]', currenttab).each(function() {
                 var el = $(this);
                 function sync_settings(el) {
