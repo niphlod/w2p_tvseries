@@ -223,7 +223,7 @@ def queue_ops():
 def torrents():
     settings_ = w2p_tvseries_settings()
     gsettings = settings_.global_settings()
-    if gsettings.tclient == 'None':
+    if gsettings.tclient == 'None' or not gsettings.tclient:
         session.flash = 'no client configured'
         redirect(URL('default', 'client_settings'))
     return dict()

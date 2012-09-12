@@ -90,7 +90,7 @@ def settings():
         db.commit()
         settings_.global_settings(refresh=True)
         if form.vars.torrent_magnet == 'ST':
-            if settings.tclient == None:
+            if gsettings.tclient == 'None':
                 session.flash = 'You need to configure your torrent client'
                 redirect(URL('default', 'client_settings'))
         session.flash = 'settings updated correctly'

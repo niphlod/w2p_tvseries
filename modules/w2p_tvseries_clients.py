@@ -394,7 +394,6 @@ class w2p_Transmission(w2p_tvseries_client):
         rpc_version = content['arguments']['rpc-version']
         data = dict(method='torrent-get', arguments={'fields' : fields})
         while True:
-            print sess.headers
             r = sess.post(self.url, data=sj.dumps(data))
             if r.status_code == 409:
                 sess.headers['X-Transmission-Session-Id'] = r.headers['X-Transmission-Session-Id']
