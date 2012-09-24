@@ -61,15 +61,19 @@ def check_season_worker(series_id , seasonnumber, mode):
     db.commit()
     return rtn
 
-def check_season(series_id, seasonnumber):
+def check_season(series_id, seasonnumber, cb=None):
     rtn = check_season_worker(series_id, seasonnumber, 'video')
+    if cb:
+        default_callback(cb, series_id, seasonnumber)
     return rtn
 
-def check_season_subs(series_id, seasonnumber):
+def check_season_subs(series_id, seasonnumber, cb=None):
     rtn = check_season_worker(series_id, seasonnumber, 'subs')
+    if cb:
+        default_callback(cb, series_id, seasonnumber)
     return rtn
 
-def down_subs(series_id, seasonnumber):
+def down_subs(series_id, seasonnumber, cb=None):
     rec = db(
             (db.seasons_settings.series_id == series_id) &
             (db.seasons_settings.seasonnumber == seasonnumber)
@@ -83,54 +87,118 @@ def down_subs(series_id, seasonnumber):
 
     rtn = downloader.get_missing(series_id, seasonnumber)
     if rtn.get('err', 0) <> 0:
-        check_season_worker(series_id, seasonnumber, 'subs')
+        check_season_subs(series_id, seasonnumber, cb=None)
         rtn = sj.dumps(rtn)
     else:
         rtn = sj.dumps(dict(ok=1))
+    if cb:
+        default_callback(cb, series_id, seasonnumber)
     return rtn
 
-def down_epbanners():
+def down_epbanners(cb=None):
     tvdb = w2p_tvseries_tvdb_loader()
     res = tvdb.episodes_banner_update_global()
     db.commit()
+    if cb:
+        default_callback(cb)
     return res
 
-def down_sebanners():
+def down_sebanners(cb=None):
     tvdb = w2p_tvseries_tvdb_loader()
     res = tvdb.series_banner_update_global()
     db.commit()
+    if cb:
+        default_callback(cb)
     return res
 
-def update():
+def update(cb=None):
     tvdb = w2p_tvseries_tvdb_loader()
     res = tvdb.global_update()
     res = dict(message='Update done (%s)' % (res))
     db.commit()
+    if cb:
+        default_callback(cb)
     return sj.dumps(res)
 
-def maintenance():
+def maintenance(cb=None):
     unparsed_date = datetime.datetime(2000, 1, 1)
     max_date = datetime.datetime(2050, 1, 1)
     limit = datetime.datetime.utcnow() - datetime.timedelta(days=5)
     db(db.urlcache.inserted_on < limit).delete()
-    db(db.global_log.dat_insert < limit).delete()
+    db(db.global_log.dat_insert < (limit - datetime.timedelta(days=25))).delete()
     db(db.episodes.firstaired == unparsed_date).update(firstaired = max_date)
+    if cb:
+        default_callback(cb)
     db.commit()
 
-def down_torrents(series_id, seasonnumber):
+def down_torrents(series_id, seasonnumber, cb=None):
     l = w2p_tvseries_torrent_loader()
     l.download_torrents(series_id, seasonnumber)
+    if cb:
+        default_callback(cb, series_id, seasonnumber)
     db.commit()
 
-def queue_torrents(series_id, seasonnumber):
+def queue_torrents(series_id, seasonnumber, cb=None):
     l = w2p_tvseries_torrent_loader()
     l.queue_torrents(series_id, seasonnumber)
+    if cb:
+        default_callback(cb, series_id, seasonnumber)
     db.commit()
 
-def scoop_season(series_id, seasonnumber):
+def scoop_season(series_id, seasonnumber, cb=None):
     scooper = tvdb_scooper_loader()
     scooper.move_files(series_id, seasonnumber)
+    if cb:
+        default_callback(cb, series_id, seasonnumber)
     db.commit()
+
+
+def ep_metadata(series_id, seasonnumber, cb=None):
+    ep_tb = db.episodes
+    se_tb = db.series
+    me_tb = db.episodes_metadata
+    episodes_to_check = db(
+                (se_tb.id == series_id) &
+                (ep_tb.seriesid == se_tb.seriesid) &
+                (ep_tb.seasonnumber == seasonnumber) &
+                (ep_tb.filename <> '') &
+                (ep_tb.filename <> None)
+            ).select()
+    path = get_season_path(series_id, seasonnumber)
+    for row in episodes_to_check:
+        filename = os.path.join(path, row.episodes.filename)
+        if os.path.exists(filename):
+            h = Hasher(filename)
+            #file yet in metadata ?
+            rec = db(me_tb.guid == h.guid).select().first()
+            if not rec:
+                b = Brewer(filename).info
+                #not exists, let's insert...
+                newr = Storage()
+                h.gen_hashes()
+                newr.episode_id = row.episodes.id
+                newr.series_id = series_id
+                newr.seasonnumber = seasonnumber
+                newr.filename = filename
+                newr.guid = h.guid
+                newr.ed2k = h.hashes.ed2k
+                newr.sha1 = h.hashes.sha1
+                newr.md5 = h.hashes.md5
+                newr.osdb = h.hashes.osdb
+                newr.filesize = h.stats.size
+                newr.infos = sj.dumps(b)
+                me_tb.update_or_insert(me_tb.episode_id == newr.episode_id, **newr)
+                db.commit()
+    if cb:
+        default_callback(cb, series_id, seasonnumber)
+    return 1
+
+def series_metadata(series_id, seasonnumber, callback=None):
+    xbmc = w2p_tvseries_serializers_loader()
+    xbmc.season_metadata(series_id, seasonnumber)
+    if callback:
+        default_callback(cb, series_id, seasonnumber)
+    return 1
 
 def add_series(seriesid, language):
     tvdb = w2p_tvseries_tvdb_loader()
@@ -170,6 +238,16 @@ def task_group_finished(group, operation_key):
         return True
     return False
 
+def default_callback(operation, series_id=None, seasonnumber=None):
+    st = db2.scheduler_task
+    if series_id and seasonnumber:
+        pattern = "%s:%s:%s" % (operation, series_id, seasonnumber)
+        db2(st.task_name.endswith(pattern)).update(enabled=True)
+    else:
+        pattern = ":%s:" % (operation)
+        db2(st.task_name.contains(pattern)).update(enabled=True)
+    db2.commit()
+
 def create_path(series_id, seasonnumber):
     ren = w2p_tvseries_ren_loader()
     rtn = ren.check_path(series_id, seasonnumber, True)
@@ -182,7 +260,7 @@ def the_boss():
     sr = db2.scheduler_run
 
     if not operation_key:
-        return "No op key found"
+        operation_key = "spec"
 
     rtn = []
     steps = ['maintenance', 'update', 'down_sebanners', 'scoop_season', 'check_season', 'ep_metadata',
@@ -219,48 +297,6 @@ def the_boss():
 
     return rtn
 
-def ep_metadata(series_id, seasonnumber):
-    ep_tb = db.episodes
-    se_tb = db.series
-    me_tb = db.episodes_metadata
-    episodes_to_check = db(
-                (se_tb.id == series_id) &
-                (ep_tb.seriesid == se_tb.seriesid) &
-                (ep_tb.seasonnumber == seasonnumber) &
-                (ep_tb.filename <> '') &
-                (ep_tb.filename <> None)
-            ).select()
-    path = get_season_path(series_id, seasonnumber)
-    for row in episodes_to_check:
-        filename = os.path.join(path, row.episodes.filename)
-        if os.path.exists(filename):
-            h = Hasher(filename)
-            #file yet in metadata ?
-            rec = db(me_tb.guid == h.guid).select().first()
-            if not rec:
-                b = Brewer(filename).info
-                #not exists, let's insert...
-                newr = Storage()
-                h.gen_hashes()
-                newr.episode_id = row.episodes.id
-                newr.series_id = series_id
-                newr.seasonnumber = seasonnumber
-                newr.filename = filename
-                newr.guid = h.guid
-                newr.ed2k = h.hashes.ed2k
-                newr.sha1 = h.hashes.sha1
-                newr.md5 = h.hashes.md5
-                newr.osdb = h.hashes.osdb
-                newr.filesize = h.stats.size
-                newr.infos = sj.dumps(b)
-                me_tb.update_or_insert(me_tb.episode_id == newr.episode_id, **newr)
-                db.commit()
-    return 1
-
-def series_metadata(series_id, seasonnumber):
-    xbmc = w2p_tvseries_serializers_loader()
-    xbmc.season_metadata(series_id, seasonnumber)
-    return 1
 
 
 myscheduler = Scheduler(db2,
@@ -282,5 +318,5 @@ myscheduler = Scheduler(db2,
         series_metadata=series_metadata,
         the_boss=the_boss
     ),
-    migrate=MIGRATE,
+    migrate=MIGRATE
 )

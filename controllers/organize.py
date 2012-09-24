@@ -128,11 +128,15 @@ def missing():
 
 #web2py/web2py.py -S "w2p_tvseries/organize/queue_ops" -M -N
 def queue_ops():
-    operation_key = db(db.global_settings.kkey=='operation_key').select().first()
-    operation_key = operation_key and operation_key.value or None
-    if not operation_key:
-        db.global_settings.insert(kkey='operation_key', value='now_or_never')
-        operation_key = 'now_or_never'
+    series_id, seasonnumber = request.args(0), request.args(1)
+    operation_key = 'spec'
+    if not (series_id and seasonnumber):
+        operation_key = db(db.global_settings.kkey=='operation_key').select().first()
+        operation_key = operation_key and operation_key.value or None
+        if not operation_key:
+            db.global_settings.insert(kkey='operation_key', value='now_or_never')
+            operation_key = 'now_or_never'
+            db.commit()
 
     se_tb = db.series
     ss_tb = db.seasons_settings
@@ -140,85 +144,92 @@ def queue_ops():
     series_metadata = db(db.global_settings.kkey=='series_metadata').select().first()
     series_metadata = series_metadata and series_metadata.value or 'N'
 
-    all_to_check = db(
-                      (ss_tb.series_id == se_tb.id) &
-                      (ss_tb.tracking == True)
-                    ).select()
+    basecond = db(ss_tb.series_id == se_tb.id)
+    if series_id and seasonnumber:
+        basecond = basecond(se_tb.id == series_id)(ss_tb.seasonnumber == seasonnumber)
 
-    validvideos = []
-    validsubs = []
-    validtorrents = []
-    validscooper = []
+    all_to_check = basecond(ss_tb.tracking == True).select()
+
+    st = db2.scheduler_task
+    sr = db2.scheduler_run
+
+    if not (series_id and seasonnumber):
+        enabled = False
+        tasks_to_delete = db2(st.id>0)
+        db2(sr.scheduler_task.belongs(tasks_to_delete._select(st.id))).delete()
+        tasks_to_delete.delete()
+        uniquename = "%s:maintenance" % (operation_key)
+        st.insert(task_name=uniquename, function_name='maintenance', enabled=True, timeout=15, vars=json(dict(cb='update')))
+
+        uniquename = "%s:update:" % (operation_key)
+        st.insert(task_name=uniquename, function_name='update', enabled=False, timeout=120, vars=json(dict(cb='down_sebanners')))
+
+        uniquename = "%s:down_sebanners:" % (operation_key)
+        st.insert(task_name=uniquename, function_name='down_sebanners', enabled=False, timeout=180, vars=json(dict(cb='down_epbanners')))
+
+        uniquename = "%s:down_epbanners:" % (operation_key)
+        st.insert(task_name=uniquename, function_name='down_epbanners', enabled=False, timeout=300, vars=json(dict(cb='check_season')))
+
+    else:
+        enabled = True
+        tasks_to_delete = db2(
+            (st.task_name.startswith(operation_key)) &
+            (st.task_name.endswith("%s:%s" % (series_id, seasonnumber)))
+            ).delete()
+
+    st.insert(task_name='%s:theBoss' % (operation_key), function_name='the_boss',repeats=0, period=10)
 
     for row in all_to_check:
         if row.series.basepath == '' or row.series.basepath == None:
             continue
         else:
-            validvideos.append((row.seasons_settings.series_id, row.seasons_settings.seasonnumber))
-            if row.seasons_settings.subtitle_tracking:
-                validsubs.append((row.seasons_settings.series_id, row.seasons_settings.seasonnumber))
-            if row.seasons_settings.torrent_tracking:
-                validtorrents.append((row.seasons_settings.series_id, row.seasons_settings.seasonnumber))
-            if row.seasons_settings.scooper_strings:
-                validscooper.append((row.seasons_settings.series_id, row.seasons_settings.seasonnumber))
-
-    st = db2.scheduler_task
-    sr = db2.scheduler_run
-    tasks_to_delete = db2(st.id>0)
-    db2(sr.scheduler_task.belongs(tasks_to_delete._select(st.id))).delete()
-    tasks_to_delete.delete()
-
-    st.insert(task_name='%s:theBoss' % (operation_key), function_name='the_boss',repeats=0, period=10)
-
-    uniquename = "%s:maintenance" % (operation_key)
-    st.insert(task_name=uniquename, function_name='maintenance', enabled=False, timeout=15)
-
-    uniquename = "%s:update" % (operation_key)
-    st.insert(task_name=uniquename, function_name='update', enabled=False, timeout=120)
-
-    uniquename = "%s:down_sebanners" % (operation_key)
-    st.insert(task_name=uniquename, function_name='down_sebanners', enabled=False, timeout=180)
-
-    uniquename = "%s:down_epbanners" % (operation_key)
-    st.insert(task_name=uniquename, function_name='down_epbanners', enabled=False, timeout=300)
-
-    for a in validvideos:
-        function_name = 'check_season'
-        unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-        st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False)
-        function_name = 'ep_metadata'
-        unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-        st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False, timeout=300)
-        if series_metadata <> 'N':
-            function_name = 'series_metadata'
-            unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-            st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False)
-
-    for a in validscooper:
-        function_name = 'scoop_season'
-        unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-        st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False, timeout=300)
-
-    for a in validsubs:
-        function_name = 'check_subs'
-        unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-        st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False)
-        function_name = 'down_subs'
-        unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-        st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False, timeout=300)
-
-    for a in validtorrents:
-        function_name = 'queue_torrents'
-        unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-        st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False)
-        function_name = 'down_torrents'
-        unique_name = "%s:%s:%s:%s" % (operation_key, function_name, a[0], a[1])
-        st.insert(task_name=unique_name, function_name=function_name, args=json(a), enabled=False)
+            path_for_one_season(row.seasons_settings, series_metadata, operation_key, enabled)
 
     db2.commit()
     db.commit()
 
     return 'started'
+
+def path_for_one_season(seasons_settings, series_metadata, op_key, enabled):
+    series_id, seasonnumber = seasons_settings.series_id, seasons_settings.seasonnumber
+    path = []
+    if seasons_settings.scooper_strings:
+        path.append('scoop_season')
+    path.append('check_season')
+    path.append('ep_metadata')
+    if series_metadata <> 'N':
+        path.append('series_metadata')
+    if seasons_settings.subtitle_tracking:
+        path.append('check_subs')
+        path.append('down_subs')
+    if seasons_settings.torrent_tracking:
+        path.append('queue_torrents')
+        path.append('down_torrents')
+
+    params = Storage()
+    params['ep_metadata'] = dict(timeout=300)
+    params['down_subs'] = dict(timeout=300)
+
+    st = db2.scheduler_task
+
+    path_count = len(path)
+
+    for i, op in enumerate(path):
+        unique_name = "%s:%s:%s:%s" % (op_key, op, series_id, seasonnumber)
+        pr = params[op] or dict()
+        pr = Storage(pr)
+        pr.update(
+            dict(
+                task_name=unique_name,
+                function_name=op,
+                args=json((series_id, seasonnumber)))
+            )
+        if i != 0 or enabled==False:
+            pr['enabled'] = False
+        if i != path_count-1:
+            pr['vars'] = json(dict(cb=path[i+1]))
+        st.insert(**pr)
+
 
 def torrents():
     settings_ = w2p_tvseries_settings()

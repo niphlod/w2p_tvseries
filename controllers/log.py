@@ -37,30 +37,26 @@ def index():
             type = 'ko'
             trclass = 'error'
             row.log_operation = row.log_error
-        rtn.append(str(TR(
-                          TD(
-                             SPAN(w2p_icon(type), "%s: %s - %s " % (row.dat_insert, row.log_module, row.log_function)),
-                             ),
-                          TD(
-                             SPAN(row.log_operation)
-                              ),
-                           _class=trclass)
-                   )
-                   )
+        rtn.append(
+            str(TR(
+                TD(
+                    SPAN(w2p_icon(type), "%s: %s - %s " % (row.dat_insert, row.log_module, row.log_function)),
+                    ),
+                TD(
+                    SPAN(row.log_operation)
+                    ),
+                _class=trclass)
+                )
+            )
     rtn = json(rtn)
     session.refresh_log = 1
     return rtn
 
 def op_status():
     session.forget()
-    operation_key = db(db.global_settings.kkey=='operation_key').select().first()
-    operation_key = operation_key and operation_key.value or None
-    if not operation_key:
-        rtn = dict(status='complete', text='0/0', perc=0)
-        return json(rtn)
 
     operations = db2(
-                    (db2.scheduler_task.task_name.startswith(operation_key))
+                    (db2.scheduler_task.id>0)
                     ).select()
 
     if not operations.first():
