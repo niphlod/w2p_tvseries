@@ -193,7 +193,7 @@ def ep_metadata(series_id, seasonnumber, cb=None):
         default_callback(cb, series_id, seasonnumber)
     return 1
 
-def series_metadata(series_id, seasonnumber, callback=None):
+def series_metadata(series_id, seasonnumber, cb=None):
     xbmc = w2p_tvseries_serializers_loader()
     xbmc.season_metadata(series_id, seasonnumber)
     if callback:
