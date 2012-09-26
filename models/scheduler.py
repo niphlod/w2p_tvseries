@@ -86,8 +86,8 @@ def down_subs(series_id, seasonnumber, cb=None):
     downloader = w2p_tvseries_sub_loader(method, verbose=True)
 
     rtn = downloader.get_missing(series_id, seasonnumber)
-    if rtn.get('err', 0) <> 0:
-        check_season_subs(series_id, seasonnumber, cb=None)
+    if rtn.get('err') is None:
+        check_season_subs(series_id, seasonnumber, cb=cb)
         rtn = sj.dumps(rtn)
     else:
         rtn = sj.dumps(dict(ok=1))
