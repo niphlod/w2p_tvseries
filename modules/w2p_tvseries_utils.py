@@ -210,7 +210,7 @@ class w2p_tvseries_settings(object):
             ('N', "Dont' handle them, try to download torrent files instead"),
             ('SF', "Create a catalog.magnet file into into torrent folder, with a line for every link"),
             ('MF', "Download into torrent folder, create a .magnet file for every link"),
-            ('ST', "Send magnet links directly to the torrent client configured (won't work if torrent client is not online or not configured)")
+            ('ST', "Send torrents directly to the torrent client configured (won't work if torrent client is not online or not configured)")
         ]
 
         self.series_metadata_options = [
