@@ -21,6 +21,7 @@ import os
 import subprocess
 import re
 import sys
+import base64
 try:
     import requests as req
 except:
@@ -220,6 +221,7 @@ class w2p_Utorrent(w2p_tvseries_client):
     def add_magnet(self, magnet):
         self.token = self.get_token()
         if not self.token:
+            self.error('add_magnet', 'Unable to add magnet')
             return None
         payload = {'token': self.token, 'action' : 'add-url', 's' : magnet}
         try:
@@ -230,6 +232,20 @@ class w2p_Utorrent(w2p_tvseries_client):
             return None
         return True
 
+    def add_torrent(self, filename):
+        self.token = self.get_token()
+        if not self.token:
+            self.error('add_torrent', 'Unable to add torrent')
+            return None
+        payload = {'token': self.token, 'action' : 'add-file'}
+        files = {'torrent_file': open(filename, 'rb')}
+        try:
+            r = self.req.post(self.url, params=payload, files=files, auth=(self.username, self.password))
+            r.raise_for_status()
+        except:
+            self.error('add_torrent', 'Unable to add torrent')
+            return None
+        return True
 
 class w2p_Deluge(w2p_tvseries_client):
     def __init__(self, *args, **vars):
@@ -314,6 +330,27 @@ class w2p_Deluge(w2p_tvseries_client):
                     continue
                 else:
                     self.error('add_magnet', 'Unable to add magnet')
+                    break
+            else:
+                break
+        return True
+
+    def add_torrent(self, filename):
+        data = {"method": "web.add_torrents", "params": [[{'path' : filename, 'options': {}}]], "id": 1}
+        while True:
+            try:
+                r = self.req.post(self.url, data=sj.dumps(data))
+                r.raise_for_status()
+                content = sj.loads(r.content)
+            except:
+                self.error('add_torrent', 'Unable to add torrent')
+                break
+            err = content.get('error')
+            if err and err.get('message'):
+                if self.init_session():
+                    continue
+                else:
+                    self.error('add_torrent', 'Unable to add torrent')
                     break
             else:
                 break
@@ -434,6 +471,38 @@ class w2p_Transmission(w2p_tvseries_client):
             r.raise_for_status()
         except:
             self.error('add magnet', 'Unable to add magnet')
+            return None
+        content = sj.loads(r.content)
+        if content['result'] == 'success':
+            return True
+        else:
+            return False
+
+    def add_torrent(self, filename):
+        sess = req.session(headers = {'User-Agent' : 'w2p_tvdb',
+                                      'Content-Type' : 'application/json'
+                                      },
+                           config= {'max_retries': 5},
+                           timeout=3,
+                           auth=(self.username, self.password)
+                           )
+        with open(filename, 'rb') as g:
+            content = base64.b64encode(g.read())
+        data = dict(method='torrent-add', arguments={'metainfo' : content})
+        while True:
+            try:
+                r = sess.post(self.url, data=sj.dumps(data))
+            except:
+                self.error('add_torrent', 'Unable to add torrent')
+                return None
+            if r.status_code == 409:
+                sess.headers['X-Transmission-Session-Id'] = r.headers['X-Transmission-Session-Id']
+            else:
+                break
+        try:
+            r.raise_for_status()
+        except:
+            self.error('add_torrent', 'Unable to add torrent')
             return None
         content = sj.loads(r.content)
         if content['result'] == 'success':
