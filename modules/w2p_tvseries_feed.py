@@ -54,6 +54,7 @@ from gluon.contrib import simplejson as sj
 from w2p_tvseries_utils import tvdb_logger, Meddler, w2p_tvseries_settings
 import hashlib
 import os
+import time
 
 from gluon import current
 import thread
@@ -236,28 +237,6 @@ class w2p_tvseries_torrent(object):
         if not os.path.exists(torrent_path):
             self.error(fname, "torrent_path %s not found" % (torrent_path))
             return
-        if torrent_magnet == 'N':
-            #find torrents to download
-            res = db(
-                (dw.queued == False) &
-                (dw.down_file == None) &
-                (dw.series_id == seriesid) &
-                (dw.seasonnumber == seasonnumber)
-                ).select()
-            for row in res:
-                if not row.link:
-                    row.link = self.get_torrent_from_magnet(row.magnet)
-                    row.update_record(link=row.link)
-                content = self.downloader(row.link)
-                if content == None:
-                    newurl = self.get_torrent_from_magnet(row.magnet)
-                    if newurl:
-                        content = self.downloader(newurl)
-                if content == None:
-                    self.error(fname, "Can't download %s " % row.link)
-                else:
-                    row.update_record(down_file=content)
-            db.commit()
 
         if torrent_magnet == 'ST':
             #retrieve current torrent client configured
@@ -284,6 +263,7 @@ class w2p_tvseries_torrent(object):
                     if tc.add_magnet(row.magnet):
                         row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
                         db.commit()
+                        time.sleep(1) #avoid DDoS to the client
                     else:
                         db.rollback()
                 else:
@@ -298,24 +278,52 @@ class w2p_tvseries_torrent(object):
                     except:
                         self.error(fname, "Cannot write to %s" % (filename))
                         db.rollback()
-        elif torrent_magnet == 'N':
+
+        if torrent_magnet in ('N', 'ST'):
+            #find torrents to download (also for adding to client if no magnet link is there)
             res = db(
                 (dw.queued == False) &
-                (dw.down_file != None) &
                 (dw.series_id == seriesid) &
                 (dw.seasonnumber == seasonnumber)
                 ).select()
             for row in res:
+                if not row.link:
+                    row.link = self.get_torrent_from_magnet(row.magnet)
+                    row.update_record(link=row.link)
+                if not row.down_file:
+                    content = self.downloader(row.link)
+                    if content == None:
+                        newurl = self.get_torrent_from_magnet(row.magnet)
+                        if newurl:
+                            content = self.downloader(newurl)
+                    if content == None:
+                        self.error(fname, "Can't download %s " % row.link)
+                        continue
+                    else:
+                        row.update_record(down_file=content)
+                else:
+                    content = row.down_file
                 filename = row.link.split('/')[-1]
                 filename = os.path.join(torrent_path, filename)
                 try:
                     with open(filename, 'wb') as g:
-                        g.write(row.down_file)
-                    row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
-                    db.commit()
+                        g.write(content)
                 except:
                     self.error(fname, "Cannot write to %s" % (filename))
                     db.rollback()
+                    continue
+                if torrent_magnet == 'ST':
+                    if tc.add_torrent(filename):
+                        row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
+                        self.log(fname, "added to client %s" % (row.link))
+                        db.commit()
+                        time.sleep(1) #avoid DDoS to the client
+                else:
+                    row.update_record(queued=True, queued_at=datetime.datetime.utcnow())
+                    self.log(fname, "added to client %s" % (row.link))
+                    db.commit()
+
+
 
 class w2p_tvseries_feed(object):
     def __init__(self):
