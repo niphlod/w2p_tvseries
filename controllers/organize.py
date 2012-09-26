@@ -244,7 +244,7 @@ def torrents_status():
     gsettings = settings_.global_settings()
     tclient = w2p_tvseries_torrent_client_loader(gsettings.tclient)
     res = tclient.get_status()
-    if not res:
+    if res is None:
         response.flash = 'Unable to connect'
         res = []
     #res = []

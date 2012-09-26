@@ -148,13 +148,13 @@ def client_settings_helper():
 
 def client_settings_validate():
     if request.vars.tclient not in ('transmission', 'deluge', 'utorrent'):
-        return sj.dumps(dict(error="No supported client"))
+        return sj.dumps(dict(error="Client is not supported"))
     tclient = w2p_tvseries_torrent_client_loader(request.vars.tclient)
     tclient.username = request.vars.tusername
     tclient.password = request.vars.tpassword
     tclient.url = request.vars.turl
     status = tclient.get_status()
-    if not status:
+    if status is None:
         return dict(status='error', message="Connection error, please check it out")
     else:
         return dict(status='ok', message='all ok')
