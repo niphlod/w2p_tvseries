@@ -81,9 +81,24 @@ def check_season():
     status = db(
        (db.seasons_settings.series_id == series_id) &
        (db.seasons_settings.seasonnumber == seasonnumber)
-       ).select(db.seasons_settings.season_status).first()
+       ).select(db.seasons_settings.season_status, db.seasons_settings.updated_on).first()
 
-    return status.season_status
+    episodes = db(
+        (db.series.id == series_id) &
+        (db.episodes.seriesid == db.series.seriesid) &
+        (db.episodes.seasonnumber == seasonnumber) &
+        (db.episodes.inserted_on > status.updated_on)
+        ).select(db.episodes.epnumber)
+
+    rtn = status.season_status
+    if len(episodes) > 0:
+        st_ = sj.loads(status.season_status)
+        missing = st_.get('missing', [])
+        for ep in episodes:
+            missing.append(ep.epnumber)
+        st_['missing'] = missing
+        rtn = sj.dumps(st_)
+    return rtn
 
 
 def check_path():

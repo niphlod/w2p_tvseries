@@ -63,6 +63,7 @@ db.define_table("episodes",
                 Field("firstaired", 'date'),
                 Field("lastupdated", "integer"),
                 Field("filename"),
+                Field("inserted_on", 'datetime', default=request.utcnow),
                 format='S%(seasonnumber).2dE%(number).2d - %(name)s'
                 )
 
@@ -81,7 +82,8 @@ db.define_table("seasons_settings",
                 Field("season_status", "text", default='{}'),
                 Field("torrent_settings", "text", default='{}'),
                 Field("torrent_tracking", "boolean", default=False),
-                Field("scooper_strings", "list:string")
+                Field("scooper_strings", "list:string"),
+                Field("updated_on", 'datetime')
                 )
 
 db.define_table("rename_log",

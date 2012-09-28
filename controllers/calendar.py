@@ -58,10 +58,16 @@ def events():
                 missing[key] = sj.loads(row.seasons_settings.season_status)
             except:
                 pass
-        try:
-            icon = row.episodes.epnumber in missing[key]['missing'] and 'icon-remove' or row.episodes.firstaired > request.now.date() and 'icon-calendar' or 'icon-ok'
-        except:
-            icon = 'icon-remove'
+        icon = ''
+        if row.episodes.inserted_on and row.seasons_settings.updated_on and row.episodes.inserted_on > row.seasons_settings.updated_on:
+            icon = 'icon-refresh'
+        if row.episodes.firstaired > request.now.date():
+            icon = 'icon-calendar'
+        if icon not in ('icon-refresh', 'icon-calendar'):
+            try:
+                icon = row.episodes.epnumber in missing[key]['missing'] and 'icon-remove' or 'icon-ok'
+            except:
+                icon = 'icon-remove'
         rec_ = Storage()
         if icon == 'icon-remove':
             #check if we have a record in db.downloads

@@ -715,5 +715,5 @@ class w2p_tvseries_tvren(object):
             except:
                 db.rollback()
         data['rename'] = rename
-        datarec.update_record(season_status=simplejson.dumps(data))
+        datarec.update_record(season_status=simplejson.dumps(data), updated_on=now)
         db.commit()

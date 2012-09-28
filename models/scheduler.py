@@ -123,10 +123,13 @@ def update(cb=None):
 def maintenance(cb=None):
     unparsed_date = datetime.datetime(2000, 1, 1)
     max_date = datetime.datetime(2050, 1, 1)
-    limit = datetime.datetime.utcnow() - datetime.timedelta(days=5)
+    now = datetime.datetime.utcnow()
+    limit = now - datetime.timedelta(days=5)
     db(db.urlcache.inserted_on < limit).delete()
     db(db.global_log.dat_insert < (limit - datetime.timedelta(days=25))).delete()
     db(db.episodes.firstaired == unparsed_date).update(firstaired = max_date)
+    db(db.episodes.inserted_on == None).update(inserted_on=now)
+    db(db.seasons_settings.updated_on == None).update(updated_on=now)
     if cb:
         default_callback(cb)
     db.commit()

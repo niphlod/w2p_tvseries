@@ -69,7 +69,8 @@
         $.getJSON(href, function(data) {
             if (!data.missing) return;
             for (var i=0; i<data.missing.length;i++) {
-                $("#S" + pad2(season) + "E" + pad2(data.missing[i])).addClass('missingep');
+                var epid = $("#S" + pad2(season) + "E" + pad2(data.missing[i]));
+                if (!epid.find('.tba').length) epid.addClass('missingep');
             }
         });
     };
