@@ -63,15 +63,8 @@ pass
             var el = $(this);
             el.removeClass('in');
         });
-        function pill_settings(tab) {
-            var currenttab = $(tab.attr('href'));
-            var inputs = currenttab.find(':input');
-            var submit_button = $('.btn-primary', currenttab);
-            var torrent_button = $('.btn.pre_torrents', currenttab);
-            var tab_button = $('a[href=#' + currenttab.attr('id') + ']');
-            var autoinput = $('input[name=tor_show_name]', currenttab);
-            $('input[name=tor_feed]', currenttab).on('change', function() {
-                if ($(this).val() == 'ShowRSS_feed') {
+        function showrss_helper(input, autoinput) {
+            if (input.val() == 'ShowRSS_feed') {
                     autoinput.addClass('w2p_autocomplete');
                     autoinput.on('change', function() {
                         if (!autoinput.hasClass('w2p_autocomplete')) return;
@@ -85,6 +78,17 @@ pass
                 } else {
                     autoinput.removeClass('w2p_autocomplete');
                 }
+        }
+        function pill_settings(tab) {
+            var currenttab = $(tab.attr('href'));
+            var inputs = currenttab.find(':input');
+            var submit_button = $('.btn-primary', currenttab);
+            var torrent_button = $('.btn.pre_torrents', currenttab);
+            var tab_button = $('a[href=#' + currenttab.attr('id') + ']');
+            var autoinput = $('input[name=tor_show_name]', currenttab);
+            showrss_helper($('input[name=tor_feed]:checked', currenttab), autoinput);
+            $('input[name=tor_feed]', currenttab).on('change', function() {
+                showrss_helper($(this), autoinput);
             });
             $('input[name=tracking]', currenttab).each(function() {
                 var el = $(this);
