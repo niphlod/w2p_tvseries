@@ -56,7 +56,8 @@ def op_status():
     session.forget()
 
     operations = db2(
-                    (db2.scheduler_task.id>0)
+                    (db2.scheduler_task.task_name.startswith('now_or_never')) |
+                    (db2.scheduler_task.task_name.startswith('spec'))
                     ).select()
 
     if not operations.first():
