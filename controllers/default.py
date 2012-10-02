@@ -77,14 +77,12 @@ def settings():
                 values = form.vars[a]
                 if not isinstance(values, (tuple,list)):
                     values = [values]
-                values = [a.strip() for a in values] #FIXME
-                db(
-                    (db.global_settings.kkey=='scooper_path') &
-                    (~db.global_settings.value.belongs(values))
-                  ).delete()
+                values = [a.strip() for a in values if a.strip() != ''] #FIXME
+                values = set(values)
+                db(db.global_settings.kkey=='scooper_path').delete()
                 for b in values:
-                    if b and b not in settings.defaults['scooper_path']:
-                        db.global_settings.insert(kkey='scooper_path', value=b)
+                    print 'b', b
+                    db.global_settings.insert(kkey='scooper_path', value=b)
             else:
                 db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a], kkey=a)
         db.commit()

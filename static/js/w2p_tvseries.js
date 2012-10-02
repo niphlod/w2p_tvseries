@@ -50,7 +50,7 @@
                              input.data('choices', data);
                              for (var i=0;i<data.length;i++){
                                  $('<li><a href="#"><i class="icon-folder-open"></i> ' + data[i] + '</a></li>').appendTo(container).click(function (e) {
-                                        var content = $(this).text();
+                                        var content = $(this).text().trim();
                                         input.val(content);
                                         input.moveAtEnd();
                                         e.preventDefault();
