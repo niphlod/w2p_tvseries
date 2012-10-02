@@ -91,6 +91,7 @@ def down_subs(series_id, seasonnumber, cb=None):
         rtn = sj.dumps(rtn)
     else:
         rtn = sj.dumps(dict(ok=1))
+
     if cb:
         default_callback(cb, series_id, seasonnumber)
     return rtn
@@ -130,6 +131,7 @@ def maintenance(cb=None):
     db(db.episodes.firstaired == unparsed_date).update(firstaired = max_date)
     db(db.episodes.inserted_on == None).update(inserted_on=now)
     db(db.seasons_settings.updated_on == None).update(updated_on=now)
+    db.commit()
     if cb:
         default_callback(cb)
     db.commit()
@@ -137,23 +139,26 @@ def maintenance(cb=None):
 def down_torrents(series_id, seasonnumber, cb=None):
     l = w2p_tvseries_torrent_loader()
     l.download_torrents(series_id, seasonnumber)
+    db.commit()
     if cb:
         default_callback(cb, series_id, seasonnumber)
-    db.commit()
+
 
 def queue_torrents(series_id, seasonnumber, cb=None):
     l = w2p_tvseries_torrent_loader()
     l.queue_torrents(series_id, seasonnumber)
+    db.commit()
     if cb:
         default_callback(cb, series_id, seasonnumber)
-    db.commit()
+
 
 def scoop_season(series_id, seasonnumber, cb=None):
     scooper = tvdb_scooper_loader()
     scooper.move_files(series_id, seasonnumber)
+    db.commit()
     if cb:
         default_callback(cb, series_id, seasonnumber)
-    db.commit()
+
 
 
 def ep_metadata(series_id, seasonnumber, cb=None):
@@ -199,6 +204,7 @@ def ep_metadata(series_id, seasonnumber, cb=None):
 def series_metadata(series_id, seasonnumber, cb=None):
     xbmc = w2p_tvseries_serializers_loader()
     xbmc.season_metadata(series_id, seasonnumber)
+    db.commit()
     if cb:
         default_callback(cb, series_id, seasonnumber)
     return 1
@@ -245,11 +251,18 @@ def default_callback(operation, series_id=None, seasonnumber=None):
     st = db2.scheduler_task
     if series_id and seasonnumber:
         pattern = "%s:%s:%s" % (operation, series_id, seasonnumber)
-        db2(st.task_name.endswith(pattern)).update(enabled=True)
+        try:
+            db2(st.task_name.endswith(pattern)).update(enabled=True)
+            db2.commit()
+        except:
+            db2.rollback()
     else:
         pattern = ":%s:" % (operation)
-        db2(st.task_name.contains(pattern)).update(enabled=True)
-    db2.commit()
+        try:
+            db2(st.task_name.contains(pattern)).update(enabled=True)
+            db2.commit()
+        except:
+            db2.rollback()
 
 def create_path(series_id, seasonnumber):
     ren = w2p_tvseries_ren_loader()
@@ -287,6 +300,7 @@ def the_boss():
             db2.commit()
         except:
             rtn.append('exception')
+            db2.rollback()
     else:
         try:
             tasks_to_delete = (st.task_name.startswith("%s:" % (operation_key)))
@@ -297,6 +311,8 @@ def the_boss():
             db2.commit()
         except:
             rtn.append('exception')
+            db.rollback()
+            db2.rollback()
 
     return rtn
 
