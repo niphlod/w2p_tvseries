@@ -44,7 +44,7 @@ def events():
     all_episodes = db(
         (db.episodes.seriesid == db.series.seriesid) &
         (db.episodes.firstaired < end) &
-        (db.episodes.firstaired > start) &
+        (db.episodes.firstaired >= start) &
         (db.seasons_settings.series_id == db.series.id) &
         (db.episodes.seasonnumber == db.seasons_settings.seasonnumber)
         ).select(db.series.ALL, db.seasons_settings.ALL, db.episodes.ALL)
