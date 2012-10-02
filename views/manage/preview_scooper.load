@@ -27,10 +27,18 @@
     </thead>
     <tbody>
         {{for mask in sorted(examples, key=examples.get, reverse=True):}}
-            <tr>
-                <td>{{=SPAN(mask, _class="autoadd")}}</td>
-                <td>{{=examples[mask]}}</td>
-            </tr>
+            {{assigned = None
+              for k,v in all.iteritems():
+                if mask in k:
+                    assigned = SPAN("Assigned to ", A("%s - season %s" % (v.name, v.seasonnumber), _href=v.url), _class="pull-right")
+                pass
+            pass}}
+            {{=TR(
+                TD(SPAN(mask, _class="autoadd"), assigned),
+                TD(examples[mask]),
+            _class=assigned and 'warning')
+            }}
+
         {{pass}}
     </tbody>
 </table>

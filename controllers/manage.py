@@ -142,20 +142,6 @@ def showrss_helper():
     mapping = t.series_helper(request.vars.show_name)
     return mapping
 
-def preview_scooper():
-    scoop = tvdb_scooper_loader()
-    scoop.scoop()
-    res = {}
-    vars = request.vars.scooper_strings
-    if not isinstance(vars, list):
-        vars = [vars]
-    vars = [a for a in vars if a <> '']
-    for a in vars:
-        res[a] = scoop.preview(a)
-
-    examples = scoop.find_patterns()
-    return dict(form='', res=res, examples=examples)
-
 def series_settings():
     series_id = request.args(0)
     if not series_id:
@@ -371,8 +357,39 @@ def series_settings_validate(form):
             for a in row.seasons_settings.scooper_strings:
                 for b in masks:
                     if b in a:
-                        form.errors.scooper_strings = 'String "%s" present for series %s, season %s will prevail on "%s"' % (a, row.series.name, row.seasons_settings.seasonnumber, b)
+                        form.errors.scooper_strings = 'String "%s" present for series %s - season %s will prevail on "%s"' % (a, row.series.name, row.seasons_settings.seasonnumber, b)
                         return
+
+
+def preview_scooper():
+    scoop = tvdb_scooper_loader()
+    scoop.scoop()
+    res = {}
+    vars = request.vars.scooper_strings
+    if not isinstance(vars, list):
+        vars = [vars]
+    vars = [a for a in vars if a <> '']
+    for a in vars:
+        res[a] = scoop.preview(a, reload=True)
+
+    examples = scoop.find_patterns()
+    all_strings = db(
+                (db.seasons_settings.series_id == db.series.id) &
+                (db.seasons_settings.scooper_strings != None)
+                ).select(db.series.id, db.series.name, db.seasons_settings.seasonnumber, db.seasons_settings.scooper_strings)
+    all = {}
+    for row in all_strings:
+        a = row.seasons_settings.scooper_strings
+        if len(row.seasons_settings.scooper_strings) > 0:
+            for b in a:
+                if b not in all:
+                    all[b] = Storage(
+                        name=row.series.name,
+                        seasonnumber=row.seasons_settings.seasonnumber,
+                        url=URL('series', 'index', args=[row.series.id], anchor='settings', extension='')
+                        )
+
+    return dict(form='', res=res, examples=examples, all=all)
 
 def stop_operations():
     db2(db2.scheduler_task.status <> 'RUNNING').delete()
