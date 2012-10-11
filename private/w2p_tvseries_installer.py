@@ -56,12 +56,15 @@ def download(url, file):
     zipball = open(file, 'wb')
     try:
         handle = urllib.urlopen(url)
+        x = 0
         while True:
+            x += 1
             block = handle.read(1024*64)
             zipball.write(block)
             if len(block) == 0:
                 break
-            print '.',
+            if x % 3 == 0:
+                print '... %s KB' % (x*64) 
         print 'Downloaded'
         return 1
     except:
@@ -80,12 +83,64 @@ def overwrite(src, dst):
                 os.remove(dst_file)
             shutil.move(src_file, dst_dir)
 
+def parse_tvseries_version(version_file):
+    with open(version_file) as g:
+        version = g.read().replace('\n', '').strip()
+    version = version.split('.')
+    return [int(a) for a in version]
+
+
+def update_w2p_tvseries(w2p_folder):
+
+    if raw_input('update/download app from internet (y/n)?').lower() in ['y', 'yes']:
+        w2p_tvseries_url = 'https://github.com/niphlod/w2p_tvseries/zipball/master'
+
+        destfolder = os.path.normpath(os.path.abspath(os.path.join(w2p_folder, 'deposit', '%s' % datetime.datetime.now().strftime('%f'))))
+        if not os.path.exists(destfolder):
+            os.makedirs(destfolder)
+        if not download(w2p_tvseries_url, zipball):
+            print 'problems downloading from github, please try again later'
+            sys.exit(1)
+
+        print 'unzipping into %s' % destfolder
+        extract(zipball, destfolder)
+        if not os.listdir(destfolder):
+            print 'Problems downloading or extracting, Aborting auto-install'
+            sys.exit(1)
+        sourcefolder = os.path.abspath(os.path.join(destfolder, os.listdir(destfolder)[0]))
+        appbckfolder = os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries_bck'))
+        finalfolder = os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
+
+        if os.path.exists(appbckfolder):
+            print 'cleaning %s' % appbckfolder
+            recursive_unlink(appbckfolder)
+
+        if os.path.exists(finalfolder):
+            print 'backupping current from %s to %s' % (finalfolder, appbckfolder)
+            shutil.copytree(finalfolder, appbckfolder)
+
+        print 'overwriting %s with %s' % (finalfolder, sourcefolder)
+        overwrite(sourcefolder, finalfolder)
+
+        print 'cleaning %s' % (destfolder)
+        recursive_unlink(destfolder)
+
+        print 'fixing newlines in %s' % (finalfolder)
+        fix_newlines(finalfolder)
+
+
 if __name__ == '__main__':
     basefolder = os.getcwd()
     w2p_folder = os.path.join(basefolder, 'web2py')
     w2p_archive = os.path.join(basefolder, 'web2py_src.zip')
     zipball = os.path.join(basefolder, 'w2p_tvseries_tarball.zip')
     ARCHIVE_MD5 = 'a478f3091620612ceb86e193502967fa'
+    w2p_git_version_url = 'https://github.com/niphlod/w2p_tvseries/raw/master/private/VERSION'
+    w2p_git_version_file = os.path.join(basefolder, 'VERSION')
+    current_version_file = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'VERSION')
+    this_file_path = os.path.abspath(__file__)
+    updater_url = 'https://github.com/niphlod/w2p_tvseries/raw/master/private/w2p_tvseries_installer.py'
+    
     if not os.path.exists(w2p_folder):
         if raw_input('There is no web2py in this path. Download it from internet (y/n)?').lower() in ['y', 'yes']:
             web2py_url = 'http://www.web2py.com/examples/static/web2py_src.zip'
@@ -104,6 +159,27 @@ if __name__ == '__main__':
         print 'web2py folder undetected, exiting...'
         sys.exit(1)
 
+    print 'Retrieving version from github'
+    if not download(w2p_git_version_url, w2p_git_version_file):
+        print 'Unable to contact github. Please try again in a few minutes'
+        sys.exit(1)
+    git_version = parse_tvseries_version(w2p_git_version_file)
+    if not os.path.isfile(current_version_file):
+        cur_version = None
+    else:
+        cur_version = parse_tvseries_version(current_version_file)
+    
+    if cur_version and cur_version < git_version:
+        print 'Downloading new installer'
+        tmp_path = this_file_path + '____tmp'
+        if not download(updater_url, tmp_path):
+            print 'Unable to download updated installer, exiting'
+            sys.exit(1)
+        os.remove(this_file_path)
+        os.rename(tmp_path, this_file_path)
+        print 'Updated installer, please restart the script'
+        sys.exit(1)
+        
     if w2p_folder not in sys.path:
         sys.path.insert(0, w2p_folder)
     os.chdir(w2p_folder)
@@ -115,41 +191,11 @@ if __name__ == '__main__':
     from gluon.storage import Storage
 
 
-if raw_input('update/download app from internet (y/n)?').lower() in ['y', 'yes']:
-    w2p_tvseries_url = 'https://github.com/niphlod/w2p_tvseries/zipball/master'
+    if cur_version >= git_version:
+        print 'You have the latest version of w2p_tvseries'
+        sys.exit(0)
 
-    destfolder = os.path.normpath(os.path.abspath(os.path.join(w2p_folder, 'deposit', '%s' % datetime.datetime.now().strftime('%f'))))
-    if not os.path.exists(destfolder):
-        os.makedirs(destfolder)
-    if not download(w2p_tvseries_url, zipball):
-        print 'problems downloading from github, please try again later'
-        sys.exit(1)
-
-    print 'unzipping into %s' % destfolder
-    extract(zipball, destfolder)
-    if not os.listdir(destfolder):
-        print 'Problems downloading or extracting, Aborting auto-install'
-        sys.exit(1)
-    sourcefolder = os.path.abspath(os.path.join(destfolder, os.listdir(destfolder)[0]))
-    appbckfolder = os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries_bck'))
-    finalfolder = os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
-
-    if os.path.exists(appbckfolder):
-        print 'cleaning %s' % appbckfolder
-        recursive_unlink(appbckfolder)
-
-    if os.path.exists(finalfolder):
-        print 'backupping current from %s to %s' % (finalfolder, appbckfolder)
-        shutil.copytree(finalfolder, appbckfolder)
-
-    print 'overwriting %s with %s' % (finalfolder, sourcefolder)
-    overwrite(sourcefolder, finalfolder)
-
-    print 'cleaning %s' % (destfolder)
-    recursive_unlink(destfolder)
-
-    print 'fixing newlines in %s' % (finalfolder)
-    fix_newlines(finalfolder)
+    update_w2p_tvseries(w2p_folder)
 
 
 if raw_input('w2p_tvseries needs a patched scheduler to work as a cron script. Can I overwrite it (y/n)?'
