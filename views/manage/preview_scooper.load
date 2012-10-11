@@ -29,8 +29,8 @@
         {{for mask in sorted(examples, key=examples.get, reverse=True):}}
             {{assigned = ''
               for k,v in all.iteritems():
-                if mask in k:
-                    assigned = SPAN("Assigned to ", A("%s - season %s" % (v.name, v.seasonnumber), _href=v.url), _class="pull-right")
+                if mask.startswith(k):
+                    assigned = SPAN("'%s' is assigned to " % (k), A("%s - season %s" % (v.name, v.seasonnumber), _href=v.url), _class="pull-right")
                 pass
             pass}}
             {{=TR(
