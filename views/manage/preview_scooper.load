@@ -27,7 +27,7 @@
     </thead>
     <tbody>
         {{for mask in sorted(examples, key=examples.get, reverse=True):}}
-            {{assigned = None
+            {{assigned = ''
               for k,v in all.iteritems():
                 if mask in k:
                     assigned = SPAN("Assigned to ", A("%s - season %s" % (v.name, v.seasonnumber), _href=v.url), _class="pull-right")
@@ -36,7 +36,7 @@
             {{=TR(
                 TD(SPAN(mask, _class="autoadd"), assigned),
                 TD(examples[mask]),
-            _class=assigned and 'warning')
+            _class=assigned <> '' and 'warning')
             }}
 
         {{pass}}
