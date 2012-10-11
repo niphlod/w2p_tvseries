@@ -292,7 +292,7 @@ class w2p_tvseries_torrent(object):
                     row.update_record(link=row.link)
                 if not row.down_file:
                     content = self.downloader(row.link)
-                    if content == None:
+                    if content == None and row.magnet:
                         newurl = self.get_torrent_from_magnet(row.magnet)
                         if newurl:
                             content = self.downloader(newurl)
