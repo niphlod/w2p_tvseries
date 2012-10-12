@@ -64,7 +64,7 @@ def download(url, file):
             if len(block) == 0:
                 break
             if x % 3 == 0:
-                print '... %s KB' % (x*64) 
+                print '... %s KB' % (x*64)
         print 'Downloaded'
         return 1
     except:
@@ -135,12 +135,12 @@ if __name__ == '__main__':
     w2p_archive = os.path.join(basefolder, 'web2py_src.zip')
     zipball = os.path.join(basefolder, 'w2p_tvseries_tarball.zip')
     ARCHIVE_MD5 = 'a478f3091620612ceb86e193502967fa'
-    w2p_git_version_url = 'https://github.com/niphlod/w2p_tvseries/raw/master/private/VERSION'
+    w2p_git_version_url = 'https://raw.github.com/niphlod/w2p_tvseries/master/private/VERSION'
     w2p_git_version_file = os.path.join(basefolder, 'VERSION')
     current_version_file = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'VERSION')
     this_file_path = os.path.abspath(__file__)
-    updater_url = 'https://github.com/niphlod/w2p_tvseries/raw/master/private/w2p_tvseries_installer.py'
-    
+    updater_url = 'https://raw.github.com/niphlod/w2p_tvseries/master/private/w2p_tvseries_installer.py'
+
     if not os.path.exists(w2p_folder):
         if raw_input('There is no web2py in this path. Download it from internet (y/n)?').lower() in ['y', 'yes']:
             web2py_url = 'http://www.web2py.com/examples/static/web2py_src.zip'
@@ -168,7 +168,7 @@ if __name__ == '__main__':
         cur_version = None
     else:
         cur_version = parse_tvseries_version(current_version_file)
-    
+
     if cur_version and cur_version < git_version:
         print 'Downloading new installer'
         tmp_path = this_file_path + '____tmp'
@@ -179,7 +179,7 @@ if __name__ == '__main__':
         os.rename(tmp_path, this_file_path)
         print 'Updated installer, please restart the script'
         sys.exit(1)
-        
+
     if w2p_folder not in sys.path:
         sys.path.insert(0, w2p_folder)
     os.chdir(w2p_folder)
