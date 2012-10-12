@@ -100,5 +100,5 @@ def show():
         recs = recs(gl.log_module.contains(request.vars.module))
     if request.vars.function:
         recs = recs(gl.log_function.contains(request.vars.function))
-    recs = recs.select()
+    recs = recs.select(orderby=~gl.dat_insert)
     return dict(recs=recs, form=form)
