@@ -83,7 +83,7 @@ def down_subs(series_id, seasonnumber, cb=None):
 
     settings = rec.subtitle_settings
     method = sj.loads(settings).get('method')
-    downloader = w2p_tvseries_sub_loader(method, verbose=True)
+    downloader = w2p_tvseries_sub_loader(method, verbose=False)
 
     rtn = downloader.get_missing(series_id, seasonnumber)
     if rtn.get('err') is None:
