@@ -24,6 +24,7 @@ import thread
 import re
 import enzyme
 import datetime
+import requests
 from gluon.storage import Storage
 import hashlib
 from gluon.html import URL, A, IMG, UL, LI, H5, INPUT, SCRIPT, TAG, LABEL, DIV, SPAN, I
@@ -1011,3 +1012,30 @@ class Brewer(object):
         #        H5(m.length)
         #    )
         return ul
+
+class Version_Tracker(object):
+
+    def __init__(self, folder):
+        self.version_file = os.path.join(folder, 'private', 'VERSION')
+        self.git_version_url = 'https://raw.github.com/niphlod/w2p_tvseries/master/private/VERSION'
+
+    @property
+    def current_version(self):
+        with open(self.version_file) as g:
+            content = g.read()
+        return self.parse_version(content)
+
+    @property
+    def git_version(self):
+        try:
+            r = requests.get(self.git_version_url)
+            content = r.content
+        except:
+            content = '0.0.0'
+        return self.parse_version(content)
+
+    def parse_version(self, content):
+        version = content.replace('\n', '').strip().split('.')
+        return [int(a) for a in version]
+
+

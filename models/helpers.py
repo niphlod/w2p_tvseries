@@ -26,7 +26,8 @@ except:
 
 import os
 import datetime
-from w2p_tvseries_utils import w2p_tvseries_settings, myfolderwidget, myfolderwidgetmultiple, myradiowidget
+from w2p_tvseries_utils import myfolderwidget, myfolderwidgetmultiple, myradiowidget
+from w2p_tvseries_utils import w2p_tvseries_settings, Version_Tracker
 import unicodedata
 
 DEPOSIT_RE = re.compile(r"^([^\.]*\.[^\.]*)\.(.{2}).*$")
@@ -405,3 +406,26 @@ def twitter_menu(menu, level=0, mobile=False):
         if mobile:
             return lis
         return UL(*lis, **{'_class' : 'dropdown-menu'})
+
+def vtracker():
+    vt = Version_Tracker(request.folder)
+    message = None
+    cur_version = vt.current_version
+    cur_version_print = '.'.join([str(a) for a in cur_version])
+    git_version = vt.git_version
+    git_version_print = '.'.join([str(a) for a in git_version])
+    if git_version == [0,0,0]:
+        message = 'Unable to retrieve info from github.com'
+        return message
+    if cur_version < git_version:
+        message = 'Newer version is available, please run w2p_tvseries_installer.py again'
+    return dict(
+        message=message,
+        cur_version=cur_version,
+        git_version=git_version,
+        cur_version_print=cur_version_print,
+        git_version_print=git_version_print
+        )
+
+if not request.ajax: #in scheduler request.ajax is False
+    vtracker = cache.disk('vtracker', lambda: vtracker(), time_expire=120*60)
