@@ -46,15 +46,15 @@ def w2p_tvseries_sub_loader(*args, **vars):
     type = args[0]
     args = args[1:]
     try:
-        if not hasattr(w2p_tvseries_sub_loader, 'w2p_tvseries_sub_loader_instance_%s' % (type)):
+        if not hasattr(w2p_tvseries_sub_loader, '_instance_%s' % (type)):
             types = dict(
                 itasa=ItasaDownloader,
                 opensubtitles=OpenSubtitlesDownloader,
             )
-            setattr(w2p_tvseries_sub_loader, 'w2p_tvseries_sub_loader_instance_%s' % (type),  types[type](*args, **vars))
+            setattr(w2p_tvseries_sub_loader, '_instance_%s' % (type),  types[type](*args, **vars))
     finally:
         locker.release()
-    return getattr(w2p_tvseries_sub_loader, 'w2p_tvseries_sub_loader_instance_%s' % (type))
+    return getattr(w2p_tvseries_sub_loader, '_instance_%s' % (type))
 
 
 class SubDownloader(object):
@@ -185,7 +185,7 @@ class OpenSubtitlesDownloader(SubDownloader):
         ct = db.urlcache
         cachekey = hashlib.md5(key).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-        cached = db((ct.key == cachekey) & (ct.inserted_on > timelimit)).select().first()
+        cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
         if cached:
             if self.verbose:
                 self.log('rpc_call', "Cache (%s): Getting url: %s" % (cachekey, key))
