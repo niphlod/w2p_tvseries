@@ -69,20 +69,20 @@ from gluon import current
 def w2p_tvseries_tvdb_loader(*args, **vars):
     locker.acquire()
     try:
-        if not hasattr(w2p_tvseries_tvdb_loader, 'w2p_tvseries_tvdb_instance'):
-            w2p_tvseries_tvdb_loader.w2p_tvseries_tvdb_instance = w2p_tvseries_tvdb(*args, **vars)
+        if not hasattr(w2p_tvseries_tvdb_loader, '_instance'):
+            w2p_tvseries_tvdb_loader._instance = w2p_tvseries_tvdb(*args, **vars)
     finally:
         locker.release()
-    return w2p_tvseries_tvdb_loader.w2p_tvseries_tvdb_instance
+    return w2p_tvseries_tvdb_loader._instance
 
 def w2p_tvseries_ren_loader(*args, **vars):
     locker.acquire()
     try:
-        if not hasattr(w2p_tvseries_ren_loader, 'w2p_tvseries_ren_instance'):
-            w2p_tvseries_ren_loader.w2p_tvseries_ren_instance = w2p_tvseries_tvren(*args, **vars)
+        if not hasattr(w2p_tvseries_ren_loader, '_instance'):
+            w2p_tvseries_ren_loader._instance = w2p_tvseries_tvren(*args, **vars)
     finally:
         locker.release()
-    return w2p_tvseries_ren_loader.w2p_tvseries_ren_instance
+    return w2p_tvseries_ren_loader._instance
 
 
 class w2p_tvseries_tvdb(object):
@@ -129,14 +129,15 @@ class w2p_tvseries_tvdb(object):
         log = self.logger
         log.error(function, message)
 
-    def downloader(self, url, raw=False):
+    def downloader(self, url, raw=False, verbose=False):
         db = current.database
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
         cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
         if cached:
-            self.log('downloader', '%s fetched from cache' % (url))
+            if verbose:
+                self.log('downloader', '%s fetched from cache' % (url))
             return cached.value
         else:
             r = self.req.get(url)
@@ -149,7 +150,8 @@ class w2p_tvseries_tvdb(object):
             db.commit()
         if not raw:
             content = content.encode('utf-8')
-        self.log('downloader', '%s fetched from internet' % (url))
+        if verbose:
+            self.log('downloader', '%s fetched from internet' % (url))
         return content
 
     def retrieve_mirrors(self):
@@ -253,7 +255,6 @@ class w2p_tvseries_tvdb(object):
         for a in se_updated_set & myseries_set:
             #if lastupdate from updates file is greater, I have to update the series
             if se_updated[a] > myseries[a]:
-                self.log('global_update', 'updating series %s' % (a))
                 self.series_update(a)
 
         #episodes that I own
@@ -273,7 +274,6 @@ class w2p_tvseries_tvdb(object):
         for a in ep_updated_set & myepisodes_set:
             #if lastupdate from updates file is greater, I have to update the episode
             if ep_updated[a] > myepisodes[a]:
-                self.log('global_update', 'updating episode %s' % (a))
                 self.episode_update(a)
 
         self.log('global_update', 'updating update_time')

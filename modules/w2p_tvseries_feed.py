@@ -198,7 +198,7 @@ class w2p_tvseries_torrent(object):
 
         db.commit()
 
-    def downloader(self, url, inserted_on=None):
+    def downloader(self, url, inserted_on=None, verbose=False):
         db = current.database
         ct = db.urlcache
         if not inserted_on:
@@ -207,7 +207,8 @@ class w2p_tvseries_torrent(object):
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
         cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
         if cached:
-            self.log('downloader', '%s fetched from cache' % (url))
+            if verbose:
+                self.log('downloader', '%s fetched from cache' % (url))
             return cached.value
         else:
             try:
@@ -323,8 +324,6 @@ class w2p_tvseries_torrent(object):
                     self.log(fname, "added to client %s" % (row.link))
                     db.commit()
 
-
-
 class w2p_tvseries_feed(object):
     def __init__(self):
         self.logger = tvdb_logger('feeds')
@@ -365,7 +364,7 @@ class w2p_tvseries_feed(object):
         ttl = datetime.datetime.utcnow() + datetime.timedelta(seconds=ttl)
         return ttl
 
-    def downloader(self, url, inserted_on=None):
+    def downloader(self, url, inserted_on=None, verbose=False):
         """manage ttl"""
         db = current.database
         ct = db.urlcache
@@ -373,7 +372,8 @@ class w2p_tvseries_feed(object):
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(seconds=3*60)
         cached = db((ct.kkey == cachekey) & (ct.inserted_on > timelimit)).select().first()
         if cached:
-            self.log('downloader', '%s fetched from cache' % (url))
+            if verbose:
+                self.log('downloader', '%s fetched from cache' % (url))
             return cached.value
         else:
             try:
@@ -384,7 +384,8 @@ class w2p_tvseries_feed(object):
                     inserted_on = self.retrieve_ttl(content)
                 ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=inserted_on, kkey=cachekey)
                 db.commit()
-                self.log('downloader', '%s fetched from internet' % (url))
+                if verbose:
+                    self.log('downloader', '%s fetched from internet' % (url))
             except:
                 content = None
                 self.error('downloader', '%s failed to fetch from internet' % (url))
