@@ -113,7 +113,7 @@ class w2p_tvseries_torrent(object):
 
     def queue_torrents(self, seriesid, seasonnumber):
         fname = 'queue_torrents'
-        db = current.database
+        db = current.w2p_tvseries.database
         ss = db.seasons_settings
         rec = db(
             (db.series.id == seriesid) &
@@ -199,7 +199,7 @@ class w2p_tvseries_torrent(object):
         db.commit()
 
     def downloader(self, url, inserted_on=None, verbose=False):
-        db = current.database
+        db = current.w2p_tvseries.database
         ct = db.urlcache
         if not inserted_on:
             inserted_on = datetime.datetime.utcnow()
@@ -224,7 +224,7 @@ class w2p_tvseries_torrent(object):
 
     def download_torrents(self, seriesid, seasonnumber):
         fname = "down_torrents"
-        db = current.database
+        db = current.w2p_tvseries.database
         dw = db.downloads
         ep = db.episodes
 
@@ -366,7 +366,7 @@ class w2p_tvseries_feed(object):
 
     def downloader(self, url, inserted_on=None, verbose=False):
         """manage ttl"""
-        db = current.database
+        db = current.w2p_tvseries.database
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(seconds=3*60)

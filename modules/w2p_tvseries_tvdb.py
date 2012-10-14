@@ -87,7 +87,7 @@ def w2p_tvseries_ren_loader(*args, **vars):
 
 class w2p_tvseries_tvdb(object):
     def __init__(self):
-        db = current.database
+        db = current.w2p_tvseries.database
         self.logger = tvdb_logger_loader('tvdb')
         self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'}, config= {'max_retries': 5}, timeout=3)
         self.apikey = 'C833E23D89D5FD35'
@@ -130,7 +130,7 @@ class w2p_tvseries_tvdb(object):
         log.error(function, message)
 
     def downloader(self, url, raw=False, verbose=False):
-        db = current.database
+        db = current.w2p_tvseries.database
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
@@ -191,7 +191,7 @@ class w2p_tvseries_tvdb(object):
         return self.mappers.add_series_mapper(content, language)
 
     def global_reset(self):
-        db = current.database
+        db = current.w2p_tvseries.database
         self.log('global_reset', "Instantiated")
         gs_tb = db.global_settings
         #series I own
@@ -207,7 +207,7 @@ class w2p_tvseries_tvdb(object):
         self.log('global_reset', "Finished")
 
     def global_update(self, mode='auto'):
-        db = current.database
+        db = current.w2p_tvseries.database
         self.log('global_update', "Global update (%s)" % (mode))
         gs_tb = db.global_settings
         lastupdate = db(gs_tb.kkey == 'update_time').select().first()
@@ -282,7 +282,7 @@ class w2p_tvseries_tvdb(object):
         return mode
 
     def series_update(self, seriesid):
-        db = current.database
+        db = current.w2p_tvseries.database
         self.log('series_update', 'updating series %s' % (seriesid))
         se_tb = db.series
         #detect language of my series
@@ -298,7 +298,7 @@ class w2p_tvseries_tvdb(object):
         self.mappers.series_mapper(node, language)
 
     def episode_update(self, episodeid):
-        db = current.database
+        db = current.w2p_tvseries.database
         self.log('episode_update', 'updating episode %s' % (episodeid))
         ep_tb = db.episodes
         #detect language of my episode
@@ -313,7 +313,7 @@ class w2p_tvseries_tvdb(object):
         self.mappers.episode_mapper(node, language)
 
     def episodes_banner_update_global(self):
-        db = current.database
+        db = current.w2p_tvseries.database
         ep_tb = db.episodes
         eb_tb = db.episodes_banners
         se_tb = db.series
@@ -335,7 +335,7 @@ class w2p_tvseries_tvdb(object):
             self.episode_banner_update(row.id)
 
     def series_banner_update_global(self):
-        db = current.database
+        db = current.w2p_tvseries.database
         sb_tb = db.series_banners
         series_to_check = db(
             (sb_tb.url <> '') &
@@ -348,7 +348,7 @@ class w2p_tvseries_tvdb(object):
             self.series_banner_update(row.id)
 
     def episode_banner_update(self, episodeid):
-        db = current.database
+        db = current.w2p_tvseries.database
         eb_tb = db.episodes_banners
         rec = db(eb_tb.id == episodeid).select().first()
         self.log('ep_banner', "Updating banner for episode %s" % (rec.id))
@@ -363,7 +363,7 @@ class w2p_tvseries_tvdb(object):
         db(eb_tb.id == episodeid).update(banner=eb_tb.banner.store(inm_file, filename))
 
     def series_banner_update(self, banner_id):
-        db = current.database
+        db = current.w2p_tvseries.database
         sb_tb = db.series_banners
         rec = db(sb_tb.id == banner_id).select().first()
         self.log('se_banner', "Updating banner for series %s" % (rec.id))
@@ -416,7 +416,7 @@ class tvdb_mappers(object):
         return rtn
 
     def series_mapper(self, xmlnode, language):
-        db = current.database
+        db = current.w2p_tvseries.database
         se_tb = db.series
         ba_tb = db.series_banners
         record = Storage()
@@ -441,7 +441,7 @@ class tvdb_mappers(object):
             return id
 
     def episode_mapper(self, xmlnodes, language):
-        db = current.database
+        db = current.w2p_tvseries.database
         ep_tb = db.episodes
         eb_tb = db.episodes_banners
         records = []
@@ -520,7 +520,7 @@ class w2p_tvseries_tvren(object):
         return s[:150]                        # 150 chars will be sufficient
 
     def check(self, seriesid, seasonnumber, mode='video'):
-        db = current.database
+        db = current.w2p_tvseries.database
         se_tb = db.series
         ep_tb = db.episodes
         ss_tb = db.seasons_settings
@@ -644,7 +644,7 @@ class w2p_tvseries_tvren(object):
         return rtn
 
     def check_path(self, seriesid, seasonnumber, create=False):
-        db = current.database
+        db = current.w2p_tvseries.database
         se_tb = db.series
         ss_tb = db.seasons_settings
         gs = w2p_tvseries_settings().global_settings()
@@ -680,7 +680,7 @@ class w2p_tvseries_tvren(object):
                                          series=season.series.name, seasonnumber=seasonnumber, seriesid=seriesid)
 
     def rename(self, seriesid, seasonnumber):
-        db = current.database
+        db = current.w2p_tvseries.database
         self.log('rename', "Checking for series with id %s and season %s" % (seriesid, seasonnumber))
         bit = db.rename_log
         ss_tb = db.seasons_settings

@@ -72,7 +72,7 @@ class SubDownloader(object):
         log.error(function, message)
 
     def put_in_cache(self, url, content, mode='insert'):
-        db = current.database
+        db = current.w2p_tvseries.database
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         if mode == 'insert':
@@ -82,7 +82,7 @@ class SubDownloader(object):
         db.commit()
 
     def downloader(self, url, hours=3):
-        db = current.database
+        db = current.w2p_tvseries.database
         ct = db.urlcache
         cachekey = hashlib.md5(url).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=hours)
@@ -101,7 +101,7 @@ class SubDownloader(object):
         return content
 
     def get_missing(self, seriesid, seasonnumber):
-        db = current.database
+        db = current.w2p_tvseries.database
         fname = 'get_missing'
         ss_tb = db.seasons_settings
         se_tb = db.series
@@ -181,7 +181,7 @@ class OpenSubtitlesDownloader(SubDownloader):
         base_api = "http://api.opensubtitles.org/xml-rpc"
         key = '&'.join(["hash=%s&size=%s&language=%s" % (a['moviehash'], a['moviebytesize'], a['sublanguageid']) for a in searchlist])
         key = base_api + '?' + key
-        db = current.database
+        db = current.w2p_tvseries.database
         ct = db.urlcache
         cachekey = hashlib.md5(key).hexdigest()
         timelimit = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
@@ -204,7 +204,7 @@ class OpenSubtitlesDownloader(SubDownloader):
 
     def search_subtitles(self, id, tvshow, seasonnumber, missingsubs, quality, language='eng'):
         fname = 'search'
-        db = current.database
+        db = current.w2p_tvseries.database
         me_tb = db.episodes_metadata
         ep_tb = db.episodes
         ss_tb = db.seasons_settings
@@ -300,7 +300,7 @@ class OpenSubtitlesDownloader(SubDownloader):
 class ItasaDownloader(SubDownloader):
     def __init__(self, verbose=False):
         super(ItasaDownloader, self).__init__(verbose)
-        db = current.database
+        db = current.w2p_tvseries.database
         self.main_url = "http://www.italiansubs.net/"
         self.req = req.session(headers={'Referer': self.main_url, 'User-Agent' : 'w2p_tvdb'}, config={'max_retries': 5}, timeout=3) #{'verbose': sys.stderr})
         gs = w2p_tvseries_settings().global_settings()

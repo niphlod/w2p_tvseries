@@ -25,9 +25,9 @@ response.generic_patterns = ['*'] if request.is_local else []
 db = DAL("sqlite://storage.db", pool_size=5, migrate=MIGRATE, attempts=10)
 db2 = DAL("sqlite://storage_scheduler.db", pool_size=5, migrate=MIGRATE, attempts=10)
 
+from gluon.storage import Storage
 from gluon import current
-current.database = db
-current.database2 = db2
+current.w2p_tvseries = Storage(database = db, database2 = db2)
 
 from gluon.tools import Auth, Crud, Service, PluginManager, prettydate
 crud, service, plugins = Crud(db), Service(), PluginManager()

@@ -221,7 +221,7 @@ class w2p_tvseries_settings(object):
 
     def _global_settings(self):
         cache = current.cache
-        db = current.database
+        db = current.w2p_tvseries.database
         settings = Storage()
         gs_tb = db.global_settings
         all_settings = db(gs_tb.id>0).select()
@@ -422,16 +422,16 @@ class tvdb_logger(object):
         self.module = module
 
     def log(self, function, message):
-        db = current.database
+        db = current.w2p_tvseries.database
         db.global_log.insert(log_module=self.module, log_function=function, log_operation=message)
 
     def error(self, function, message):
-        db = current.database
+        db = current.w2p_tvseries.database
         db.global_log.insert(log_module=self.module, log_function=function, log_error=message)
 
 class Scooper(object):
     def __init__(self):
-        db = current.database
+        db = current.w2p_tvseries.database
         self.counter = {}
         self.collector = {}
         self.logger = tvdb_logger('scooper')
@@ -448,7 +448,7 @@ class Scooper(object):
         log.error(function, message)
 
     def scoop(self):
-        db = current.database
+        db = current.w2p_tvseries.database
         #folders to scoop
         filelist = []
         for folder in self.folders:
@@ -502,7 +502,7 @@ class Scooper(object):
 
     def move_files(self, seriesid, seasonnumber):
         fname = 'move'
-        db = current.database
+        db = current.w2p_tvseries.database
 
         se_tb = db.series
         ss_tb = db.seasons_settings
@@ -1037,5 +1037,3 @@ class Version_Tracker(object):
     def parse_version(self, content):
         version = content.replace('\n', '').strip().split('.')
         return [int(a) for a in version]
-
-

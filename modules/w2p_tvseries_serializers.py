@@ -77,7 +77,7 @@ class w2p_tvseries_xbmc(object):
         log.error(function, message)
 
     def get_season_path(self, series_id, seasonnumber):
-        db = current.database
+        db = current.w2p_tvseries.database
         gs = w2p_tvseries_settings().global_settings()
         path_format = gs.season_path or '%(seasonnumber).2d'
 
@@ -99,7 +99,7 @@ class w2p_tvseries_xbmc(object):
 
     def season_metadata(self, seriesid, seasonnumber):
         fname = 'metadata'
-        db = current.database
+        db = current.w2p_tvseries.database
         ep_tb = db.episodes
         se_tb = db.series
         ss_tb = db.seasons_settings
@@ -171,7 +171,7 @@ class w2p_tvseries_xbmc(object):
 
 
     def series_nfo(self, seriesid):
-        db = current.database
+        db = current.w2p_tvseries.database
         infos = db(db.series.id == seriesid).select().first()
         if not infos:
             self.error('series_nfo', "Unable to retrieve infos for series %s" % (seriesid))
