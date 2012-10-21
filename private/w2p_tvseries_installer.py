@@ -24,6 +24,7 @@ import sys
 import zipfile
 import hashlib
 import datetime
+import time
 
 #adapted from http://code.activestate.com/recipes/465649-file-unzip-lite/
 def extract( filename, dir ):
@@ -159,17 +160,23 @@ if __name__ == '__main__':
         print 'web2py folder undetected, exiting...'
         sys.exit(1)
 
-    print 'Retrieving version from github'
-    if not download(w2p_git_version_url, w2p_git_version_file):
-        print 'Unable to contact github. Please try again in a few minutes'
-        sys.exit(1)
+    try:
+        version_mtime = os.stat(w2p_git_version_file).st_mtime
+    except:
+        version_mtime = 0
+    check_version = version_mtime < time.time() - 60
+    if check_version:
+        print 'Retrieving version from github'
+        if not download(w2p_git_version_url, w2p_git_version_file):
+            print 'Unable to contact github. Please try again in a few minutes'
+            sys.exit(1)
     git_version = parse_tvseries_version(w2p_git_version_file)
     if not os.path.isfile(current_version_file):
         cur_version = None
     else:
         cur_version = parse_tvseries_version(current_version_file)
 
-    if cur_version and cur_version < git_version:
+    if cur_version and cur_version < git_version and check_version:
         print 'Downloading new installer'
         tmp_path = this_file_path + '____tmp'
         if not download(updater_url, tmp_path):
