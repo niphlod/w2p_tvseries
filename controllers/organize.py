@@ -162,7 +162,7 @@ def queue_ops():
         st.insert(task_name=uniquename, function_name='maintenance', enabled=True, timeout=15, vars=json(dict(cb='update')))
 
         uniquename = "%s:update:" % (operation_key)
-        st.insert(task_name=uniquename, function_name='update', enabled=False, timeout=120, vars=json(dict(cb='down_sebanners')))
+        st.insert(task_name=uniquename, function_name='update', enabled=False, timeout=300, vars=json(dict(cb='down_sebanners')))
 
         uniquename = "%s:down_sebanners:" % (operation_key)
         st.insert(task_name=uniquename, function_name='down_sebanners', enabled=False, timeout=180, vars=json(dict(cb='down_epbanners')))
