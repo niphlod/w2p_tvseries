@@ -94,7 +94,7 @@ function w2p_tvseries_ajax_page(method,action,data,target) {
       web2py_trap_link(target);
       web2py_ajax_init('#'+target);
       if(command) eval(command);
-      if(flash) jQuery('.flash').html(flash).slideDown();
+      if(flash) jQuery('.flash').html(decodeURIComponent(flash)).slideDown();
       }
     });
 }
