@@ -211,6 +211,7 @@ def path_for_one_season(seasons_settings, series_metadata, hash_gen_mode, op_key
     params = Storage()
     params['ep_metadata'] = dict(timeout=300)
     params['down_subs'] = dict(timeout=300)
+    params['scoop_season'] = dict(timeout=300)
 
     st = db2.scheduler_task
 
