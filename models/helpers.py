@@ -357,7 +357,8 @@ def w2p_deposit(file):
     if filepart:
         args = list(filepart.groups())
     args.append(file)
-    return URL('static', 'deposit', args=args, extension='')
+    version = '.'.join(response.static_version.split('.')[:2] + [str(request.utcnow.toordinal())])
+    return URL('static', '_%s/deposit' % (version), args=args, extension='')
 
 
 def get_series_path(series_id):
