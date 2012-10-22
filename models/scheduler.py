@@ -159,9 +159,7 @@ def scoop_season(series_id, seasonnumber, cb=None):
     if cb:
         default_callback(cb, series_id, seasonnumber)
 
-
-
-def ep_metadata(series_id, seasonnumber, cb=None):
+def ep_metadata(series_id, seasonnumber, mode='simple', cb=None):
     ep_tb = db.episodes
     se_tb = db.series
     me_tb = db.episodes_metadata
@@ -183,7 +181,7 @@ def ep_metadata(series_id, seasonnumber, cb=None):
                 b = Brewer(filename).info
                 #not exists, let's insert...
                 newr = Storage()
-                h.gen_hashes()
+                h.gen_hashes(mode=mode)
                 newr.episode_id = row.episodes.id
                 newr.series_id = series_id
                 newr.seasonnumber = seasonnumber

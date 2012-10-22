@@ -50,7 +50,7 @@ def settings():
     form.wells = [
         dict(
             title="General Settings",
-            fields=['series_language', 'season_path', 'series_basefolder', 'series_metadata']
+            fields=['series_language', 'season_path', 'series_basefolder', 'series_metadata', 'hash_gen']
         ),
         dict(
             title="Scooper Settings",
@@ -81,7 +81,6 @@ def settings():
                 values = set(values)
                 db(db.global_settings.kkey=='scooper_path').delete()
                 for b in values:
-                    print 'b', b
                     db.global_settings.insert(kkey='scooper_path', value=b)
             else:
                 db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a], kkey=a)

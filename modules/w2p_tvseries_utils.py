@@ -250,7 +250,7 @@ class w2p_tvseries_settings(object):
             'subtitles_default_quality', 'subtitles_default_language',
             'torrent_default_feed', 'torrent_default_quality',
             'torrent_default_feed', 'torrent_default_quality', 'torrent_default_minsize',
-            'torrent_default_maxsize', 'series_metadata']
+            'torrent_default_maxsize', 'series_metadata', 'hash_gen']
 
         settings.defaults = Storage()
         settings.comments = Storage()
@@ -274,6 +274,7 @@ class w2p_tvseries_settings(object):
         settings.defaults.torrent_default_minsize = 100
         settings.defaults.torrent_default_maxsize = 4780
         settings.defaults.series_metadata = 'N'
+        settings.defaults.hash_gen = 'simple'
 
         settings.comments.series_basefolder = 'w2p_tvseries will suggest a default folder for new added series in this path'
         settings.comments.series_language = 'w2p_tvseries will download series definitions from thetvdb.com using this language'
@@ -291,6 +292,7 @@ class w2p_tvseries_settings(object):
         settings.comments.torrent_default_maxsize = 'Maximum allowed size for torrents, in MB'
         settings.comments.torrent_magnet = 'How should I handle magnet links ?'
         settings.comments.series_metadata = 'Should I help some program with my data?'
+        settings.comments.hash_gen = 'Type of hash generated for every file'
 
         settings.types.itasa_password = 'password'
         settings.types.torrent_default_minsize = 'integer'
@@ -304,6 +306,7 @@ class w2p_tvseries_settings(object):
         settings.widgets.torrent_default_feed = myradiowidget
         settings.widgets.torrent_magnet = myradiowidgetvertical
         settings.widgets.series_metadata = myradiowidget
+        settings.widgets.hash_gen = myradiowidget
 
         settings.requires.series_language = IS_IN_SET(self.langs)
         settings.requires.subtitles_default_method = IS_IN_SET(('itasa', 'opensubtitles'))
@@ -312,6 +315,7 @@ class w2p_tvseries_settings(object):
         settings.requires.subtitles_default_language = IS_IN_SET(self.sub_langs)
         settings.requires.torrent_magnet = IS_IN_SET(self.magnet_options)
         settings.requires.series_metadata = IS_IN_SET(self.series_metadata_options)
+        settings.requires.hash_gen = IS_IN_SET(('simple', 'full'))
 
         return settings
 
@@ -810,7 +814,7 @@ class Hasher(object):
         c.update("%s %s %s" % (self.filename, self.stats.mtime, self.stats.size))
         self.guid = c.hexdigest()
 
-    def gen_hashes(self):
+    def gen_hashes(self, mode='simple'):
         """
         http://www.radicand.org/blog/orz/2010/2/21/edonkey2000-hash-in-python/
         """
@@ -831,21 +835,21 @@ class Hasher(object):
             m = md4()
             m.update(data)
             return m
-
-        with open(self.filename, 'rb') as f:
-            a = gen(f)
-            ed2k_ = []
-            for data in a:
-                ed2k_.append(md4_hash(data).digest())
-                md5.update(data)
-                sha1.update(data)
-        self.hashes.md5 = md5.hexdigest()
-        self.hashes.sha1 = sha1.hexdigest()
-        if len(ed2k_) == 1:
-            ed2k = ed2k_[0].encode("hex")
-        else:
-            ed2k = md4_hash(reduce(lambda a, d: a + d, ed2k_, "")).hexdigest()
-        self.hashes.ed2k = ed2k
+        if mode != 'simple':
+            with open(self.filename, 'rb') as f:
+                a = gen(f)
+                ed2k_ = []
+                for data in a:
+                    ed2k_.append(md4_hash(data).digest())
+                    md5.update(data)
+                    sha1.update(data)
+            self.hashes.md5 = md5.hexdigest()
+            self.hashes.sha1 = sha1.hexdigest()
+            if len(ed2k_) == 1:
+                ed2k = ed2k_[0].encode("hex")
+            else:
+                ed2k = md4_hash(reduce(lambda a, d: a + d, ed2k_, "")).hexdigest()
+            self.hashes.ed2k = ed2k
         self.hashes.osdb = self.opensub_hash()
 
     def opensub_hash(self):

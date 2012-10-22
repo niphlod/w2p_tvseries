@@ -143,6 +143,8 @@ def queue_ops():
 
     series_metadata = db(db.global_settings.kkey=='series_metadata').select().first()
     series_metadata = series_metadata and series_metadata.value or 'N'
+    hash_gen_mode = db(db.global_settings.kkey=='hash_gen').select().first()
+    hash_gen_mode = hash_gen_mode and hash_gen_mode.value or 'Simple'
 
     basecond = db(ss_tb.series_id == se_tb.id)
     if series_id and seasonnumber:
@@ -183,14 +185,14 @@ def queue_ops():
         if row.series.basepath == '' or row.series.basepath == None:
             continue
         else:
-            path_for_one_season(row.seasons_settings, series_metadata, operation_key, enabled)
+            path_for_one_season(row.seasons_settings, series_metadata, hash_gen_mode, operation_key, enabled)
 
     db2.commit()
     db.commit()
 
     return 'started'
 
-def path_for_one_season(seasons_settings, series_metadata, op_key, enabled):
+def path_for_one_season(seasons_settings, series_metadata, hash_gen_mode, op_key, enabled):
     series_id, seasonnumber = seasons_settings.series_id, seasons_settings.seasonnumber
     path = []
     if seasons_settings.scooper_strings:
@@ -226,8 +228,12 @@ def path_for_one_season(seasons_settings, series_metadata, op_key, enabled):
             )
         if i != 0 or enabled==False:
             pr['enabled'] = False
+        vars = dict()
+        if op == 'ep_metadata':
+            vars['mode'] = hash_gen_mode
         if i != path_count-1:
-            pr['vars'] = json(dict(cb=path[i+1]))
+            vars['cb'] = path[i+1]
+        pr['vars'] = json(vars)
         st.insert(**pr)
 
 
