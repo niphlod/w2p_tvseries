@@ -29,17 +29,52 @@ Loose ends in such an application are likely to happen. I'll be more than glad t
 a full-time python programmer guru.
 
 ##Install
-There is a script in private folder, w2p_tvseries_installer.py, to put in an empty directory.
-It tries to:
+There is a script in private folder, [w2p_tvseries_installer.py](https://raw.github.com/niphlod/w2p_tvseries/master/private/w2p_tvseries_installer.py)
+### Python installed on the system
+Just put it in an empty folder and start with
+<pre>
+python w2p_tvseries_installer.py
+</pre>
+and follow instructions. It tries to:
 - download the last stable web2py release
 - download the source of w2p_tvseries
 - ease default redirection (http://127.0.0.1:8000/ instead of http://127.0.0.1:8000/w2p_tvseries/)
 - create template scripts to run w2p_tvseries and the cron task
 
-While it becomes stable (needs testing), here's how install w2p_tvseries manually
+### No Python available
+Go to [web2py.com](http://web2py.com/examples/default/download) and download the binary from the page.
+If you are on Windows, just download [this zip](http://www.web2py.com/examples/static/web2py_win.zip), decompress in a folder of your choice, put w2p_tvseries_installer.py right out of that folder
+<pre>
+c:\folderofchoice
+    |
+    --- w2p_tvseries_installer.py
+    --- web2py\
+    |...
+</pre>
+ and start it with
+<pre>
+cd web2py
+web2py.exe -S admin -R ..\w2p_tvseries_installer.py
+</pre>
+and follow the instructions
+
+###Manual installation
 
 - Install web2py (downloading the archive and unzipping it in a directory)
 - Download this app and place it under web2py/applications/w2p_tvseries
+<pre>
+installfolder/
+    |
+    w2p_tvseries_installer.py
+    -web2py\
+    |...
+    --- applications/
+       |
+       --- w2p_tvseries/
+          |
+          --- controllers/
+          |...
+</pre>
 - Start web2py with
 <pre>
 python web2py.py -a "yourdesiredpassword"
