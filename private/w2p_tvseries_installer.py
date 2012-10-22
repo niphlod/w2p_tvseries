@@ -91,10 +91,11 @@ def parse_tvseries_version(version_file):
     return [int(a) for a in version]
 
 
-def update_w2p_tvseries(w2p_folder):
-
+def update_w2p_tvseries(w2p_folder, version):
     if raw_input('update/download app from internet (y/n)?').lower() in ['y', 'yes']:
-        w2p_tvseries_url = 'https://github.com/niphlod/w2p_tvseries/zipball/master'
+        version = '.'.join([str(a) for a in version])
+        print 'Downloading version %s' % version
+        w2p_tvseries_url = 'https://github.com/niphlod/w2p_tvseries/zipball/%s' % version
 
         destfolder = os.path.normpath(os.path.abspath(os.path.join(w2p_folder, 'deposit', '%s' % datetime.datetime.now().strftime('%f'))))
         if not os.path.exists(destfolder):
@@ -131,7 +132,11 @@ def update_w2p_tvseries(w2p_folder):
 
 
 if __name__ == '__main__':
-    basefolder = os.getcwd()
+    if sys.executable.endswith('web2py.exe'):
+        basefolder = os.path.normpath(os.path.join(os.getcwd(), '..'))
+        __file__ = os.path.join(basefolder, 'w2p_tvseries_installer.py')
+    else:
+        basefolder = os.getcwd()
     w2p_folder = os.path.join(basefolder, 'web2py')
     w2p_archive = os.path.join(basefolder, 'web2py_src.zip')
     zipball = os.path.join(basefolder, 'w2p_tvseries_tarball.zip')
@@ -141,7 +146,6 @@ if __name__ == '__main__':
     current_version_file = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'VERSION')
     this_file_path = os.path.abspath(__file__)
     updater_url = 'https://raw.github.com/niphlod/w2p_tvseries/master/private/w2p_tvseries_installer.py'
-
     if not os.path.exists(w2p_folder):
         if raw_input('There is no web2py in this path. Download it from internet (y/n)?').lower() in ['y', 'yes']:
             web2py_url = 'http://www.web2py.com/examples/static/web2py_src.zip'
@@ -202,14 +206,7 @@ if __name__ == '__main__':
         print 'You have the latest version of w2p_tvseries'
         sys.exit(0)
 
-    update_w2p_tvseries(w2p_folder)
-
-
-if raw_input('w2p_tvseries needs a patched scheduler to work as a cron script. Can I overwrite it (y/n)?'
-            ).lower() in ['y', 'yes']:
-    new_scheduler = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'scheduler.py')
-    old_scheduler = os.path.join(w2p_folder, 'gluon', 'scheduler.py')
-    shutil.copy(new_scheduler, old_scheduler)
+    update_w2p_tvseries(w2p_folder, git_version)
 
 if raw_input("let's create/migrate our database.... (y/n)?").lower() in ['y', 'yes']:
     remove_compiled_application(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
@@ -243,17 +240,28 @@ if raw_input("copy default redirection (if this is the only app installed, it's 
         shutil.copy(routes_src, routes_dst)
 
 if raw_input("Create start scripts (y/n)?").lower() in ['y', 'yes']:
+    is_binary_version = sys.executable.endswith('web2py.exe')
+    executable = sys.executable
+    if is_binary_version:
+        executable = os.path.basename(executable)
     startfiledos = """
-cd web2py
+pushd web2py
 start "%(executable)s" web2py.py -K w2p_tvseries
 start "%(executable)s" web2py.py -a w2p_tvseries
-""" % dict(executable=sys.executable)
-
+popd
+""" % dict(executable=executable)
+    if is_binary_version:
+        startfiledos = """
+pushd web2py
+start %(executable)s -K w2p_tvseries
+start %(executable)s -a w2p_tvseries
+popd
+""" % dict(executable=executable)
     startfilelinux = """
 cd web2py
 "%(executable)s" web2py.py -a w2p_tvseries &
 "%(executable)s" web2py.py -K w2p_tvseries
-""" % dict(executable=sys.executable)
+""" % dict(executable=executable)
 
     cronscript = """
 "%(executable)s" "%(cronfile)s"
