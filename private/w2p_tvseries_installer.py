@@ -140,7 +140,6 @@ if __name__ == '__main__':
     w2p_folder = os.path.join(basefolder, 'web2py')
     w2p_archive = os.path.join(basefolder, 'web2py_src.zip')
     zipball = os.path.join(basefolder, 'w2p_tvseries_tarball.zip')
-    ARCHIVE_MD5 = 'a478f3091620612ceb86e193502967fa'
     w2p_git_version_url = 'https://raw.github.com/niphlod/w2p_tvseries/master/private/VERSION'
     w2p_git_version_file = os.path.join(basefolder, 'VERSION')
     current_version_file = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'VERSION')
@@ -153,12 +152,6 @@ if __name__ == '__main__':
                 print 'problems downloading from web2py.com, try again later'
                 sys.exit(1)
             if os.path.exists(w2p_archive):
-                with open(w2p_archive, 'rb') as g:
-                    calc_md5 = hashlib.md5(g.read()).hexdigest()
-                if calc_md5 != ARCHIVE_MD5:
-                    print calc_md5
-                    print "Downloaded archive corrupted, exiting..."
-                    sys.exit(1)
                 extract(w2p_archive, basefolder)
     if not os.path.exists(w2p_folder):
         print 'web2py folder undetected, exiting...'
