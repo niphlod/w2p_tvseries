@@ -18,12 +18,6 @@
 # along with w2p_tvseries. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-#preparing for 2.0
-#if request.controller == 'w2p_static':
-#    session.forget()
-#    file = os.path.join(request.folder, 'static', request.function, *request.args)
-#    response.headers['Cache-Control'] = 'max-age=604800'
-#    raise HTTP(200, response.stream(file))
 
 response.title = 'w2p_tvseries'
 response.subtitle = 'Another TV Series Organizer!'
