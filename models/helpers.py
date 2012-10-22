@@ -416,7 +416,6 @@ def vtracker():
     git_version_print = '.'.join([str(a) for a in git_version])
     if git_version == [0,0,0]:
         message = 'Unable to retrieve info from github.com'
-        return message
     if cur_version < git_version:
         message = 'Newer version is available, please run w2p_tvseries_installer.py again'
     return dict(
