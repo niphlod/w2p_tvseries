@@ -16,14 +16,32 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with w2p_tvseries. If not, see <http://www.gnu.org/licenses/>.
+
 import os
+#preparing for 2.0
+#if request.controller == 'w2p_static':
+#    session.forget()
+#    file = os.path.join(request.folder, 'static', request.function, *request.args)
+#    response.headers['Cache-Control'] = 'max-age=604800'
+#    raise HTTP(200, response.stream(file))
+
+response.title = 'w2p_tvseries'
+response.subtitle = 'Another TV Series Organizer!'
+
+## read more at http://dev.w3.org/html5/markup/meta.name.html
+response.meta.author = 'Niphlod'
+response.meta.description = 'TV Series Organizer!'
+response.meta.keywords = 'TV Series Organizer!'
+response.meta.generator = 'Web2py Web Framework'
+response.meta.copyright = 'Copyright 2012'
 
 MIGRATE = True
+LAZY_TABLES = False
 
 response.generic_patterns = ['*'] if request.is_local else []
 
-db = DAL("sqlite://storage.db", pool_size=5, migrate=MIGRATE, attempts=10)
-db2 = DAL("sqlite://storage_scheduler.db", pool_size=5, migrate=MIGRATE, attempts=10)
+db = DAL("sqlite://storage.db", pool_size=5, migrate=MIGRATE, attempts=10, lazy_tables=LAZY_TABLES)
+db2 = DAL("sqlite://storage_scheduler.db", pool_size=5, migrate=MIGRATE, attempts=10, lazy_tables=LAZY_TABLES)
 
 from gluon.storage import Storage
 from gluon import current
