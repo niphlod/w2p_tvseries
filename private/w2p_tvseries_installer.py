@@ -206,7 +206,9 @@ if raw_input("let's create/migrate our database.... (y/n)?").lower() in ['y', 'y
     model_file = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'models', 'db.py')
     print 'setting migrate to True, just to be sure'
     with open(model_file) as g:
-        content = g.read().replace("MIGRATE = False", "MIGRATE = True")
+        content = g.read()
+        content = content.replace("MIGRATE = False", "MIGRATE = True")
+        content = content.replace("LAZY_TABLES = False", "LAZY_TABLES = True")
     with open(model_file, 'w') as g:
         g.write(content)
 
