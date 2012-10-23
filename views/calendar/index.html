@@ -20,7 +20,7 @@
 <script type="text/javascript">
 $(function () {
     $('#calendar').fullCalendar({
-        events: '/w2p_tvseries/calendar/events',
+        events: '{{=URL('calendar', 'events')}}',
         eventRender: function(event, element) {
             element.find('span').before($(event.icon));
         },

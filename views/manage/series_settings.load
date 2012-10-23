@@ -68,7 +68,7 @@ pass
                     autoinput.addClass('w2p_autocomplete');
                     autoinput.on('change', function() {
                         if (!autoinput.hasClass('w2p_autocomplete')) return;
-                        $.get('/w2p_tvseries/manage/showrss_helper',
+                        $.get('{{=URL('manage', 'showrss_helper')}}',
                               {'show_name' : $(this).val()},
                               function(data) {
                                 autoinput.val(data);

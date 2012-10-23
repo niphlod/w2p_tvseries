@@ -101,13 +101,13 @@
             if ($(e.target).attr('href') == '#series_settings') {
                 var settings = $(".settings", currenttab);
                 var el = settings[0].id
-                w2p_tvseries_ajax_page('get', '/w2p_tvseries/manage/series_settings.load/' + el.replace('settings_', ''), null, el);
+                w2p_tvseries_ajax_page('get', '{{=URL('manage','series_settings.load')}}/' + el.replace('settings_', ''), null, el);
             } else {
                 var episodes = $('.loading', currenttab);
                 var myrequests = [];
                 $.each(episodes, function() {
                     var episodeid = this.id.replace('episode_', '');
-                    myrequests.push(w2p_tvseries_ajax_page('get', '/w2p_tvseries/series/episodes.load/' + episodeid, null, this.id));
+                    myrequests.push(w2p_tvseries_ajax_page('get', '{{=URL('series', 'episodes.load')}}/' + episodeid, null, this.id));
                 });
                 // thanks to http://stackoverflow.com/questions/9865586/jquery-when-troubleshooting-with-variable-number-of-arguments
                 var defer = $.when.apply($, myrequests);
