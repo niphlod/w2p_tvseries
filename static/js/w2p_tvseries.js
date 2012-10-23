@@ -100,7 +100,7 @@ function w2p_tvseries_ajax_page(method,action,data,target) {
 }
 function w2p_tvseries_message(message) {
    var flash = jQuery('.flash');
-   flash.html(message);
+   flash.html(decodeURIComponent(message));
    flash.slideDown();
 }
 jQuery(document).ready(function(){
