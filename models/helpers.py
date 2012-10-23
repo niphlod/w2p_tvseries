@@ -416,9 +416,9 @@ def vtracker():
     git_version = vt.git_version
     git_version_print = '.'.join([str(a) for a in git_version])
     if git_version == [0,0,0]:
-        message = 'Unable to retrieve info from github.com'
+        message = 'Unable to retrieve version info from github.com'
     if cur_version < git_version:
-        message = 'Newer version is available, please run w2p_tvseries_installer.py again'
+        message = 'Newer version is available, please stop and run w2p_tvseries_installer.py again'
     return dict(
         message=message,
         cur_version=cur_version,
@@ -428,4 +428,4 @@ def vtracker():
         )
 
 if not request.ajax: #in scheduler request.ajax is False
-    vtracker = cache.disk('vtracker', lambda: vtracker(), time_expire=120*60)
+    vtracker = cache.ram('vtracker', lambda: vtracker(), time_expire=120*60)

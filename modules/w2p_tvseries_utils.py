@@ -1034,9 +1034,10 @@ class Version_Tracker(object):
         try:
             r = requests.get(self.git_version_url)
             content = r.content
+            rtn = self.parse_version(content)
         except:
-            content = '0.0.0'
-        return self.parse_version(content)
+            rtn = [0, 0, 0]
+        return rtn
 
     def parse_version(self, content):
         version = content.replace('\n', '').strip().split('.')

@@ -127,8 +127,17 @@
   <hr>
   <footer>
     <p>
-        w2p_tvseries {{=vtracker['cur_version_print']}}: built around <a href="web2py.com">web2py</a>, <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>, <a href="http://thetvdb.com/">thetvdb</a>, <a href="http://ezrss.it">ezrss.it</a>, <a href="http://torrentz.eu">torrentz</a>,
-        <a href="http://showrss.karmorra.info/">showRSS</a>, <a href="http://www.italiansubs.net">itasa</a> and <a href="http://www.opensubtitles.org/">opensubtitles</a> and <a href="{{=URL('docs', 'page', args=['index'], anchor="credits")}}">others</a> .Without them, no w2p_tvseries could be possible!
+        {{if vtracker['message']:}}
+            <span class="label label-warning">{{=vtracker['message']}}</span>
+        {{else:}}
+        w2p_tvseries <span class="label label-success">v {{=vtracker['cur_version_print']}}</span> :
+        {{pass}}
+        built around <a href="web2py.com">web2py</a>, <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>,
+        <a href="http://thetvdb.com/">thetvdb</a>, <a href="http://ezrss.it">ezrss.it</a>, <a href="http://torrentz.eu">torrentz</a>,
+        <a href="http://showrss.karmorra.info/">showRSS</a>, <a href="http://www.italiansubs.net">itasa</a>
+        and <a href="http://www.opensubtitles.org/">opensubtitles</a> and
+        <a href="{{=URL('docs', 'page', args=['index'], anchor="credits")}}">others</a> .
+        Without them, no w2p_tvseries could be possible!
     </p>
   </footer>
 
@@ -151,7 +160,7 @@ $(document).ready(function() {
     $("#global_search").select2({
         minimumInputLength: 4,
         ajax: {
-            url: "/w2p_tvseries/series/search.json",
+            url: "{{=URL('series', 'search.json')}}",
             dataType: 'json',
             data: function (term, page) {
                 return {
@@ -162,7 +171,7 @@ $(document).ready(function() {
                 return {results: data};
             }
         },
-        formatResult: movieFormatResult, // omitted for brevity, see the source of this page
+        formatResult: movieFormatResult,
         dropdownCssClass: "bigdrop" // apply css that makes the dropdown taller
     });
     $('#global_search').on('change', function(e) {
