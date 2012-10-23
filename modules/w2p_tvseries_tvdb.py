@@ -492,7 +492,6 @@ class tvdb_mappers(object):
 class w2p_tvseries_tvren(object):
 
     def __init__(self):
-        print 'istantiated tvren'
         self.video_ext = ['.avi', '.mkv', '.mp4', '.3gp']
         self.subs_ext = ['.srt', '.ass']
         self.logger = tvdb_logger_loader('tvren')
