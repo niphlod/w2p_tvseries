@@ -427,5 +427,5 @@ def vtracker():
         git_version_print=git_version_print
         )
 
-if not request.ajax: #in scheduler request.ajax is False
+if request.ajax == False: #in scheduler request.ajax is None
     vtracker = cache.ram('vtracker', lambda: vtracker(), time_expire=120*60)
