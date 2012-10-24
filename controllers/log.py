@@ -54,14 +54,18 @@ def index():
 
 def op_status():
     session.forget()
-
+    st = db2.scheduler_task
+    sw = db2.scheduler_worker
     operations = db2(
-                    (db2.scheduler_task.task_name.startswith('now_or_never')) |
-                    (db2.scheduler_task.task_name.startswith('spec'))
+                    (st.task_name.startswith('now_or_never')) |
+                    (st.task_name.startswith('spec'))
                     ).select()
 
+    timelimit = request.now - datetime.timedelta(seconds=3)
+    worker = db2(sw.last_heartbeat > timelimit).select(sw.id).first()
+
     if not operations.first():
-        rtn = dict(status='complete', text='0/0', perc=0)
+        rtn = dict(status='complete', text='0/0', perc=0, worker=worker)
         return json(rtn)
 
     todo = operations.find(lambda row: (row.times_run == 0 and row.status not in ('RUNNING', 'FAILED')))
@@ -71,7 +75,7 @@ def op_status():
 
     text = "%s/%s" % (operations-todo,operations)
     perc = "%s%%" % ((operations - todo) * 1.0 / operations * 100)
-    rtn = dict(status='loading', text=text, perc=perc)
+    rtn = dict(status='loading', text=text, perc=perc, worker=worker)
     return json(rtn)
 
 def show():

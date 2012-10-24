@@ -78,10 +78,8 @@ $(function () {
         $.when(request).then(function() {
             el.text('0/0');
         });
-
     });
     if (typeof $('#smarthandle').data('handle') !== 'undefined') $('#smarthandle').data('handle').stop();
-
     el.PeriodicalUpdater('/w2p_tvseries/log/op_status', {
         method: 'get',
         data: '',
@@ -101,6 +99,11 @@ $(function () {
             var command = xhr.getResponseHeader('web2py-component-command');
             if (command == 'stop') handle.stop();
             el.button(remoteData.status).text(remoteData.text);
+            if (!remoteData.worker) {
+                el.removeClass('btn-info').addClass('btn-warning').attr('data-original-title', 'no active workers')
+                } else {
+                el.removeClass('btn-warning').addClass('btn-info').attr('data-original-title', 'background operations, click to stop them')
+            }
             bar.css('width', remoteData.perc);
             if(command) eval(decodeURIComponent(escape(command)));
         }
@@ -121,7 +124,7 @@ $(function () {
                DIV(
                    DIV(
                    A(w2p_icon('Continuing', variant='white'),_id="operation_button", _href=URL('manage', 'stop_operations'), _class="btn btn-info",
-                     _autocomplete="off", **{'_data-original-title' : 'background operations, click to stop them'}),
+                     _autocomplete="off"),
                      _class="btn-group"),
                    DIV(
                         BUTTON(w2p_icon('settings', variant='white'), ' Add/Del Series ', SPAN(_class="caret"), _class="btn btn-primary dropdown-toggle", **{'_data-toggle' : 'dropdown'}),
