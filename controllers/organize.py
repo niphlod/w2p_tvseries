@@ -203,15 +203,16 @@ def path_for_one_season(seasons_settings, series_metadata, hash_gen_mode, op_key
         path.append('series_metadata')
     if seasons_settings.subtitle_tracking:
         path.append('check_subs')
-        path.append('down_subs')
     if seasons_settings.torrent_tracking:
         path.append('queue_torrents')
         path.append('down_torrents')
 
     params = Storage()
     params['ep_metadata'] = dict(timeout=300)
-    params['down_subs'] = dict(timeout=300)
+    params['check_subs'] = dict(timeout=300, retry_failed=2)
     params['scoop_season'] = dict(timeout=300)
+    params['queue_torrents'] = dict(retry_failed=2)
+    params['down_torrents'] = dict(retry_failed=2)
 
     st = db2.scheduler_task
 

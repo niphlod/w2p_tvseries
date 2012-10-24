@@ -27,7 +27,6 @@ from w2p_tvseries_feed import w2p_tvseries_torrent_loader
 from w2p_tvseries_utils import tvdb_scooper_loader, Hasher, Brewer
 from w2p_tvseries_serializers import w2p_tvseries_serializers_loader
 import datetime
-import time
 import shutil
 
 def check_season_worker(series_id , seasonnumber, mode):
@@ -68,12 +67,15 @@ def check_season(series_id, seasonnumber, cb=None):
     return rtn
 
 def check_season_subs(series_id, seasonnumber, cb=None):
-    rtn = check_season_worker(series_id, seasonnumber, 'subs')
+    check_season_worker(series_id, seasonnumber, 'subs')
+    rtn = down_subs(series_id, seasonnumber)
+    if rtn.get('err') is None:
+        check_season_worker(series_id, seasonnumber, 'subs')
     if cb:
         default_callback(cb, series_id, seasonnumber)
     return rtn
 
-def down_subs(series_id, seasonnumber, cb=None):
+def down_subs(series_id, seasonnumber):
     rec = db(
             (db.seasons_settings.series_id == series_id) &
             (db.seasons_settings.seasonnumber == seasonnumber)
@@ -86,14 +88,6 @@ def down_subs(series_id, seasonnumber, cb=None):
     downloader = w2p_tvseries_sub_loader(method, verbose=False)
 
     rtn = downloader.get_missing(series_id, seasonnumber)
-    if rtn.get('err') is None:
-        check_season_subs(series_id, seasonnumber, cb=cb)
-        rtn = sj.dumps(rtn)
-    else:
-        rtn = sj.dumps(dict(ok=1))
-
-    if cb:
-        default_callback(cb, series_id, seasonnumber)
     return rtn
 
 def down_epbanners(cb=None):
@@ -143,14 +137,12 @@ def down_torrents(series_id, seasonnumber, cb=None):
     if cb:
         default_callback(cb, series_id, seasonnumber)
 
-
 def queue_torrents(series_id, seasonnumber, cb=None):
     l = w2p_tvseries_torrent_loader()
     l.queue_torrents(series_id, seasonnumber)
     db.commit()
     if cb:
         default_callback(cb, series_id, seasonnumber)
-
 
 def scoop_season(series_id, seasonnumber, cb=None):
     scooper = tvdb_scooper_loader()
@@ -232,7 +224,6 @@ def bit_actualizer(rename_log_id):
     else:
         return str(TAG[''](TD(), TD('Invalid rename'), TD()))
 
-
 def task_group_finished(group, operation_key):
     st = db2.scheduler_task
     #still to run
@@ -289,7 +280,6 @@ def the_boss():
         return rtn
     steps_todo = [a[0] for a in res if not a[1]]
 
-
     if len(steps_todo) > 0:
         step = steps_todo[0]
         rtn.append('activating %s' % (step))
@@ -314,8 +304,6 @@ def the_boss():
 
     return rtn
 
-
-
 myscheduler = Scheduler(db2,
     dict(
         check_season=check_season,
@@ -323,7 +311,6 @@ myscheduler = Scheduler(db2,
         add_series=add_series,
         bit_actualizer=bit_actualizer,
         check_subs=check_season_subs,
-        down_subs=down_subs,
         down_epbanners=down_epbanners,
         down_sebanners=down_sebanners,
         update=update,
