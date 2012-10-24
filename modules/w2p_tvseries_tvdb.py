@@ -429,7 +429,7 @@ class tvdb_mappers(object):
         record.lastupdated = xmlnode.findtext('lastupdated')
         record.genre = [a for a in record.genre.split('|') if a <> '']
         banner = xmlnode.findtext('banner')
-        self.log('series_mapper',  'mapping series %s (%s)' % (record.name, record.seriesid))
+        self.log('series_mapper', 'mapping series %s (%s)' % (record.name, record.seriesid))
         if record.seriesid:
             condition = (se_tb.seriesid == record.seriesid)
             id = se_tb.update_or_insert(condition, **record)
