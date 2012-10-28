@@ -61,7 +61,7 @@ def op_status():
                     (st.task_name.startswith('spec'))
                     ).select()
 
-    timelimit = request.now - datetime.timedelta(seconds=3)
+    timelimit = request.now - datetime.timedelta(seconds=10)
     worker = db2(sw.last_heartbeat > timelimit).select(sw.id).first()
 
     if not operations.first():
