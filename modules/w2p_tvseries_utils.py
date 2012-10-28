@@ -220,7 +220,6 @@ class w2p_tvseries_settings(object):
         ]
 
     def _global_settings(self):
-        cache = current.cache
         db = current.w2p_tvseries.database
         settings = Storage()
         gs_tb = db.global_settings

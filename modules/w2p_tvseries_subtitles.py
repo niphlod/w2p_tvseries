@@ -232,7 +232,7 @@ class OpenSubtitlesDownloader(SubDownloader):
             searchlist.append(
                 dict(
                     moviehash = row.episodes_metadata.osdb,
-                    moviebytesize = str(row.episodes_metadata.size),
+                    moviebytesize = str(row.episodes_metadata.filesize),
                     sublanguageid = language
                 )
             )
