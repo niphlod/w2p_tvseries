@@ -4,9 +4,10 @@
 import os
 import sys
 
-if '__file__' in globals():
+if hasattr(sys, 'frozen'):
+    path = os.path.dirname(os.path.abspath(sys.executable))
+elif '__file__' in globals():
     path = os.path.dirname(os.path.abspath(__file__))
-
     if not os.path.exists(os.path.join(path,'web2py.py')):
         i = 0
         while i<10:
@@ -16,46 +17,55 @@ if '__file__' in globals():
             path = os.path.abspath(os.path.join(path, '..'))
     os.chdir(path)
 else:
-    path = os.getcwd() # Seems necessary for py2exe
+    path = os.getcwd()
 
 
 sys.path = [path]+[p for p in sys.path if not p==path]
 
-from gluon.widget import start
 from gluon.shell import run
 from gluon import main
-import shutil
 import logging
 
 logging.getLogger().setLevel(logging.INFO)
 
-def start_schedulers():
-    apps = ['w2p_tvseries']
+
+def start_schedulers(apps='w2p_tvseries'):
     try:
         from multiprocessing import Process
     except:
         sys.stderr.write('Sorry, -K only supported for python 2.6-2.7\n')
         return
     processes = []
+    apps = [app.strip() for app in apps.split(',')]
     code = "from gluon import current; current._scheduler.max_empty_runs=10; current._scheduler.loop()"
+    logging.getLogger().setLevel(logging.INFO)
+    if len(apps) == 1:
+        print 'starting single-scheduler for "%s"...' % apps[0]
+        run(apps[0], True, True, None, False, code)
+        return
     for app in apps:
-        logging.info('starting scheduler for "%s"...' % app)
-        args = (app,True,True,None,False,code)
+        print 'starting scheduler for "%s"...' % app
+        args = (app, True, True, None, False, code)
         p = Process(target=run, args=args)
         processes.append(p)
-        logging.info("Currently running %s scheduler processes" % (len(processes)))
+        print "Currently running %s scheduler processes" % (len(processes))
         p.start()
-        logging.info("Processes started")
+        print "Processes started"
     for p in processes:
         try:
             p.join()
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
+            print "Processes stopped"
+        except:
             p.terminate()
             p.join()
 
-
 # Queue ops and start Scheduler
 if __name__ == '__main__':
+    """web2py.py -M -S w2p_tvseries -D 0 -R applications/w2p_tvseries/private/w2p_tvseries.py -A -s maintenance
+        or
+        python applications/w2p_tvseries/private/w2p_tvseries.py -s maintenance
+    """
     args = sys.argv
     if '-h' in args or '--help' in args:
         print """Use this to enqueue and process tasks with a cron job
@@ -83,9 +93,8 @@ e.g.  Set this to maintenance,update to skip maintenance and update jobs
         code = ''
         for a in disabled_operations:
             if a in available_ops:
-                logging.info('Skipping %s tasks' % a)
+                print 'Skipping %s tasks' % a
                 code += "db2(db2.scheduler_task.function_name == '%s').delete();" % a
         code += "db2.commit();"
         run('w2p_tvseries/organize', True, True, None, False, code)
-    from multiprocessing import Process
     start_schedulers()

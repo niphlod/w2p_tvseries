@@ -22,7 +22,6 @@ import shutil
 import urllib
 import sys
 import zipfile
-import hashlib
 import datetime
 import time
 
@@ -257,10 +256,14 @@ cd web2py
 "%(executable)s" web2py.py -a w2p_tvseries &
 "%(executable)s" web2py.py -K w2p_tvseries
 """ % dict(executable=executable)
-
     cronscript = """
 "%(executable)s" "%(cronfile)s"
 """  % dict(executable=sys.executable, cronfile=os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'w2p_tvseries.py'))
+
+    if is_binary_version:
+        cronscript = """
+"%(executable)s" -M -S w2p_tvseries -R "%(cronfile)s"
+""" % dict(executable=sys.executable, cronfile=os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'w2p_tvseries.py'))
 
     if sys.platform.startswith('win'):
         with open(os.path.join(basefolder, 'start_web_and_scheduler.template.bat'), 'w') as g:
