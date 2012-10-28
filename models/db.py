@@ -33,7 +33,7 @@ MIGRATE = True
 LAZY_TABLES = False
 
 response.generic_patterns = ['*'] if request.is_local else []
-response.static_version = '1.2.2'
+response.static_version = '1.3.0'
 
 db = DAL("sqlite://storage.db", pool_size=5, migrate=MIGRATE, attempts=10, lazy_tables=LAZY_TABLES)
 db2 = DAL("sqlite://storage_scheduler.db", pool_size=5, migrate=MIGRATE, attempts=10, lazy_tables=LAZY_TABLES)
