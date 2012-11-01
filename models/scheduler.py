@@ -115,6 +115,17 @@ def update(cb=None):
         default_callback(cb)
     return sj.dumps(res)
 
+def update_single_series(series_id):
+    tvdb = w2p_tvseries_tvdb_loader()
+    se_tb = db.series
+    series = db(se_tb.id == series_id).select(se_tb.seriesid, se_tb.language).first()
+    if not series:
+        return
+    db(se_tb.id == series_id).update(lastupdated = se_tb.lastupdated - 10000)
+    res = tvdb.add_series(series.seriesid, series.language)
+    db.commit()
+    return sj.dumps(res)
+
 def maintenance(cb=None):
     unparsed_date = datetime.datetime(2000, 1, 1)
     max_date = datetime.datetime(2050, 1, 1)
@@ -309,6 +320,7 @@ myscheduler = Scheduler(db2,
         check_season=check_season,
         create_path=create_path,
         add_series=add_series,
+        update_single_series=update_single_series,
         bit_actualizer=bit_actualizer,
         check_subs=check_season_subs,
         down_epbanners=down_epbanners,

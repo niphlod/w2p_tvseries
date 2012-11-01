@@ -415,6 +415,17 @@ def episode_tracking():
 
     return A(rtntext, callback=URL('manage', 'episode_tracking', args=[rec.id]), target=trackingid, _class=rtnclass, _title=title)
 
+def update_from_tvdb():
+    series_id = request.args(0)
+    if not series_id:
+        return ''
+    db2.scheduler_task.insert(
+        function_name='update_single_series',
+        args=sj.dumps(series_id),
+        task_name='spec:update_single_series',
+        timeout=180)
+    return json(dict(result='ok'))
+
 def bit():
 
     cond_series = db(db.series.id>0)

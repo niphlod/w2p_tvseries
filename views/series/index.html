@@ -33,7 +33,7 @@
                     <div class="row-fluid">
                         <div class="btn-toolbar">
                             <div class="btn-group">
-                                {{=A("Refresh from db", _class="btn reload", _href=URL('osi', 'check_season', args=[request.args(0), season]))}}
+                                {{=A("Refresh from tvdb", _class="btn reload", _href=URL('manage', 'update_from_tvdb', args=[request.args(0)]))}}
                                 {{=A("Queue activities", _class="btn queue_season", _title="(for this series only)", _href=URL('organize', 'queue_ops', args=[request.args(0), season]))}}
                             </div>
                             {{=myrefurlwidget(seasondict['ref_urls'])}}
@@ -63,9 +63,8 @@
             return (number < 10 ? '0' : '') + number
         };
         $(".missingep", currenttab).removeClass('missingep');
-        var el = $('a.reload', currenttab);
-        var href = el.attr('href');
         var season = currenttab.attr('id').replace('season_', '');
+        var href = '{{=URL('osi', 'check_season', args=[request.args(0)])}}' + '/' + season;
         $.getJSON(href, function(data) {
             if (!data.missing) return;
             for (var i=0; i<data.missing.length;i++) {

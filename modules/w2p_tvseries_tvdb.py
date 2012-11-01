@@ -198,7 +198,7 @@ class w2p_tvseries_tvdb(object):
         se_tb = db.series
         series = db(se_tb.id>0).select(se_tb.seriesid, se_tb.language)
         series = [(row.seriesid, row.language) for row in series]
-        db(se_tb.id>0).update(lastupdated = se_tb.lastupdated - 1000)
+        db(se_tb.id>0).update(lastupdated = se_tb.lastupdated - 10000)
         for id, language in series:
             self.log('global_reset', "Re-add Series (%s)" % (id))
             self.add_series(id, language)
