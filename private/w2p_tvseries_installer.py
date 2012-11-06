@@ -25,6 +25,10 @@ import zipfile
 import datetime
 import time
 
+def wait_and_exit(rtncode=0):
+    time.sleep(5)
+    sys.exit(rtncode)
+
 #adapted from http://code.activestate.com/recipes/465649-file-unzip-lite/
 def extract( filename, dir ):
     zf = zipfile.ZipFile( filename )
@@ -49,7 +53,7 @@ def extract( filename, dir ):
                 out.write(zf.read(fn))
                 out.close()
         finally:
-            print fn
+            pass
     os.chdir( pushd )
 
 def download(url, file):
@@ -91,42 +95,42 @@ def parse_tvseries_version(version_file):
 
 
 def update_w2p_tvseries(w2p_folder, version):
-    if raw_input('update/download app from internet (y/n)?').lower() in ['y', 'yes']:
+    if raw_input('Q:    Update/download app from internet ([Y]/n)?').lower() in ['y', 'yes']:
         version = '.'.join([str(a) for a in version])
-        print 'Downloading version %s' % version
+        print '  INFO: Downloading version %s' % version
         w2p_tvseries_url = 'https://github.com/niphlod/w2p_tvseries/zipball/%s' % version
 
         destfolder = os.path.normpath(os.path.abspath(os.path.join(w2p_folder, 'deposit', '%s' % datetime.datetime.now().strftime('%f'))))
         if not os.path.exists(destfolder):
             os.makedirs(destfolder)
         if not download(w2p_tvseries_url, zipball):
-            print 'problems downloading from github, please try again later'
-            sys.exit(1)
+            print '  ERROR: Problems downloading from github, please try again later'
+            wait_and_exit(1)
 
-        print 'unzipping into %s' % destfolder
+        print '  INFO: unzipping into %s' % destfolder
         extract(zipball, destfolder)
         if not os.listdir(destfolder):
-            print 'Problems downloading or extracting, Aborting auto-install'
-            sys.exit(1)
+            print '  ERROR: Problems downloading or extracting, Aborting auto-install'
+            wait_and_exit(1)
         sourcefolder = os.path.abspath(os.path.join(destfolder, os.listdir(destfolder)[0]))
         appbckfolder = os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries_bck'))
         finalfolder = os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
 
         if os.path.exists(appbckfolder):
-            print 'cleaning %s' % appbckfolder
+            print '  INFO: cleaning %s' % appbckfolder
             recursive_unlink(appbckfolder)
 
         if os.path.exists(finalfolder):
-            print 'backupping current from %s to %s' % (finalfolder, appbckfolder)
+            print '  INFO: backupping current from %s to %s' % (finalfolder, appbckfolder)
             shutil.copytree(finalfolder, appbckfolder)
 
-        print 'overwriting %s with %s' % (finalfolder, sourcefolder)
+        print '  INFO: overwriting %s with %s' % (finalfolder, sourcefolder)
         overwrite(sourcefolder, finalfolder)
 
-        print 'cleaning %s' % (destfolder)
+        print '  INFO: cleaning %s' % (destfolder)
         recursive_unlink(destfolder)
 
-        print 'fixing newlines in %s' % (finalfolder)
+        print '  INFO: fixing newlines in %s' % (finalfolder)
         fix_newlines(finalfolder)
 
 
@@ -145,16 +149,16 @@ if __name__ == '__main__':
     this_file_path = os.path.abspath(__file__)
     updater_url = 'https://raw.github.com/niphlod/w2p_tvseries/master/private/w2p_tvseries_installer.py'
     if not os.path.exists(w2p_folder):
-        if raw_input('There is no web2py in this path. Download it from internet (y/n)?').lower() in ['y', 'yes']:
+        if raw_input('Q:    There is no web2py in this path. Download it from internet ([Y]/n)?').lower() in ['y', 'yes']:
             web2py_url = 'http://www.web2py.com/examples/static/web2py_src.zip'
             if not download(web2py_url, w2p_archive):
-                print 'problems downloading from web2py.com, try again later'
-                sys.exit(1)
+                print '  INFO: problems downloading from web2py.com, try again later'
+                wait_and_exit(1)
             if os.path.exists(w2p_archive):
                 extract(w2p_archive, basefolder)
     if not os.path.exists(w2p_folder):
-        print 'web2py folder undetected, exiting...'
-        sys.exit(1)
+        print '  INFO: web2py folder undetected, exiting...'
+        wait_and_exit(1)
 
     try:
         version_mtime = os.stat(w2p_git_version_file).st_mtime
@@ -162,10 +166,10 @@ if __name__ == '__main__':
         version_mtime = 0
     check_version = version_mtime < time.time() - 60
     if check_version:
-        print 'Retrieving version from github'
+        print '  INFO: Retrieving version from github'
         if not download(w2p_git_version_url, w2p_git_version_file):
-            print 'Unable to contact github. Please try again in a few minutes'
-            sys.exit(1)
+            print '  ERROR: Unable to contact github. Please try again in a few minutes'
+            wait_and_exit(1)
     git_version = parse_tvseries_version(w2p_git_version_file)
     if not os.path.isfile(current_version_file):
         cur_version = None
@@ -173,15 +177,15 @@ if __name__ == '__main__':
         cur_version = parse_tvseries_version(current_version_file)
 
     if cur_version and cur_version < git_version and check_version:
-        print 'Downloading new installer'
+        print '  INFO: Downloading new installer'
         tmp_path = this_file_path + '____tmp'
         if not download(updater_url, tmp_path):
-            print 'Unable to download updated installer, exiting'
-            sys.exit(1)
+            print '  INFO: Unable to download updated installer, exiting'
+            wait_and_exit(1)
         os.remove(this_file_path)
         os.rename(tmp_path, this_file_path)
-        print 'Updated installer, please restart the script'
-        sys.exit(1)
+        print '  INFO: Updated installer, please restart the script'
+        wait_and_exit(1)
 
     if w2p_folder not in sys.path:
         sys.path.insert(0, w2p_folder)
@@ -195,45 +199,48 @@ if __name__ == '__main__':
 
 
     if cur_version >= git_version:
-        print 'You have the latest version of w2p_tvseries'
-        sys.exit(0)
+        print '  INFO: You have the latest version of w2p_tvseries'
+        wait_and_exit(0)
 
     update_w2p_tvseries(w2p_folder, git_version)
 
-if raw_input("let's create/migrate our database.... (y/n)?").lower() in ['y', 'yes']:
+if raw_input("Q:    Let's create/migrate our database.... ([Y]/n)?").lower() in ['y', 'yes']:
     remove_compiled_application(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
     model_file = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'models', 'db.py')
-    print 'setting migrate to True, just to be sure'
+    print '  INFO: setting migrate to True, just to be sure'
     with open(model_file) as g:
         content = g.read()
         content = content.replace("MIGRATE = False", "MIGRATE = True")
-        content = content.replace("LAZY_TABLES = False", "LAZY_TABLES = True")
+        content = content.replace("LAZY_TABLES = True", "LAZY_TABLES = False")
     with open(model_file, 'w') as g:
         g.write(content)
 
     run('w2p_tvseries/manage/stop_operations')
-    print 'migration occurred, setting migrate to False'
+    print '  INFO: migration occurred, setting migrate to False'
 
     with open(model_file) as g:
         content = g.read().replace("MIGRATE = True", "MIGRATE = False")
+        content = content.replace("LAZY_TABLES = False", "LAZY_TABLES = True")
     with open(model_file, 'w') as g:
         g.write(content)
 
-    print 'migrate set to False'
-
+    print '  INFO: migrate set to False'
+"""
 if raw_input("(re)compile application (y,n) ?").lower() in ['y','yes']:
     request = Storage(folder=os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries')))
     remove_compiled_application(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
     app_compile('w2p_tvseries', request)
+"""
+routes_dst = os.path.abspath(os.path.join(w2p_folder, 'routes.py'))
+if not os.path.isfile(routes_dst):
+    if raw_input("Q:    Copy default redirection (if this is the only app installed, it's safe to say yes) ([Y]/n)?"
+                ).lower() in ['y', 'yes']:
+        routes_src = os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'routes.py'))
+        routes_dst = os.path.abspath(os.path.join(w2p_folder, 'routes.py'))
+        if not os.path.exists(routes_dst):
+            shutil.copy(routes_src, routes_dst)
 
-if raw_input("copy default redirection (if this is the only app installed, it's safe to say yes) (y/n)?"
-            ).lower() in ['y', 'yes']:
-    routes_src = os.path.abspath(os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'routes.py'))
-    routes_dst = os.path.abspath(os.path.join(w2p_folder, 'routes.py'))
-    if not os.path.exists(routes_dst):
-        shutil.copy(routes_src, routes_dst)
-
-if raw_input("Create start scripts (y/n)?").lower() in ['y', 'yes']:
+if raw_input("Q:    Create start scripts ([Y]/n)?").lower() in ['y', 'yes']:
     is_binary_version = sys.executable.endswith('web2py.exe')
     executable = sys.executable
     if is_binary_version:
@@ -244,6 +251,9 @@ start "%(executable)s" web2py.py -K w2p_tvseries
 start "%(executable)s" web2py.py -a w2p_tvseries
 popd
 """ % dict(executable=executable)
+    updaterfile = """
+"%(executable)s" w2p_tvseries_installer.py
+""" % dict(executable=executable)
     if is_binary_version:
         startfiledos = """
 pushd web2py
@@ -251,14 +261,21 @@ start %(executable)s -K w2p_tvseries
 start %(executable)s -a w2p_tvseries
 popd
 """ % dict(executable=executable)
+        updaterfile = """
+pushd web2py
+%(executable)s -S admin -R ..\w2p_tvseries_installer.py
+popd
+""" % dict(executable=executable)
     startfilelinux = """
-cd web2py
+pushd web2py
 "%(executable)s" web2py.py -a w2p_tvseries &
 "%(executable)s" web2py.py -K w2p_tvseries
+popd
 """ % dict(executable=executable)
     cronscript = """
 "%(executable)s" "%(cronfile)s"
 """  % dict(executable=sys.executable, cronfile=os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'w2p_tvseries.py'))
+
 
     if is_binary_version:
         cronscript = """
@@ -270,14 +287,20 @@ cd web2py
             g.write(startfiledos)
         with open(os.path.join(basefolder, 'cronscript.template.bat'), 'w') as g:
             g.write(cronscript)
+        with open(os.path.join(basefolder, 'updater.bat'), 'w') as g:
+            g.write(updaterfile)
 
     elif sys.platform.startswith('linux'):
         with open(os.path.join(basefolder, 'start_web_and_scheduler.template.sh'), 'w') as g:
             g.write(startfilelinux)
         with open(os.path.join(basefolder, 'cronscript.template.sh'), 'w') as g:
             g.write(cronscript)
+        with open(os.path.join(basefolder, 'updater.sh'), 'w') as g:
+            g.write(updaterfile)
 
-print "Enjoy w2p_tvseries"
+print "    Enjoy w2p_tvseries!, Exiting from the updater"
 for file in [w2p_archive, zipball]:
     if os.path.exists(file):
         os.unlink(file)
+wait_and_exit(0)
+
