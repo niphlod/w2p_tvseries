@@ -32,8 +32,13 @@ def page():
             content = g.read()
     else:
         raise HTTP(404)
+    def url2(*a,**b):
+        b['host'] = False
+        b['scheme'] = False
+        b['args'] = [q for q in b['args'] if q <> 'def']
+        return URL(*a,**b)
 
-    return dict(content=content, path=path)
+    return dict(content=MARKMIN(content, url=url2, extra=dict(images=lambda x : '')), path=path)
 
 def path_to_file(request):
     folders = request.args
