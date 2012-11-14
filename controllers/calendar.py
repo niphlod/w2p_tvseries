@@ -59,8 +59,10 @@ def events():
             except:
                 pass
         icon = ''
-        if row.episodes.inserted_on and row.seasons_settings.updated_on and row.episodes.inserted_on > row.seasons_settings.updated_on:
-            icon = 'icon-refresh'
+        if row.episodes.inserted_on and row.seasons_settings.updated_on:
+            cmp_to = max(row.episodes.inserted_on.date(), row.episodes.firstaired)
+            if cmp_to > row.seasons_settings.updated_on.date():
+                icon = 'icon-refresh'
         if row.episodes.firstaired > request.now.date():
             icon = 'icon-calendar'
         if icon not in ('icon-refresh', 'icon-calendar'):
