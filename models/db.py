@@ -35,8 +35,20 @@ LAZY_TABLES = False
 response.generic_patterns = ['*'] if request.is_local else []
 response.static_version = '1.3.2'
 
-db = DAL("sqlite://storage.db", pool_size=5, migrate=MIGRATE, attempts=10, lazy_tables=LAZY_TABLES)
-db2 = DAL("sqlite://storage_scheduler.db", pool_size=5, migrate=MIGRATE, attempts=10, lazy_tables=LAZY_TABLES)
+db = DAL(
+    "sqlite://storage.db",
+    migrate=MIGRATE,
+    attempts=10,
+    lazy_tables=LAZY_TABLES,
+    driver_args= {'timeout': 30}
+    )
+db2 = DAL(
+    "sqlite://storage_scheduler.db",
+    migrate=MIGRATE,
+    attempts=10,
+    lazy_tables=LAZY_TABLES,
+    driver_args= {'timeout': 30}
+    )
 
 from gluon.storage import Storage
 from gluon import current

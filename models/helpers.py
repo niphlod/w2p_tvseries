@@ -430,5 +430,17 @@ def vtracker():
         git_version_print=git_version_print
         )
 
+def activate_wal():
+    """
+    If dburi is sqlite, try to activate WAL
+    http://www.sqlite.org/draft/wal.html
+    Regardless of the supported version, the executed
+    query is safe.
+    """
+    for database in db, db2:
+        if database._uri.startswith('sqlite://'):
+            result = database.executesql("PRAGMA journal_mode=WAL;")
+
 if request.ajax == False: #in scheduler request.ajax is None
     vtracker = cache.ram('vtracker', lambda: vtracker(), time_expire=120*60)
+    walmode = cache.ram('walmode', lambda: activate_wal(), time_expire=180*60)
