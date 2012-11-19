@@ -541,11 +541,12 @@ class Scooper(object):
                 for mask in masks:
                     if filename.lower().startswith(mask.lower()):
                         if os.path.isfile(source) and not os.path.exists(dest):
+                            db.commit()
                             try:
-                                db.commit()
-                                db.rename_log.insert(file_from=source, file_to=dest, series_id=seriesid, seasonnumber=seasonnumber)
-                                self.log(fname, 'moving %s --> %s' % (filename, path))
                                 shutil.move(source, dest)
+                                db.rename_log.insert(file_from=source, file_to=dest, series_id=seriesid, seasonnumber=seasonnumber)
+                                self.log(fname, 'moved %s --> %s' % (filename, path))
+                                db.commit()
                             except:
                                 db.rollback()
 
