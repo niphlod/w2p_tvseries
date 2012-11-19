@@ -155,3 +155,21 @@ def client_settings_validate():
         return dict(status='error', message="Connection error, please check it out")
     else:
         return dict(status='ok', message='all ok')
+
+def hints():
+    session.forget()
+    #are there any new season if we're following the last one ?
+    all_se = db(db.series.id > 0).select(db.series.id, db.series.name)
+    ss = db.seasons_settings
+    new_se = []
+    for row in all_se:
+        validate_seasons(row.id)
+        all_seasons = db(ss.series_id == row.id).select(ss.seasonnumber, ss.tracking, orderby=ss.seasonnumber)
+        to_activate = False
+        for a in all_seasons:
+            if a.tracking:
+                to_activate = True
+            elif to_activate and not a.tracking:
+                new_se.append(Storage(id=row.id, name=row.name, seasonnumber=a.seasonnumber))
+
+    return dict(new_se=new_se)

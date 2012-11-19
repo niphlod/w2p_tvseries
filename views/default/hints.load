@@ -1,0 +1,8 @@
+{{if len(new_se) > 0:}}
+<h4>New Seasons</h4>
+<ul>
+    {{for se in new_se:}}
+    <li>{{=A("%(name)s: season %(seasonnumber).2d" % se, _href=URL('series', 'index', args=se.id, anchor='series_settings', extension=False))}}</li>
+    {{pass}}
+</ul>
+{{pass}}

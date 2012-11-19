@@ -4,6 +4,11 @@
 
 <div id="calendar"></div>
 
+<h3>Hints</h3>
+
+{{=LOAD('default', 'hints.load', ajax=True, target="hints_overview", content=SPAN(".", _class="spinner"))}}
+
+
 <h3>Missing</h3>
 
 {{=LOAD('organize', 'missing.load', ajax=True, target="missing_overview", content=SPAN(".", _class="spinner"))}}
