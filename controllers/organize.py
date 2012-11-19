@@ -49,11 +49,11 @@ def index():
 
 def check_missing_path():
     all_to_check = db(
-                      (db.seasons_settings.series_id == db.series.id) &
-                      (db.seasons_settings.tracking == True) &
-                      (db.series.basepath <> '') &
-                      (db.series.basepath != None)
-                    ).select()
+        (db.seasons_settings.series_id == db.series.id) &
+        (db.seasons_settings.tracking == True) &
+        (db.series.basepath <> '') &
+        (db.series.basepath != None)
+        ).select()
 
     ren = w2p_tvseries_ren_loader()
     results = []
@@ -66,21 +66,21 @@ def check_missing_path():
 
 def missing():
     all_to_check = db(
-                      (db.seasons_settings.series_id == db.series.id) &
-                      (db.series.basepath <> '') &
-                      (db.seasons_settings.tracking == True)
-                    ).select(orderby=db.seasons_settings.series_id|db.seasons_settings.seasonnumber)
+        (db.seasons_settings.series_id == db.series.id) &
+        (db.series.basepath <> '') &
+        (db.seasons_settings.tracking == True)
+        ).select(orderby=db.seasons_settings.series_id|db.seasons_settings.seasonnumber)
 
     rtn = {}
     for row in all_to_check:
         data = sj.loads(row.seasons_settings.season_status)
         missing_eps = db(
-                     (db.episodes.seriesid == row.series.seriesid) &
-                     (db.episodes.seasonnumber == row.seasons_settings.seasonnumber) &
-                     (db.episodes.tracking == True) &
-                     (db.episodes.firstaired < request.now.date()) &
-                     (db.episodes.epnumber.belongs(data.get('missing', [])))
-                     ).select()
+            (db.episodes.seriesid == row.series.seriesid) &
+            (db.episodes.seasonnumber == row.seasons_settings.seasonnumber) &
+            (db.episodes.tracking == True) &
+            (db.episodes.firstaired < request.now.date()) &
+            (db.episodes.epnumber.belongs(data.get('missing', [])))
+            ).select()
         missing = []
         #check if we have a record in db.downloads
         for mep in missing_eps:
@@ -96,33 +96,34 @@ def missing():
                     ," E%.2d - %s" % (mep.epnumber, mep.name)
                 )
             )
-
         if len(missing) == 0:
             continue
         if row.series.id not in rtn:
             rtn[row.series.id] = dict(
-                                      name=row.series.name,
-                                      seasons=[dict(
-                                                    number=row.seasons_settings.seasonnumber,
-                                                    missing=missing,
-                                                    missingsubs=data.get('missingsubs', []),
-                                                    link=URL('series', 'index', args=[row.series.id],
-                                                             anchor="episode_%s" % (missing_eps[0].id),
-                                                             extension='')
-                                                    )
-                                               ]
-                                      )
+                name=row.series.name,
+                seasons=[
+                    dict(
+                        number=row.seasons_settings.seasonnumber,
+                        missing=missing,
+                        missingsubs=data.get('missingsubs', []),
+                        link=URL(
+                            'series', 'index', args=[row.series.id],
+                            anchor="episode_%s" % (missing_eps[0].id),
+                            extension='')
+                        )
+                    ]
+                )
         else:
             rtn[row.series.id]['seasons'].append(
-                                                 dict(
-                                                      number=row.seasons_settings.seasonnumber,
-                                                      missing=missing,
-                                                      missingsubs=data.get('missingsubs', []),
-                                                      link=URL('series', 'index', args=[row.series.id],
-                                                               anchor="episode_%s" % (missing_eps[0].id)
-                                                               ,extension='')
-                                                     )
-                                                 )
+                dict(
+                    number=row.seasons_settings.seasonnumber,
+                    missing=missing,
+                    missingsubs=data.get('missingsubs', []),
+                    link=URL('series', 'index', args=[row.series.id],
+                             anchor="episode_%s" % (missing_eps[0].id)
+                             ,extension='')
+                    )
+                )
     return dict(rtn=rtn)
 
 

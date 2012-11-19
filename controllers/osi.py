@@ -120,3 +120,4 @@ def check_path():
         rtn = res.result
 
     return rtn
+
