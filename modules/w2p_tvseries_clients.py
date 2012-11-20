@@ -310,7 +310,7 @@ class w2p_Deluge(w2p_tvseries_client):
         stats = stats['result']
         files = []
         if not stats.get('torrents'):
-            return None
+            return files
         for file in stats['torrents']:
             parsed = stats['torrents'][file]
             files.append(self.normalize(parsed))
