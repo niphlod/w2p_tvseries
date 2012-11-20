@@ -118,11 +118,6 @@
         });
         manage_scrolling();
         window.addEventListener("hashchange", manage_scrolling);
-        $("a.reload").click(function() {
-            var el = $(this);
-            check_missing(el.closest('.tab-pane'));
-            return false;
-        })
         $("a.queue_season").click(function(e) {
             e.preventDefault();
             var href = $(this).attr('href');
