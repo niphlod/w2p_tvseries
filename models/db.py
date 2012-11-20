@@ -33,7 +33,7 @@ MIGRATE = True
 LAZY_TABLES = False
 
 response.generic_patterns = ['*'] if request.is_local else []
-response.static_version = '1.3.2'
+response.static_version = '1.3.3'
 
 db = DAL(
     "sqlite://storage.db",
