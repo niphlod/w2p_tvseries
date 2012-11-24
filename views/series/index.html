@@ -123,6 +123,11 @@
             var href = $(this).attr('href');
             $.ajax(href);
         })
+        $("a.reload").click(function(e) {
+            e.preventDefault();
+            var href = $(this).attr('href');
+            $.ajax(href);
+        })
 
     });
 </script>

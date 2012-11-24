@@ -421,7 +421,7 @@ def update_from_tvdb():
         return ''
     db2.scheduler_task.insert(
         function_name='update_single_series',
-        args=sj.dumps(series_id),
+        args=sj.dumps([series_id]),
         task_name='spec:update_single_series',
         timeout=180)
     return json(dict(result='ok'))
