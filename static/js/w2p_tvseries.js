@@ -21,8 +21,13 @@
           jQuery(this).trigger({ type: 'keypress', which: character.charCodeAt(0) });
     };
     $.fn.scanfolders = function() {
-        var uniq = 'id' + (new Date()).getTime() + Math.floor(Math.random() * 10);
         var input = $(this);
+        if (input.data('scanfolderactive')) {
+            return false;
+            } else {
+            input.data('scanfolderactive', true);
+                }
+        var uniq = 'id' + (new Date()).getTime() + Math.floor(Math.random() * 10);
         var ainput = input.next('a');
         if (ainput.length) {
           var container = $('<ul class="unstyled help-inline"></ul>').attr('id', uniq).insertAfter(ainput);
@@ -76,6 +81,8 @@
         })
     }
 })();
+
+
 function w2p_tvseries_ajax_page(method,action,data,target) {
     return  jQuery.ajax({'type':method,'url':action,'data':data,
     'beforeSend':function(xhr) {
@@ -103,7 +110,11 @@ function w2p_tvseries_message(message) {
    flash.html(decodeURIComponent(message));
    flash.slideDown();
 }
+
 jQuery(document).ready(function(){
+    $(document).on('focus', '.folders', function () {
+          $(this).scanfolders();
+    });
      var path = location.pathname.substring(1);
      if ( path ) $('div.navbar li a[href$="' + path + '"]').closest('li').addClass('active').closest('ul.dropdown-menu').closest('li').addClass('active');
      $(document).on('hover', "[rel=tooltip]", function (event) {

@@ -65,6 +65,7 @@ def check_missing_path():
     return dict(results=results)
 
 def missing():
+    session.forget()
     all_to_check = db(
         (db.seasons_settings.series_id == db.series.id) &
         (db.series.basepath <> '') &

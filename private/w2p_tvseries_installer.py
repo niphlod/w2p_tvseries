@@ -133,6 +133,11 @@ def update_w2p_tvseries(w2p_folder, version):
         print '  INFO: fixing newlines in %s' % (finalfolder)
         fix_newlines(finalfolder)
 
+        print '  INFO: updating static files with latest version'
+        sourcefile = os.path.abspath(os.path.join(w2p_folder, 'applications', 'welcome' , 'static', 'js', 'web2py.js'))
+        destfile = os.path.abspath(os.path.join(finalfolder, 'static', 'js', 'web2py.js'))
+        os.unlink(destfile)
+        shutil.copy(sourcefile, destfile)
 
 if __name__ == '__main__':
     if sys.executable.endswith('web2py.exe'):
@@ -303,4 +308,3 @@ for file in [w2p_archive, zipball]:
     if os.path.exists(file):
         os.unlink(file)
 wait_and_exit(0)
-

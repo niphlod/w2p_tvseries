@@ -105,7 +105,7 @@ $(function () {
                 el.removeClass('btn-warning').addClass('btn-info').attr('data-original-title', 'background operations, click to stop them')
             }
             bar.css('width', remoteData.perc);
-            if(command) eval(decodeURIComponent(escape(command)));
+            if(command) eval(decodeURIComponent(command));
         }
     )
 })"""
