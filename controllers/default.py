@@ -159,17 +159,72 @@ def client_settings_validate():
 def hints():
     session.forget()
     #are there any new season if we're following the last one ?
-    all_se = db(db.series.id > 0).select(db.series.id, db.series.name)
+
     ss = db.seasons_settings
+    ep_me = db.episodes_metadata
+    ep_tb = db.episodes
+    se_tb = db.series
     new_se = []
+    all_se = db(se_tb.id > 0).select(se_tb.id, se_tb.name, se_tb.status)
+    se_cache = {}
     for row in all_se:
-        validate_seasons(row.id)
+        se_cache[row.id] = row
+
+    lock_validate = cache.ram('lock_validate', lambda: request.now, time_expire=120)
+
+    for row in all_se:
+        if lock_validate == request.now:
+            #validate seasons every two minutes at most
+            validate_seasons(row.id)
         all_seasons = db(ss.series_id == row.id).select(ss.seasonnumber, ss.tracking, orderby=ss.seasonnumber)
         to_activate = False
+        x = 0
         for a in all_seasons:
+            x += 1
             if a.tracking:
                 to_activate = True
             elif to_activate and not a.tracking:
                 new_se.append(Storage(id=row.id, name=row.name, seasonnumber=a.seasonnumber))
+            #instead of doing another query, let's store in se_cache the last tracked season for every series
+            if len(all_seasons) == x:
+                se_cache[row.id]['lastseason'] = a.seasonnumber
 
-    return dict(new_se=new_se)
+    #are there any season we're following with all files in it?
+    all_se = db(ss.tracking == True).select()
+    completed_se = {}
+    double_files = {}
+    for row in all_se:
+        rtn = db(
+            (se_tb.id == row.series_id) &
+            (ep_tb.seriesid == se_tb.seriesid) &
+            (ep_tb.language == se_tb.language) &
+            (ep_tb.seasonnumber == row.seasonnumber) &
+            (ep_tb.tracking == True) &
+            (
+                (ep_me.id == None) |
+                (ep_me.filename == None)
+            )
+          ).select(ep_tb.id, ep_me.id, left=ep_me.on(ep_me.episode_id==ep_tb.id))
+        if not rtn and row.seasonnumber != se_cache[row.series_id]['lastseason']:
+            if row.series_id in completed_se:
+                completed_se[row.series_id].append(row.seasonnumber)
+            else:
+                completed_se[row.series_id] = [row.seasonnumber]
+        #in the meantime, let's check if there are files
+        #ready to be renamed but there is another valid one
+        #yet in the folder
+        data = sj.loads(row.season_status)
+        existingvideo = data.get('existingvideo', [])
+        existingsubs = data.get('existingsubs', [])
+        if existingvideo or existingsubs:
+            inner_report = {
+                'seasonnumber' : row.seasonnumber,
+                'videos' : existingvideo,
+                'subs' : existingsubs
+                }
+            if row.series_id not in double_files:
+                double_files[row.series_id] = [inner_report]
+            else:
+                double_files[row.series_id].append(inner_report)
+
+    return dict(new_se=new_se, completed_se=completed_se, se_cache=se_cache, double_files=double_files)

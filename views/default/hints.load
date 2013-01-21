@@ -1,8 +1,89 @@
-{{if len(new_se) > 0:}}
-<h4>New Seasons</h4>
-<ul>
-    {{for se in new_se:}}
-    <li>{{=A("%(name)s: season %(seasonnumber).2d" % se, _href=URL('series', 'index', args=se.id, anchor='series_settings', extension=False))}}</li>
+
+
+
+<div id="accordion" class="accordion">
+    {{if len(new_se) > 0:}}
+    <div class="accordion-group">
+        <div class="accordion-heading">
+           <a href="#hints_new" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle">
+            <span class="badge badge-warning">{{=len(new_se)}}</span> New Seasons <i class="icon-resize-full pull-right"></i>
+           </a>
+        </div>
+        <div class="accordion-body collapse" id="hints_new">
+            <div class="accordion-inner">
+              <ul>
+               {{for se in new_se:}}
+                  <li>{{=A("%(name)s: season %(seasonnumber).2d" % se, _href=URL('series', 'index', args=se.id, anchor='series_settings', extension=False))}}</li>
+               {{pass}}
+               </ul>
+            </div>
+        </div>
+    </div>
     {{pass}}
-</ul>
-{{pass}}
+    {{if len(completed_se) > 0:}}
+    <div class="accordion-group">
+        <div class="accordion-heading">
+           <a href="#hints_completed" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle">
+            <span class="badge badge-warning">{{=len(completed_se)}}</span> Completed Seasons (you may disable tracking to speed-up the work-queue) <i class="icon-resize-full pull-right"></i>
+           </a>
+        </div>
+        <div class="accordion-body collapse" id="hints_completed">
+            <div class="accordion-inner">
+                <ul>
+                {{for se in completed_se:}}
+                    <li>{{=A("%s (%s)" % (se_cache[se].get('name'), se_cache[se].get('status')), _href=URL('series', 'index', args=se, anchor='series_settings', extension=False))}}
+                        {{='seasons' if len(completed_se[se])>1 else 'season'}} {{=','.join(["%s" % a for a in completed_se[se]])}}
+                    </li>
+                {{pass}}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {{pass}}
+    {{if len(double_files) > 0:}}
+    <div class="accordion-group">
+        <div class="accordion-heading">
+           <a href="#hints_double" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle">
+            <span class="badge badge-warning">{{=len(double_files)}}</span> Double files (you may want to delete one or another) <i class="icon-resize-full pull-right"></i>
+           </a>
+        </div>
+        <div class="accordion-body collapse" id="hints_double">
+            <div class="accordion-inner">
+                <ul>
+                {{for se in double_files:}}
+                    <li>{{=A("%s (%s)" % (se_cache[se].get('name'), se_cache[se].get('status')), _href=URL('series', 'index', args=se, anchor='series_settings', extension=False))}}</li>
+                    {{for season in double_files[se]:}}
+                        <ul>
+                            <li>Season {{=season['seasonnumber']}}</li>
+                            {{if season['videos']:}}
+                            <ul>
+                                <li>Video</li>
+                                <ul>
+                                    {{for v in season['videos']:}}
+                                        <li>{{="%s --> %s" % (os.path.basename(v[0]), v[1])}}</li>
+                                    {{pass}}
+                                </ul>
+                            </ul>
+                            {{pass}}
+                            {{if season['subs']:}}
+                            <ul>
+                                <li>Subs</li>
+                                <ul>
+                                    {{for v in season['subs']:}}
+                                        <li>{{="%s --> %s" % (os.path.basename(v[0]), v[1])}}</li>
+                                    {{pass}}
+                                </ul>
+                            </ul>
+                            {{pass}}
+                        </ul>
+                    {{pass}}
+                {{pass}}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {{pass}}
+</div>
+
+
+
