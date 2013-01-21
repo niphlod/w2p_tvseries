@@ -27,7 +27,7 @@ import datetime
 import requests
 from gluon.storage import Storage
 import hashlib
-from gluon.html import URL, A, IMG, UL, LI, H5, INPUT, SCRIPT, TAG, LABEL, DIV, SPAN, I
+from gluon.html import URL, A, IMG, UL, LI, INPUT, SCRIPT, TAG, LABEL, DIV, SPAN, I
 from gluon.sqlhtml import SQLFORM
 from gluon.validators import *
 locker = thread.allocate_lock()

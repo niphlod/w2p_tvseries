@@ -56,7 +56,8 @@ def check_season_worker(series_id , seasonnumber, mode):
        (db.seasons_settings.seasonnumber == seasonnumber)
        ).update(season_status=rtn)
 
-    renamer.rename(series_id, seasonnumber)
+    renamer.rename(series_id, seasonnumber, mode)
+
     db.commit()
     return rtn
 
@@ -73,6 +74,7 @@ def check_season_subs(series_id, seasonnumber, cb=None):
         check_season_worker(series_id, seasonnumber, 'subs')
     if cb:
         default_callback(cb, series_id, seasonnumber)
+    rtn = ''
     return rtn
 
 def down_subs(series_id, seasonnumber):

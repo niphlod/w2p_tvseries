@@ -519,6 +519,7 @@ class w2p_tvseries_tvren(object):
         return s[:150]                        # 150 chars will be sufficient
 
     def check(self, seriesid, seasonnumber, mode='video'):
+
         db = current.w2p_tvseries.database
         se_tb = db.series
         ep_tb = db.episodes
@@ -578,7 +579,6 @@ class w2p_tvseries_tvren(object):
 
         for file_ in lista:
             file = os.path.split(file_)[1]
-            x = 0
             match = self.meddler.analyze(file)
             if match.reason:
                 continue
@@ -678,7 +678,7 @@ class w2p_tvseries_tvren(object):
             return dict(dir=season_path, message="dir %s doesn't exist, can I create it?" % season_path,
                                          series=season.series.name, seasonnumber=seasonnumber, seriesid=seriesid)
 
-    def rename(self, seriesid, seasonnumber):
+    def rename(self, seriesid, seasonnumber, mode):
         db = current.w2p_tvseries.database
         self.log('rename', "Checking for series with id %s and season %s" % (seriesid, seasonnumber))
         bit = db.rename_log
@@ -695,6 +695,7 @@ class w2p_tvseries_tvren(object):
 
         now = datetime.datetime.now()
         db.commit()
+        existing = []
         while True:
             try:
                 rename_ = rename.pop()
@@ -702,6 +703,8 @@ class w2p_tvseries_tvren(object):
                 break
             source, dest = rename_
             self.log('rename', "trying to do %s --> %s" % (os.path.basename(source), os.path.basename(dest)))
+            if os.path.exists(dest):
+                existing.append((dest, source))
             if os.path.exists(dest) or not os.path.exists(source):
                 continue
             try:
@@ -714,5 +717,10 @@ class w2p_tvseries_tvren(object):
             except:
                 db.rollback()
         data['rename'] = rename
+        if mode == 'video':
+            data['existingvideo'] = existing
+        elif mode == 'subs':
+            data['existingsubs'] = existing
         datarec.update_record(season_status=simplejson.dumps(data), updated_on=now)
         db.commit()
+        return datarec
