@@ -14,8 +14,18 @@
         )}}
     <div class="media-body">
     {{pass}}
-
-    {{=H6(I(_title="missing", _class="icon-warning-sign"),"Aired %s" % (episode.firstaired), _class="pull-right")}}
+    {{links_holder = ''}}
+    {{if download:}}
+        {{links_holder = []}}
+        {{if download.magnet:}}
+            {{links_holder.append(A(I(_class="icon icon-magnet", _title="Magnet Link"), _href=download.magnet))}}
+        {{pass}}
+        {{if download.link:}}
+            {{links_holder.append(A(I(_class="icon icon-download", _title="Download Link"), _href=download.link))}}
+        {{pass}}
+        {{links_holder = CAT(links_holder)}}
+    {{pass}}
+    {{=H6(I(_title="missing", _class="icon-warning-sign"), links_holder, "Aired %s" % (episode.firstaired), _class="pull-right")}}
     {{=H4("S%.2dE%.2d - %s" % (episode.seasonnumber, episode.epnumber, episode.name))}}
     {{=P(episode.overview)}}
     {{trackingclass = episode.tracking and 'btn btn-success' or 'btn btn-danger'}}
