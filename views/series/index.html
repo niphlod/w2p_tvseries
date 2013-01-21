@@ -38,7 +38,14 @@
                             </div>
                             {{=myrefurlwidget(seasondict['ref_urls'])}}
                         </div>
-                        {{=H1("Season %s" % (season))}}
+                        <div class="row-fluid">
+                            <div class="span6">
+                            {{=H1("Season %s" % (season))}}
+                            </div>
+                            <div id="{{='season_summary_%s' % season}}" class="span4 pull-right">
+                                <span class="spinner">.</span>
+                            </div>
+                        </div>
                         {{for ep in eps:}}
                             {{=DIV(
                                 DIV(SPAN(".", _class="spinner"),_class="episode loading %s" % (ep['tba']), _id="episode_%s" % (ep['id']))
@@ -62,17 +69,32 @@
         function pad2(number) {
             return (number < 10 ? '0' : '') + number
         };
+        function bdg_cl(number) {
+            return (number == 0 ? 'badge badge-success' : 'badge badge-warning')
+        }
+        function season_summary(number, data) {
+            var target = "#season_summary_" + number;
+            var template = '<dl class="dl-horizontal">';
+            if (data.missing) template += '<dt>missing videos</dt><dd><span class="' + bdg_cl(data.missing.length) + '">' + data.missing.length + '</span></dd>';
+            if (data.missingsubs) template += '<dt>missing subs</dt><dd><span class="' + bdg_cl(data.missingsubs.length) + '">' + data.missingsubs.length + '</span></dd>';
+            if (data.existingvideos) template += '<dt>duplicate videos</dt><dd><span class="' + bdg_cl(data.existingvideos.length) + '">' + data.existingvideos.length + '</span></dd>';
+            if (data.existingsubs) template += '<dt>duplicate subs</dt><dd><span class="' + bdg_cl(data.existingsubs.length) + '">' + data.existingsubs.length + '</span></dd>';
+            template += '</dl>'
+            $(target).empty().append(template);
+        }
         $(".missingep", currenttab).removeClass('missingep');
         var season = currenttab.attr('id').replace('season_', '');
         var href = '{{=URL('osi', 'check_season', args=[request.args(0)])}}' + '/' + season;
         $.getJSON(href, function(data) {
             if (!data.missing) return;
+            season_summary(season, data);
             for (var i=0; i<data.missing.length;i++) {
                 var epid = $("#S" + pad2(season) + "E" + pad2(data.missing[i]));
                 if (!epid.find('.tba').length) epid.addClass('missingep');
             }
         });
     };
+
 
     function manage_scrolling() {
         var season_to_show = $(document.location.hash).closest('.tab-pane').attr('id');
@@ -113,6 +135,7 @@
                 defer.then(function(){
                     episodes.hide().removeClass('loading').fadeIn('slow');
                     check_missing($(currenttab));
+                    $('h6.pull-right i', currenttab).tooltip();
                 });
             }
         });
