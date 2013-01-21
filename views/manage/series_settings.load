@@ -13,7 +13,7 @@ pass
 
 <div class="row-fluid">
     <dl class="dl-horizontal">
-        <dt>TVDBID</dt>         <dd>{{=series.seriesid}}</dd>
+        <dt>TVDBID</dt>         <dd>{{=series.seriesid}} {{=A("Link to tvdb.com", _href="http://thetvdb.com/?tab=series&id=%s" % series.seriesid, _target="blank")}}</dd>
         <dt>Overview</dt>       <dd>{{=series.overview}}</dd>
         <dt>Language</dt>       <dd>{{=series.language}}</dd>
         <dt>Status</dt>         <dd>{{=series.status}}</dd>
