@@ -215,6 +215,11 @@ def series_settings():
                   default=row.subtitle_tracking
                   )
         ]
+        if row.scooper_strings is None or row.scooper_strings == []:
+            row.scooper_strings = []
+            common_formats = ["%s.S%.2dE", "%s S%.2dE", "%s.%sx", "%s %sx"]
+            for a in common_formats:
+                row.scooper_strings.append(a % (series.name, row.seasonnumber))
 
         others_fi = [
             Field("ref_urls",
