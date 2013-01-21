@@ -19,6 +19,7 @@ div.flash {
     -webkit-border-radius: 5px;
     z-index: 2;
 }
+div.flash #closeflash{color:inherit; float:right; margin-left:15px;}
 
 .topbar a {
     color: #e1e1e1;
@@ -211,4 +212,3 @@ color: #222;
 	border-radius:2px;
 }
 .ie9 #query_panel {padding-bottom:2px;}
-

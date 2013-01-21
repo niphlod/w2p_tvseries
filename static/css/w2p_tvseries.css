@@ -213,7 +213,7 @@ margin-bottom: 10px;
    display: none;
 }
 .missingep .episode .icon-warning-sign {
-   display: block;
+   display: inline-block;
 }
 
 /*
