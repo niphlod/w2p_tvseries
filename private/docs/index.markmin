@@ -155,7 +155,7 @@ and follow instructions. It tries to:
 - create template scripts to run w2p_tvseries and the cron task
 
 ## Semi-Auto - No Python (binary_install) [[install_nopython]]
-There's a ready-to-use archive at [[github.com https://github.com/downloads/niphlod/w2p_tvseries/w2p_tvseries_win.zip]].
+There's a ready-to-use archive at [[bitbucket.org https://bitbucket.org/niphlod/w2p_tvseries/downloads/w2p_tvseries_win.zip]] for Windows users.
 Decompress it in a folder of your choice and you're good to go.
 
 Alternatively, go to [[web2py.com http://web2py.com/examples/default/download]] and download the binary for your system.
@@ -182,7 +182,7 @@ and follow the instructions. It will:
 - create template scripts to run w2p_tvseries and the cron task
 
 ## Manual [[manual_install]]
-Install web2py (downloading the archive and unzipping it in a directory)
+Install web2py (downloading the [[archive http://www.web2py.com/examples/default/download]] and unzipping it in a directory)
 Download this app [[from GitHub http://github.com/niphlod/w2p_tvseries]] and place it under web2py/applications/w2p_tvseries
 ``
 /installfolder/
@@ -206,6 +206,7 @@ Start web2py with
 python web2py.py -a "yourdesiredpassword"
 ``
 Then go to http://127.0.0.1:8000/w2p_tvseries/
+
 Refer to the next section on how to start the scheduler
 
 ## Scheduled tasks [[scheduled]]

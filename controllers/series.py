@@ -75,6 +75,7 @@ def episodes():
 
     banner = db((db.episodes_banners.episode_id == episode.id) & (db.episodes_banners.banner <> '')).select().first()
     metadata = db(db.episodes_metadata.episode_id == episode.id).select().first()
+    download = db(db.downloads.episode_id == episode.id).select(db.downloads.link, db.downloads.magnet).first()
     if metadata and metadata.infos:
         info = sj.loads(metadata.infos)
         if len(info) > 0:
@@ -82,7 +83,7 @@ def episodes():
         else:
             metadata = None
 
-    return dict(episode=episode, banner=banner, metadata=metadata)
+    return dict(episode=episode, banner=banner, metadata=metadata, download=download)
 
 def season():
     session.forget()
