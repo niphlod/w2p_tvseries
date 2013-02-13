@@ -67,7 +67,7 @@ def bit_actualizer():
     if not res:
         rtn = json(dict(message='working on it...'))
     if res:
-        rtn = json(dict(content=sj.loads(res.result)))
+        rtn = json(dict(content=sj.loads(res.result))) ##FIXME
 
     return rtn
 
@@ -120,4 +120,3 @@ def check_path():
         rtn = res.result
 
     return rtn
-
