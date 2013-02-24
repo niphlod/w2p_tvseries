@@ -97,19 +97,19 @@ def add_series():
 
     if not request.vars.task_id:
         db2(db2.scheduler_task.task_name == request.cid).delete()
-        task_id = db2.scheduler_task.insert(task_name=request.cid, function_name='add_series', args=json([seriesid, language]))
+        q = myscheduler.queue_task('add_series', [seriesid, language], {}, task_name=request.cid, immediate=True)
+        task_id = q.id
         return json(dict(task_id=task_id))
 
-    res = db2(
-        (db2.scheduler_run.scheduler_task == request.vars.task_id) &
-        (db2.scheduler_run.status == 'COMPLETED')
-        ).select(limitby=(0,1), orderby=db2.scheduler_run.id).first()
+    task_id = int(request.vars.task_id)
 
-    if not res:
+    res = myscheduler.task_status(task_id, output=True)
+
+    if not res.scheduler_run.status == 'COMPLETED':
         rtn = json(dict(message='working on it...'))
-    if res:
+    else:
         rtn = json(dict(message='added'))
-        location = URL('series', 'index', args=[sj.loads(res.result)], vars=dict(settings=1))
+        location = URL('series', 'index', args=[res.result], vars=dict(settings=1))
         response.js = "handle.stop(); window.location = '%s';" % (location)
 
     return rtn
@@ -215,7 +215,7 @@ def series_settings():
                   default=row.subtitle_tracking
                   )
         ]
-        if row.scooper_strings is None or row.scooper_strings == []:
+        if row.scooper_strings is None:
             row.scooper_strings = []
             common_formats = ["%s.S%.2dE", "%s S%.2dE", "%s.%sx", "%s %sx"]
             for a in common_formats:
@@ -424,12 +424,17 @@ def update_from_tvdb():
     series_id = request.args(0)
     if not series_id:
         return ''
-    db2.scheduler_task.insert(
-        function_name='update_single_series',
-        args=sj.dumps([series_id]),
-        task_name='spec:update_single_series',
-        timeout=180)
-    return json(dict(result='ok'))
+    rtn = myscheduler.queue_task(
+            'update_single_series',
+            [series_id],
+            {},
+            task_name = 'spec:update_single_series',
+            timeout=180,
+            immediate=True)
+    if rtn.id:
+        return json(dict(result='ok'))
+    else:
+        return json(dict(result='error'))
 
 def bit():
 

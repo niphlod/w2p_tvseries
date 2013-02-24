@@ -57,17 +57,18 @@ def bit_actualizer():
 
     if not request.vars.task_id:
         db2(db2.scheduler_task.task_name == request.cid).delete()
-        task_id = db2.scheduler_task.insert(task_name=request.cid, function_name='bit_actualizer', args=json([rename_log_id]))
+        res = myscheduler.queue_task('bit_actualizer', [rename_log_id], task_name=request.cid, immediate=True)
+        task_id = res.id
         return json(dict(task_id=task_id))
 
-    res = db2(
-        (db2.scheduler_run.scheduler_task == request.vars.task_id) &
-        (db2.scheduler_run.status == 'COMPLETED')
-        ).select(limitby=(0,1), orderby=db2.scheduler_run.id).first()
-    if not res:
+    task_id = int(request.vars.task_id)
+
+    res = myscheduler.task_status(task_id, output=True)
+
+    if not res.scheduler_run.status == 'COMPLETED':
         rtn = json(dict(message='working on it...'))
-    if res:
-        rtn = json(dict(content=sj.loads(res.result))) ##FIXME
+    else:
+        rtn = json(dict(content=res.result))
 
     return rtn
 
@@ -110,13 +111,17 @@ def check_path():
 
     if not request.vars.task_id:
         db2(db2.scheduler_task.task_name == request.cid).delete()
-        task_id = db2.scheduler_task.insert(task_name=request.cid, function_name='create_path', args=json([series_id, seasonnumber]))
+        res = myscheduler.queue_task('create_path', [series_id, seasonnumber], {}, task_name=request.cid, immediate=True)
+        task_id = res.id
         return json(dict(task_id=task_id))
 
-    res = db2(db2.scheduler_run.scheduler_task == request.vars.task_id).select(limitby=(0,1), orderby=db2.scheduler_run.id).first()
-    if not res:
+    task_id = int(request.vars.task_id)
+
+    res = myscheduler.task_status(task_id, output=True)
+
+    if not res.scheduler_run.status == 'COMPLETED':
         rtn = json(dict(message='working on it...'))
-    if res:
-        rtn = res.result
+    else:
+        rtn = res.scheduler_run.run_result
 
     return rtn

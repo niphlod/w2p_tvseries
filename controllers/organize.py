@@ -160,7 +160,7 @@ def queue_ops():
     if not (series_id and seasonnumber):
         enabled = False
         tasks_to_delete = db2(st.id>0)
-        db2(sr.scheduler_task.belongs(tasks_to_delete._select(st.id))).delete()
+        db2(sr.task_id.belongs(tasks_to_delete._select(st.id))).delete()
         tasks_to_delete.delete()
         uniquename = "%s:maintenance" % (operation_key)
         st.insert(task_name=uniquename, function_name='maintenance', enabled=True, timeout=15, vars=json(dict(cb='update')))
@@ -181,14 +181,14 @@ def queue_ops():
             (st.task_name.endswith("%s:%s" % (series_id, seasonnumber)))
             ).delete()
 
-    st.insert(task_name='%s:theBoss' % (operation_key), function_name='the_boss',repeats=0, period=10)
-
     for row in all_to_check:
         if row.series.basepath == '' or row.series.basepath == None:
             continue
         else:
             path_for_one_season(row.seasons_settings, series_metadata, hash_gen_mode, operation_key, enabled)
 
+
+    myscheduler.queue_task('the_boss', [], {}, task_name='%s:theBoss' % (operation_key), repeats=0, period=10, immediate=True)
     db2.commit()
     db.commit()
 

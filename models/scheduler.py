@@ -305,7 +305,7 @@ def the_boss():
     else:
         try:
             tasks_to_delete = (st.task_name.startswith("%s:" % (operation_key)))
-            db2(sr.scheduler_task.belongs(db2(tasks_to_delete)._select(st.id))).delete()
+            db2(sr.task_id.belongs(db2(tasks_to_delete)._select(st.id))).delete()
             db2(tasks_to_delete).delete()
             db(db.global_settings.kkey=='operation_key').delete()
             db.commit()

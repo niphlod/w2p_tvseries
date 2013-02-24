@@ -209,6 +209,20 @@ if __name__ == '__main__':
 
     update_w2p_tvseries(w2p_folder, git_version)
 
+if raw_input('Q:    w2p_tvseries needs a patched scheduler to work. Can I overwrite it (y/n)?'
+            ).lower() in ['y', 'yes']:
+    new_scheduler = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'scheduler.py')
+    old_scheduler = os.path.join(w2p_folder, 'gluon', 'scheduler.py')
+    olddb = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'databases', 'storage_scheduler.db')
+    if os.path.isfile(olddb):
+        try:
+            os.unlink(olddb)
+        except:
+            pass
+    shutil.copy(new_scheduler, old_scheduler)
+    print '  INFO: new scheduler in place'
+
+
 if raw_input("Q:    Let's create/migrate our database.... ([Y]/n)?").lower() in ['y', 'yes']:
     remove_compiled_application(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
     model_file = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'models', 'db.py')
@@ -236,6 +250,7 @@ if raw_input("(re)compile application (y,n) ?").lower() in ['y','yes']:
     remove_compiled_application(os.path.join(w2p_folder, 'applications', 'w2p_tvseries'))
     app_compile('w2p_tvseries', request)
 """
+
 routes_dst = os.path.abspath(os.path.join(w2p_folder, 'routes.py'))
 if not os.path.isfile(routes_dst):
     if raw_input("Q:    Copy default redirection (if this is the only app installed, it's safe to say yes) ([Y]/n)?"
