@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright 2012 Niphlod <niphlod@gmail.com>
+# Copyright 2013 Niphlod <niphlod@gmail.com>
 #
 # This file is part of w2p_tvseries.
 #
@@ -27,7 +27,7 @@ response.meta.author = 'Niphlod'
 response.meta.description = 'TV Series Organizer!'
 response.meta.keywords = 'TV Series Organizer!'
 response.meta.generator = 'Web2py Web Framework'
-response.meta.copyright = 'Copyright 2012'
+response.meta.copyright = 'Copyright 2013'
 
 MIGRATE = True
 LAZY_TABLES = False

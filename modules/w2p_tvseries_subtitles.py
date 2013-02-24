@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright 2012 Niphlod <niphlod@gmail.com>
+# Copyright 2013 Niphlod <niphlod@gmail.com>
 #
 # This file is part of w2p_tvseries.
 #
