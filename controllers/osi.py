@@ -84,6 +84,8 @@ def check_season():
        (db.seasons_settings.seasonnumber == seasonnumber)
        ).select(db.seasons_settings.season_status, db.seasons_settings.updated_on).first()
 
+    if not status.updated_on:
+        status.updated_on = request.now
     episodes = db(
         (db.series.id == series_id) &
         (db.episodes.seriesid == db.series.seriesid) &
