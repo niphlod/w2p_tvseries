@@ -125,16 +125,14 @@ class w2p_Utorrent(w2p_tvseries_client):
         self.logger = tvdb_logger('utclient')
         super(w2p_Utorrent, self).__init__(*args, **vars)
         self.access_settings()
-        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'},
-                               config= {'max_retries': 5},
-                               timeout=3,
-                               )
+        self.req = req.Session()
+        self.req.headers = {'User-Agent' : 'w2p_tvdb'}
 
     def get_token(self):
         token_url = self.url + 'token.html'
         content = ''
         try:
-            r = self.req.get(token_url, auth=(self.username, self.password))
+            r = self.req.get(token_url, auth=(self.username, self.password), timeout=3)
             r.raise_for_status()
             content = r.content
         except:
@@ -200,7 +198,7 @@ class w2p_Utorrent(w2p_tvseries_client):
             return None
         list_url = "%s?token=%s&list=1" % (self.url, self.token)
         try:
-            r = self.req.get(list_url, auth=(self.username, self.password))
+            r = self.req.get(list_url, auth=(self.username, self.password), timeout=3)
             r.raise_for_status()
         except:
             self.error('get_status', 'unable to retrieve status')
@@ -225,7 +223,7 @@ class w2p_Utorrent(w2p_tvseries_client):
             return None
         payload = {'token': self.token, 'action' : 'add-url', 's' : magnet}
         try:
-            r = self.req.get(self.url, params=payload, auth=(self.username, self.password))
+            r = self.req.get(self.url, params=payload, auth=(self.username, self.password), timeout=3)
             r.raise_for_status()
         except:
             self.error('add_magnet', 'Unable to add magnet')
@@ -240,7 +238,7 @@ class w2p_Utorrent(w2p_tvseries_client):
         payload = {'token': self.token, 'action' : 'add-file'}
         files = {'torrent_file': open(filename, 'rb')}
         try:
-            r = self.req.post(self.url, params=payload, files=files, auth=(self.username, self.password))
+            r = self.req.post(self.url, params=payload, files=files, auth=(self.username, self.password), timeout=3)
             r.raise_for_status()
         except:
             self.error('add_torrent', 'Unable to add torrent')
@@ -252,18 +250,15 @@ class w2p_Deluge(w2p_tvseries_client):
         self.logger = tvdb_logger('declient')
         super(w2p_Deluge, self).__init__(*args, **vars)
         self.access_settings()
-        self.req = req.session(
-            headers = {'User-Agent' : 'w2p_tvdb',
+        self.req = req.Session()
+        self.req.headers =  {'User-Agent' : 'w2p_tvdb',
                        'Content-Type' : 'application/json'
-                       },
-            config= {'max_retries': 5},
-            timeout=3
-            )
+                       }
 
     def init_session(self):
         data = dict(id=1, method='auth.login', params=[self.password])
         try:
-            r = self.req.post(self.url, data=sj.dumps(data))
+            r = self.req.post(self.url, data=sj.dumps(data), timeout=3)
             r.raise_for_status()
         except:
             self.error('auth', 'Unable to login')
@@ -301,7 +296,7 @@ class w2p_Deluge(w2p_tvseries_client):
                          'total_payload_download']
         data = dict(id=2, method='web.update_ui', params=[retrieve_keys, {}])
         try:
-            r = self.req.post(self.url, data=sj.dumps(data))
+            r = self.req.post(self.url, data=sj.dumps(data), timeout=3)
             r.raise_for_status()
         except:
             self.error('get_status', 'Unable to retrieve status')
@@ -341,7 +336,7 @@ class w2p_Deluge(w2p_tvseries_client):
         data = {"method": "web.add_torrents", "params": [[{'path' : filename, 'options': {}}]], "id": 1}
         while True:
             try:
-                r = self.req.post(self.url, data=sj.dumps(data))
+                r = self.req.post(self.url, data=sj.dumps(data), timeout=3)
                 r.raise_for_status()
                 content = sj.loads(r.content)
             except:
@@ -404,19 +399,17 @@ class w2p_Transmission(w2p_tvseries_client):
         return Storage(file)
 
     def get_status(self):
-        sess = req.session(headers = {'User-Agent' : 'w2p_tvdb',
+        sess = req.Session()
+        sess.headers = {'User-Agent' : 'w2p_tvdb',
                                       'Content-Type' : 'application/json'
-                                      },
-                           config= {'max_retries': 5},
-                           timeout=3,
-                           auth=(self.username, self.password)
-                           )
+                                      }
         fields = ['eta', 'hashString', 'name', 'rateDownload', 'rateUpload', 'totalSize', 'status', 'uploadRatio', 'percentDone']
         #get transmission-id header and rpc version (status decoding needs it)
         data = dict(method='session-get', arguments=[])
         while True:
             try:
-                r = sess.post(self.url, data=sj.dumps(data))
+                r = sess.post(self.url, data=sj.dumps(data), timeout=3,
+                           auth=(self.username, self.password))
             except:
                 self.error('get_status', 'Unable to retrieve status')
                 return None
@@ -433,7 +426,8 @@ class w2p_Transmission(w2p_tvseries_client):
         rpc_version = content['arguments']['rpc-version']
         data = dict(method='torrent-get', arguments={'fields' : fields})
         while True:
-            r = sess.post(self.url, data=sj.dumps(data))
+            r = sess.post(self.url, data=sj.dumps(data), timeout=3,
+                           auth=(self.username, self.password))
             if r.status_code == 409:
                 sess.headers['X-Transmission-Session-Id'] = r.headers['X-Transmission-Session-Id']
             else:
@@ -451,17 +445,15 @@ class w2p_Transmission(w2p_tvseries_client):
         return files
 
     def add_magnet(self, magnet):
-        sess = req.session(headers = {'User-Agent' : 'w2p_tvdb',
+        sess = req.Session()
+        sess.headers = {'User-Agent' : 'w2p_tvdb',
                                       'Content-Type' : 'application/json'
-                                      },
-                           config= {'max_retries': 5},
-                           timeout=3,
-                           auth=(self.username, self.password)
-                           )
+                                      }
         data = dict(method='torrent-add', arguments={'filename' : magnet})
         while True:
             try:
-                r = sess.post(self.url, data=sj.dumps(data))
+                r = sess.post(self.url, data=sj.dumps(data), timeout=3,
+                           auth=(self.username, self.password))
             except:
                 self.error('add_magnet', 'Unable to add magnet')
                 return None
@@ -481,19 +473,17 @@ class w2p_Transmission(w2p_tvseries_client):
             return False
 
     def add_torrent(self, filename):
-        sess = req.session(headers = {'User-Agent' : 'w2p_tvdb',
+        sess = req.Session()
+        sess.headers = {'User-Agent' : 'w2p_tvdb',
                                       'Content-Type' : 'application/json'
-                                      },
-                           config= {'max_retries': 5},
-                           timeout=3,
-                           auth=(self.username, self.password)
-                           )
+                                      }
         with open(filename, 'rb') as g:
             content = base64.b64encode(g.read())
         data = dict(method='torrent-add', arguments={'metainfo' : content})
         while True:
             try:
-                r = sess.post(self.url, data=sj.dumps(data))
+                r = sess.post(self.url, data=sj.dumps(data), timeout=3,
+                           auth=(self.username, self.password))
             except:
                 self.error('add_torrent', 'Unable to add torrent')
                 return None

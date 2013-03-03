@@ -91,7 +91,8 @@ class w2p_tvseries_torrent(object):
 
     def __init__(self):
         self.logger = tvdb_logger('torrent')
-        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'}, config= {'max_retries': 5}, timeout=3)
+        self.req = req.Session()
+        self.req.headers = {'User-Agent' : 'w2p_tvdb'}
         self.magnetr = re.compile(r'xt=urn:btih:([\w]{40})&')
         self.magnetdnr = re.compile(r'&dn=.*')
 
@@ -212,14 +213,24 @@ class w2p_tvseries_torrent(object):
             return cached.value
         else:
             try:
-                r = self.req.get(url)
-                r.raise_for_status()
+                i = 0
+                while i < 5:
+                    try:
+                        r = self.req.get(url, timeout=3)
+                        r.raise_for_status()
+                        break
+                    except:
+                        i += 1
+                        time.sleep(0.2)
+                if i == 5:
+                    raise Exception("can't connect")
                 content = r.content
                 ct.update_or_insert(ct.kkey==cachekey, value=content, inserted_on=inserted_on, kkey=cachekey)
                 db.commit()
             except:
                 self.error('downloader', '%s failed to fetch from internet' % (url))
                 content = None
+                db.rollback()
         return content
 
     def download_torrents(self, seriesid, seasonnumber):
@@ -327,7 +338,8 @@ class w2p_tvseries_torrent(object):
 class w2p_tvseries_feed(object):
     def __init__(self):
         self.logger = tvdb_logger('feeds')
-        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'}, config= {'max_retries': 5}, timeout=3)
+        self.req = req.Session()
+        self.req.headers = {'User-Agent' : 'w2p_tvdb'}
         self.meddler = Meddler()
         self.errors = None
 
@@ -377,8 +389,17 @@ class w2p_tvseries_feed(object):
             return cached.value
         else:
             try:
-                r = self.req.get(url)
-                r.raise_for_status()
+                i = 0
+                while i < 5:
+                    try:
+                        r = self.req.get(url, timeout=3)
+                        r.raise_for_status()
+                        break
+                    except:
+                        i += 1
+                        time.sleep(0.2)
+                if i == 5:
+                    raise Exception("can't connect")
                 content = r.content
                 if not inserted_on:
                     inserted_on = self.retrieve_ttl(content)
@@ -388,6 +409,7 @@ class w2p_tvseries_feed(object):
                     self.log('downloader', '%s fetched from internet' % (url))
             except:
                 content = None
+                db.rollback()
                 self.error('downloader', '%s failed to fetch from internet' % (url))
         return content
 

@@ -89,7 +89,8 @@ class w2p_tvseries_tvdb(object):
     def __init__(self):
         db = current.w2p_tvseries.database
         self.logger = tvdb_logger_loader('tvdb')
-        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'}, config= {'max_retries': 5}, timeout=10)
+        self.req = req.Session()
+        self.req.headers = {'User-Agent' : 'w2p_tvdb'}
         self.apikey = 'C833E23D89D5FD35'
         self.mirrors_url = "http://thetvdb.com/api/%s/mirrors.xml" % (self.apikey)
         self.languages = {
@@ -140,8 +141,17 @@ class w2p_tvseries_tvdb(object):
                 self.log('downloader', '%s fetched from cache' % (url))
             return cached.value
         else:
-            r = self.req.get(url)
-            r.raise_for_status()
+            i = 0
+            while i < 10:
+                try:
+                    r = self.req.get(url, timeout=10)
+                    r.raise_for_status()
+                    break
+                except:
+                    i += 1
+                    time.sleep(0.2)
+            if i == 10:
+                raise Exception("can't connect")
             if not raw:
                 content = r.text
             else:

@@ -60,7 +60,8 @@ def w2p_tvseries_sub_loader(*args, **vars):
 class SubDownloader(object):
     def __init__(self, verbose=False):
         self.logger = tvdb_logger('subs')
-        self.req = req.session(headers = {'User-Agent' : 'w2p_tvdb'}, config= {'max_retries': 5}, timeout=3)
+        self.req = req.Session()
+        self.req.headers = {'User-Agent' : 'w2p_tvdb'}
         self.verbose = verbose
 
     def log(self, function, message):
@@ -92,8 +93,17 @@ class SubDownloader(object):
                 self.log('downloader', "Cache (%s): Getting url: %s" % (cachekey, url))
             return cached.value
         else:
-            r = self.req.get(url)
-            r.raise_for_status()
+            i = 0
+            while i < 5:
+                try:
+                    r = self.req.get(url, timeout=3)
+                    r.raise_for_status()
+                    break
+                except:
+                    i += 1
+                    time.sleep(0.2)
+            if i == 5:
+                raise Exception("can't connect")
             content = r.content
             self.put_in_cache(url, content)
         if self.verbose:
@@ -302,7 +312,8 @@ class ItasaDownloader(SubDownloader):
         super(ItasaDownloader, self).__init__(verbose)
         db = current.w2p_tvseries.database
         self.main_url = "http://www.italiansubs.net/"
-        self.req = req.session(headers={'Referer': self.main_url, 'User-Agent' : 'w2p_tvdb'}, config={'max_retries': 5}, timeout=3) #{'verbose': sys.stderr})
+        self.req = req.Session()
+        self.req.headers = {'Referer': self.main_url, 'User-Agent' : 'w2p_tvdb'}
         gs = w2p_tvseries_settings().global_settings()
         self.username = gs.itasa_username
         self.password = gs.itasa_password
