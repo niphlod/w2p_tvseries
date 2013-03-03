@@ -276,7 +276,7 @@ def the_boss():
     operation_key = operation_key and operation_key.value or None
     st = db2.scheduler_task
     sr = db2.scheduler_run
-
+    sw = db2.scheduler_worker
     if not operation_key:
         operation_key = "spec"
 
@@ -298,6 +298,7 @@ def the_boss():
         rtn.append('activating %s' % (step))
         try:
             db2(st.task_name.startswith("%s:%s" % (operation_key, step))).update(enabled=True)
+            db2(sw.is_ticker == True).update(status="PICK")
             db2.commit()
         except:
             rtn.append('exception')
