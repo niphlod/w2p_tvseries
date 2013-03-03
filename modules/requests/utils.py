@@ -19,48 +19,18 @@ import zlib
 from netrc import netrc, NetrcParseError
 
 from . import __version__
+from . import certs
 from .compat import parse_http_list as _parse_list_header
-from .compat import quote, quote_plus, urlparse, basestring, bytes, str, OrderedDict
+from .compat import quote, urlparse, bytes, str, OrderedDict, urlunparse
 from .cookies import RequestsCookieJar, cookiejar_from_dict
 
 _hush_pyflakes = (RequestsCookieJar,)
 
-CERTIFI_BUNDLE_PATH = None
-try:
-    # see if requests's own CA certificate bundle is installed
-    from . import certs
-    CERTIFI_BUNDLE_PATH = certs.where()
-except ImportError:
-    pass
-
 NETRC_FILES = ('.netrc', '_netrc')
-
-# common paths for the OS's CA certificate bundle
-POSSIBLE_CA_BUNDLE_PATHS = [
-        # Red Hat, CentOS, Fedora and friends (provided by the ca-certificates package):
-        '/etc/pki/tls/certs/ca-bundle.crt',
-        # Ubuntu, Debian, and friends (provided by the ca-certificates package):
-        '/etc/ssl/certs/ca-certificates.crt',
-        # FreeBSD (provided by the ca_root_nss package):
-        '/usr/local/share/certs/ca-root-nss.crt',
-        # openSUSE (provided by the ca-certificates package), the 'certs' directory is the
-        # preferred way but may not be supported by the SSL module, thus it has 'ca-bundle.pem'
-        # as a fallback (which is generated from pem files in the 'certs' directory):
-        '/etc/ssl/ca-bundle.pem',
-]
-
-
-def get_os_ca_bundle_path():
-    """Try to pick an available CA certificate bundle provided by the OS."""
-    for path in POSSIBLE_CA_BUNDLE_PATHS:
-        if os.path.exists(path):
-            return path
-    return None
 
 # if certifi is installed, use its CA bundle;
 # otherwise, try and use the OS bundle
-DEFAULT_CA_BUNDLE_PATH = CERTIFI_BUNDLE_PATH or get_os_ca_bundle_path()
-
+DEFAULT_CA_BUNDLE_PATH = certs.where()
 
 def dict_to_sequence(d):
     """Returns an internal sequence dictionary update."""
@@ -70,6 +40,13 @@ def dict_to_sequence(d):
 
     return d
 
+def super_len(o):
+    if hasattr(o, '__len__'):
+        return len(o)
+    if hasattr(o, 'len'):
+        return o.len
+    if hasattr(o, 'fileno'):
+        return os.fstat(o.fileno()).st_size
 
 def get_netrc_auth(url):
     """Returns the Requests tuple auth for a given url from netrc."""
@@ -252,57 +229,6 @@ def unquote_header_value(value, is_filename=False):
     return value
 
 
-def header_expand(headers):
-    """Returns an HTTP Header value string from a dictionary.
-
-    Example expansion::
-
-        {'text/x-dvi': {'q': '.8', 'mxb': '100000', 'mxt': '5.0'}, 'text/x-c': {}}
-        # Accept: text/x-dvi; q=.8; mxb=100000; mxt=5.0, text/x-c
-
-        (('text/x-dvi', {'q': '.8', 'mxb': '100000', 'mxt': '5.0'}), ('text/x-c', {}))
-        # Accept: text/x-dvi; q=.8; mxb=100000; mxt=5.0, text/x-c
-    """
-
-    collector = []
-
-    if isinstance(headers, dict):
-        headers = list(headers.items())
-    elif isinstance(headers, basestring):
-        return headers
-    elif isinstance(headers, str):
-        # As discussed in https://github.com/kennethreitz/requests/issues/400
-        # latin-1 is the most conservative encoding used on the web. Anyone
-        # who needs more can encode to a byte-string before calling
-        return headers.encode("latin-1")
-    elif headers is None:
-        return headers
-
-    for i, (value, params) in enumerate(headers):
-
-        _params = []
-
-        for (p_k, p_v) in list(params.items()):
-
-            _params.append('%s=%s' % (p_k, p_v))
-
-        collector.append(value)
-        collector.append('; ')
-
-        if len(params):
-
-            collector.append('; '.join(_params))
-
-            if not len(headers) == i + 1:
-                collector.append(', ')
-
-    # Remove trailing separators.
-    if collector[-1] in (', ', '; '):
-        del collector[-1]
-
-    return ''.join(collector)
-
-
 def dict_from_cookiejar(cj):
     """Returns a key/value dictionary from a CookieJar.
 
@@ -421,8 +347,7 @@ def get_unicode_from_response(r):
 
 
 def stream_decompress(iterator, mode='gzip'):
-    """
-    Stream decodes an iterator over compressed data
+    """Stream decodes an iterator over compressed data
 
     :param iterator: An iterator over compressed data
     :param mode: 'gzip' or 'deflate'
@@ -473,21 +398,18 @@ def unquote_unreserved(uri):
     """Un-escape any percent-escape sequences in a URI that are unreserved
     characters. This leaves all reserved, illegal and non-ASCII bytes encoded.
     """
-    try:
-        parts = uri.split('%')
-        for i in range(1, len(parts)):
-            h = parts[i][0:2]
-            if len(h) == 2 and h.isalnum():
-                c = chr(int(h, 16))
-                if c in UNRESERVED_SET:
-                    parts[i] = c + parts[i][2:]
-                else:
-                    parts[i] = '%' + parts[i]
+    parts = uri.split('%')
+    for i in range(1, len(parts)):
+        h = parts[i][0:2]
+        if len(h) == 2 and h.isalnum():
+            c = chr(int(h, 16))
+            if c in UNRESERVED_SET:
+                parts[i] = c + parts[i][2:]
             else:
                 parts[i] = '%' + parts[i]
-        return ''.join(parts)
-    except ValueError:
-        return uri
+        else:
+            parts[i] = '%' + parts[i]
+    return ''.join(parts)
 
 
 def requote_uri(uri):
@@ -502,7 +424,7 @@ def requote_uri(uri):
     return quote(unquote_unreserved(uri), safe="!#$%&'()*+,/:;=?@[]~")
 
 
-def get_environ_proxies():
+def get_environ_proxies(url):
     """Return a dict of environment proxies."""
 
     proxy_keys = [
@@ -510,11 +432,29 @@ def get_environ_proxies():
         'http',
         'https',
         'ftp',
-        'socks',
-        'no'
+        'socks'
     ]
 
     get_proxy = lambda k: os.environ.get(k) or os.environ.get(k.upper())
+
+    # First check whether no_proxy is defined. If it is, check that the URL
+    # we're getting isn't in the no_proxy list.
+    no_proxy = get_proxy('no_proxy')
+
+    if no_proxy:
+        # We need to check whether we match here. We need to see if we match
+        # the end of the netloc, both with and without the port.
+        no_proxy = no_proxy.split(',')
+        netloc = urlparse(url).netloc
+
+        for host in no_proxy:
+            if netloc.endswith(host) or netloc.split(':')[0].endswith(host):
+                # The URL does match something in no_proxy, so we don't want
+                # to apply the proxies on this URL.
+                return {}
+
+    # If we get here, we either didn't have no_proxy set or we're not going
+    # anywhere that no_proxy applies to.
     proxies = [(key, get_proxy(key + '_proxy')) for key in proxy_keys]
     return dict([(key, val) for (key, val) in proxies if val])
 
@@ -540,11 +480,25 @@ def default_user_agent():
     else:
         _implementation_version = 'Unknown'
 
+    try:
+        p_system = platform.system()
+        p_release = platform.release()
+    except IOError:
+        p_system = 'Unknown'
+        p_release = 'Unknown'
+
     return " ".join([
             'python-requests/%s' % __version__,
             '%s/%s' % (_implementation, _implementation_version),
-            '%s/%s' % (platform.system(), platform.release()),
+            '%s/%s' % (p_system, p_release),
         ])
+
+def default_headers():
+    return {
+        'User-Agent': default_user_agent(),
+        'Accept-Encoding': ', '.join(('gzip', 'deflate', 'compress')),
+        'Accept': '*/*'
+    }
 
 
 def parse_header_links(value):
@@ -614,3 +568,17 @@ def guess_json_utf(data):
             return 'utf-32-le'
         # Did not detect a valid UTF-32 ascii-range character
     return None
+
+
+def prepend_scheme_if_needed(url, new_scheme):
+    '''Given a URL that may or may not have a scheme, prepend the given scheme.
+    Does not replace a present scheme with the one provided as an argument.'''
+    scheme, netloc, path, params, query, fragment = urlparse(url, new_scheme)
+
+    # urlparse is a finicky beast, and sometimes decides that there isn't a
+    # netloc present. Assume that it's being over-cautious, and switch netloc
+    # and path if urlparse decided there was no netloc.
+    if not netloc:
+        netloc, path = path, netloc
+
+    return urlunparse((scheme, netloc, path, params, query, fragment))
