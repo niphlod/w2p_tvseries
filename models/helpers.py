@@ -49,7 +49,7 @@ ICON_MAPPING = {
 
 def w2p_icon(status, variant=None):
     variant = variant and ' icon-white' or ''
-    return TAG[''](' ',I(_class="%s%s" % (ICON_MAPPING[status], variant), _title=status))
+    return TAG[''](' ',I(_class="%s%s" % (ICON_MAPPING.get(status), variant), _title=status))
 
 
 
