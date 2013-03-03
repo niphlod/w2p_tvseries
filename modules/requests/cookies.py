@@ -32,26 +32,22 @@ class MockRequest(object):
     def __init__(self, request):
         self._r = request
         self._new_headers = {}
+        self.type = urlparse(self._r.url).scheme
 
     def get_type(self):
-        return urlparse(self._r.full_url).scheme
+        return self.type
 
     def get_host(self):
-        return urlparse(self._r.full_url).netloc
+        return urlparse(self._r.url).netloc
 
     def get_origin_req_host(self):
-        if self._r.response.history:
-            r = self._r.response.history[0]
-            return urlparse(r.url).netloc
-        else:
-            return self.get_host()
+        return self.get_host()
 
     def get_full_url(self):
-        return self._r.full_url
+        return self._r.url
 
     def is_unverifiable(self):
-        # unverifiable == redirected
-        return bool(self._r.response.history)
+        return True
 
     def has_header(self, name):
         return name in self._r.headers or name in self._new_headers

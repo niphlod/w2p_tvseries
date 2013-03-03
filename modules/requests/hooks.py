@@ -8,26 +8,21 @@ This module provides the capabilities for the Requests hooks system.
 
 Available hooks:
 
-``args``:
-    A dictionary of the arguments being sent to Request().
-
-``pre_request``:
-    The Request object, directly after being created.
-
-``pre_send``:
-    The Request object, directly before being sent.
-
-``post_request``:
-    The Request object, directly after being sent.
-
 ``response``:
     The response generated from a Request.
 
 """
 
 
-HOOKS = ('args', 'pre_request', 'pre_send', 'post_request', 'response')
+HOOKS = ['response']
 
+def default_hooks():
+    hooks = {}
+    for event in HOOKS:
+        hooks[event] = []
+    return hooks
+
+# TODO: response is the only one
 
 def dispatch_hook(key, hooks, hook_data):
     """Dispatches a hook dictionary on a given piece of data."""

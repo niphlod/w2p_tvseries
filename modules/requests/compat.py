@@ -4,6 +4,7 @@
 pythoncompat
 """
 
+from .packages import charade as chardet
 
 import sys
 
@@ -81,7 +82,6 @@ except ImportError:
 # Specifics
 # ---------
 
-
 if is_py2:
     from urllib import quote, unquote, quote_plus, unquote_plus, urlencode
     from urlparse import urlparse, urlunparse, urljoin, urlsplit, urldefrag
@@ -89,10 +89,6 @@ if is_py2:
     import cookielib
     from Cookie import Morsel
     from StringIO import StringIO
-    try:
-        import cchardet as chardet
-    except ImportError:
-        from .packages import chardet
     from .packages.urllib3.packages.ordered_dict import OrderedDict
 
     builtin_str = str
@@ -109,7 +105,6 @@ elif is_py3:
     from http import cookiejar as cookielib
     from http.cookies import Morsel
     from io import StringIO
-    from .packages import chardet2 as chardet
     from collections import OrderedDict
 
     builtin_str = str
