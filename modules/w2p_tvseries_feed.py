@@ -70,7 +70,8 @@ def w2p_tvseries_feed_loader(*args, **vars):
             types = dict(
                 Eztv_feed=Eztv_feed,
                 Torrentz_feed=Torrentz_feed,
-                ShowRSS_feed=ShowRSS_feed
+                ShowRSS_feed=ShowRSS_feed,
+                DTT_feed=DTT_feed
             )
             setattr(w2p_tvseries_feed_loader, 'instance_%s' % (type),  types[type](*args, **vars))
     finally:
@@ -697,5 +698,55 @@ class ShowRSS_feed(w2p_tvseries_feed):
         ep.pubdate = datetime.datetime.utcfromtimestamp(mktime_tz(parsedate_tz(ep.pubdate)))
         ep.filterwith = ep.title
         ep.size = 300*1024*1024
+        ep.guid = item.findtext('guid')
+        return ep
+
+
+
+class DTT_feed(w2p_tvseries_feed):
+    def __init__(self, *args):
+        super(DTT_feed, self).__init__(*args)
+        self.title_strip_quality = re.compile(r"""(.*) \[.*\]""")
+
+    def search(self, show_name, seasonnumber, quality='', minsize=100, maxsize=4780, regex=None, lower_attention='Verified'):
+        self.eps = []
+        self.calc_url_feed(show_name, seasonnumber, quality, lower_attention)
+        self.parse_feed()
+        self.filter_list(quality, minsize*1024*1024, maxsize*1024*1024, regex, seasonnumber)
+        return self.eps
+
+    def calc_url_feed(self, show_name, seasonnumber, quality, lower_attention='Verified'):
+        addpar = 'min_age=4'
+        if quality.lower() in ['hd', 'hdtv', 'no_720p']:
+            addpar += '&prefer=HD'
+        elif quality.lower() == '720p':
+            addpar += '&prefer=720'
+        elif quality.lower() == '1080p':
+            addpar += '&prefer=1080'
+        self.feed_url = "http://www.dailytvtorrents.org/rss/show/%s?%s" % (show_name.lower(), addpar)
+
+    def parse_item(self, item):
+        ep = Storage()
+        ep.title = item.findtext('title')
+        match = self.title_strip_quality.search(ep.title)
+        if match:
+            title_ = match.group(1)
+        else:
+            title_ = ep.title
+        info = self.parse_title(title_)
+        ep.update(info)
+        ep.description = item.findtext('description')
+        ep.link = item.find('enclosure').get('url')
+        ep.pubdate = item.findtext('pubDate')
+        ep.filename = item.findtext('title')
+        ep.pubdate = datetime.datetime.utcfromtimestamp(mktime_tz(parsedate_tz(ep.pubdate)))
+        ep.filterwith = ep.title
+        ep.size = item.find('enclosure').get('length')
+        try:
+            ep.size = int(ep.size)
+        except:
+            ep.size = 0
+        if ep.size < 100*1024*1024:
+            ep.size = 300*1024*1024
         ep.guid = item.findtext('guid')
         return ep
