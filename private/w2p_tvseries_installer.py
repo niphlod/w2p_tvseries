@@ -24,6 +24,7 @@ import sys
 import zipfile
 import datetime
 import time
+import glob
 
 def wait_and_exit(rtncode=0):
     time.sleep(5)
@@ -214,11 +215,14 @@ if raw_input('Q:    w2p_tvseries needs a patched scheduler to work. Can I overwr
     new_scheduler = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'private', 'scheduler.py')
     old_scheduler = os.path.join(w2p_folder, 'gluon', 'scheduler.py')
     olddb = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'databases', 'storage_scheduler.db')
-    if os.path.isfile(olddb):
-        try:
-            os.unlink(olddb)
-        except:
-            pass
+    tablefiles = os.path.join(w2p_folder, 'applications', 'w2p_tvseries', 'databases', '*scheduler_*.table')
+    todelete = glob.glob(tablefiles) + [olddb]
+    for todel in todelete:
+        if os.path.isfile(todel):
+            try:
+                os.unlink(todel)
+            except:
+                pass
     shutil.copy(new_scheduler, old_scheduler)
     print '  INFO: new scheduler in place'
 
@@ -323,3 +327,4 @@ for file in [w2p_archive, zipball]:
     if os.path.exists(file):
         os.unlink(file)
 wait_and_exit(0)
+
