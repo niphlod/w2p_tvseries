@@ -195,7 +195,10 @@ class w2p_tvseries_torrent(object):
             (db.episodes.seasonnumber == seasonnumber) &
             (~db.episodes.epnumber.belongs(missing))
         )._select(db.episodes.id)
-        db(db.downloads.episode_id.belongs(not_missing)).delete()
+        db(
+            (db.downloads.episode_id.belongs(not_missing)) &
+            (db.downloads.queued == False)
+        ).delete()
 
         if len(eps_to_avoid) > 0:
             #prune relevant downloads records
