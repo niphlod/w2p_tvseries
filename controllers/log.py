@@ -53,7 +53,7 @@ def index():
     return rtn
 
 def op_status():
-    session.forget()
+    session.forget(response)
     st = db2.scheduler_task
     sw = db2.scheduler_worker
     operations = db2(

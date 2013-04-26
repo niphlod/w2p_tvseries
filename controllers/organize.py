@@ -65,7 +65,7 @@ def check_missing_path():
     return dict(results=results)
 
 def missing():
-    session.forget()
+    session.forget(response)
     all_to_check = db(
         (db.seasons_settings.series_id == db.series.id) &
         (db.series.basepath <> '') &
@@ -241,7 +241,7 @@ def path_for_one_season(seasons_settings, series_metadata, hash_gen_mode, op_key
         st.insert(**pr)
 
 def torrents():
-    session.forget()
+    session.forget(response)
     settings_ = w2p_tvseries_settings()
     gsettings = settings_.global_settings()
     if gsettings.tclient == 'None' or not gsettings.tclient:
@@ -250,7 +250,7 @@ def torrents():
     return dict()
 
 def torrents_status():
-    session.forget()
+    session.forget(response)
     settings_ = w2p_tvseries_settings()
     gsettings = settings_.global_settings()
     tclient = w2p_tvseries_torrent_client_loader(gsettings.tclient)

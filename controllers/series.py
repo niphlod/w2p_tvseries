@@ -23,7 +23,7 @@ import time
 
 
 def index():
-    session.forget()
+    session.forget(response)
     if not request.args(0):
         redirect(URL('default', 'index'))
 
@@ -66,7 +66,7 @@ def index():
     return dict(episodes=episodes, name=name, banner=banner)
 
 def episodes():
-    session.forget()
+    session.forget(response)
     if not request.args(0):
         return ''
 
@@ -86,7 +86,7 @@ def episodes():
     return dict(episode=episode, banner=banner, metadata=metadata, download=download)
 
 def season():
-    session.forget()
+    session.forget(response)
     if not (request.args(0) and request.args(1)):
         return ''
 

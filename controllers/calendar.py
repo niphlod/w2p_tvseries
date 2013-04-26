@@ -22,11 +22,11 @@ from gluon.storage import Storage
 import datetime
 
 def index():
-    session.forget()
+    session.forget(response)
     return dict()
 
 def events():
-    session.forget()
+    session.forget(response)
     start = request.vars.start
     end = request.vars.end
 

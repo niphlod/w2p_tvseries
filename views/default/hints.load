@@ -44,7 +44,7 @@
     <div class="accordion-group">
         <div class="accordion-heading">
            <a href="#hints_double" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle">
-            <span class="badge badge-warning">{{=len(double_files)}}</span> Double files (you may want to delete one or another) <i class="icon-resize-full pull-right"></i>
+            <span class="badge badge-warning">{{=len(double_files)}}</span> Double Files (you may want to delete one or another) <i class="icon-resize-full pull-right"></i>
            </a>
         </div>
         <div class="accordion-body collapse" id="hints_double">
@@ -83,7 +83,36 @@
         </div>
     </div>
     {{pass}}
+    {{if len(unable_to_download) > 0:}}
+    <div class="accordion-group">
+        <div class="accordion-heading">
+           <a href="#hints_downloads" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle">
+            <span class="badge badge-warning">{{=unable_to_download_counter}}</span> Unable to Download Torrent <i class="icon-resize-full pull-right"></i>
+           </a>
+        </div>
+        <div class="accordion-body collapse" id="hints_downloads">
+            <div class="accordion-inner">
+              <ul>
+               {{for se in unable_to_download:}}
+                  <li>{{=A("%s (%s)" % (se_cache[se].get('name'), se_cache[se].get('status')), _href=URL('series', 'index', args=se, anchor='series_settings', extension=False))}}</li>
+                  {{for season in unable_to_download[se]:}}
+                        <ul>
+                            <li>Season {{=season}}</li>
+                            <ul>
+                            {{for ep_id, el in unable_to_download[se][season].items():}}
+                                <li>
+                                    {{="S%.2dE%.2d - %s" % (season, el['epnumber'], el['name'])}}:
+                                    tried {{=A("this link", _href=el['link'], _target="blank")}} since {{=el['queued_at']}}
+                                </li>
+                            {{pass}}
+                            </ul>
+                        </ul>
+                  {{pass}}
+               {{pass}}
+
+               </ul>
+            </div>
+        </div>
+    </div>
+    {{pass}}
 </div>
-
-
-

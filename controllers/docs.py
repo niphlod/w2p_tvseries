@@ -20,11 +20,11 @@
 import os
 
 def index():
-    session.forget()
+    session.forget(response)
     redirect(URL('page', args=['index']))
 
 def page():
-    session.forget()
+    session.forget(response)
     content = ''
     path = path_to_file(request)
     if os.path.exists(path) and os.path.isfile(path):

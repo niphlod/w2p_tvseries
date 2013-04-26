@@ -107,6 +107,7 @@ TERMINATE = 'TERMINATE'
 DISABLED = 'DISABLED'
 KILL = 'KILL'
 PICK = 'PICK'
+STOP_TASK = 'STOP_TASK'
 EXPIRED = 'EXPIRED'
 SECONDS = 1
 HEARTBEAT = 3 * SECONDS
@@ -398,7 +399,7 @@ class MetaScheduler(threading.Thread):
 
 TASK_STATUS = (QUEUED, RUNNING, COMPLETED, FAILED, TIMEOUT, STOPPED, EXPIRED)
 RUN_STATUS = (RUNNING, COMPLETED, FAILED, TIMEOUT, STOPPED)
-WORKER_STATUS = (ACTIVE, PICK, DISABLED, TERMINATE, KILL)
+WORKER_STATUS = (ACTIVE, PICK, DISABLED, TERMINATE, KILL, STOP_TASK)
 
 
 class TYPE(object):
@@ -562,16 +563,18 @@ class Scheduler(MetaScheduler):
             self.die()
 
     def wrapped_assign_tasks(self, db):
+        logger.debug('Assigning tasks...')
         db.commit()  #db.commit() only for Mysql
         x = 0
         while x < 10:
             try:
                 self.assign_tasks(db)
                 db.commit()
+                logger.debug('Tasks assigned...')
                 break
             except:
                 db.rollback()
-                logger.error('TICKER: error assigning tasks')
+                logger.error('TICKER: error assigning tasks (%s)', x)
                 x += 1
                 time.sleep(0.5)
 
@@ -746,7 +749,7 @@ class Scheduler(MetaScheduler):
                     # keep sleeping
                     self.worker_status[0] = DISABLED
                     if self.worker_status[1] == MAXHIBERNATION:
-                        logger.debug('........recording heartbeat')
+                        logger.debug('........recording heartbeat (%s)', self.worker_status[0])
                         db(sw.worker_name == self.worker_name).update(
                             last_heartbeat=now)
                 elif mybackedstatus == TERMINATE:
@@ -758,11 +761,14 @@ class Scheduler(MetaScheduler):
                     self.worker_status[0] = KILL
                     self.die()
                 else:
+                    if mybackedstatus == STOP_TASK:
+                        logger.info('Asked to kill the current task')
+                        self.terminate_process()
                     logger.debug('........recording heartbeat (%s)', self.worker_status[0])
                     db(sw.worker_name == self.worker_name).update(
                         last_heartbeat=now, status=ACTIVE)
                     self.worker_status[1] = 1  # re-activating the process
-                    if self.worker_status[0] <> RUNNING:
+                    if self.worker_status[0] != RUNNING:
                         self.worker_status[0] = ACTIVE
 
             self.do_assign_tasks = False
@@ -782,13 +788,17 @@ class Scheduler(MetaScheduler):
                         inactive_workers._select(sw.worker_name)))(st.status == RUNNING)\
                         .update(assigned_worker_name='', status=QUEUED)
                     inactive_workers.delete()
-                    self.is_a_ticker = self.being_a_ticker()
+                    try:
+                        self.is_a_ticker = self.being_a_ticker()
+                    except:
+                        logger.error('Error coordinating TICKER')
                     if self.worker_status[0] == ACTIVE:
                         self.do_assign_tasks = True
                 except:
-                    pass
+                    logger.error('Error cleaning up')
             db.commit()
         except:
+            logger.error('Error retrieving status')
             db.rollback()
         self.adj_hibernation()
         self.sleep()
@@ -802,14 +812,16 @@ class Scheduler(MetaScheduler):
         ticker = all_active.find(lambda row: row.is_ticker is True).first()
         not_busy = self.worker_status[0] == ACTIVE
         if not ticker:
+            #if no other tickers are around
             if not_busy:
-                #only if this worker isn't busy, otherwise wait for a free one
+                #only if I'm not busy
                 db(sw.worker_name == self.worker_name).update(is_ticker=True)
                 db(sw.worker_name != self.worker_name).update(is_ticker=False)
                 logger.info("TICKER: I'm a ticker")
             else:
-                #giving up, only if I'm not alone
-                if len(all_active) > 1:
+                #I'm busy
+                if len(all_active) >= 1:
+                    #so I'll "downgrade" myself to a "poor worker"
                     db(sw.worker_name == self.worker_name).update(is_ticker=False)
                 else:
                     not_busy = True
@@ -1006,6 +1018,40 @@ class Scheduler(MetaScheduler):
                 loads(row.scheduler_run.run_result,
                       object_hook=_decode_dict) or None
         return row
+
+    def stop_task(self, ref):
+        """
+        Experimental!!!
+        Shortcut for task termination.
+        If the task is RUNNING it will terminate it --> execution will be set as FAILED
+        If the task is QUEUED, its stop_time will be set as to "now",
+            the enabled flag will be set to False, status to STOPPED
+
+        :param ref: can be
+            - integer --> lookup will be done by scheduler_task.id
+            - string  --> lookup will be done by scheduler_task.uuid
+        Returns:
+            - 1 if task was stopped (meaning an update has been done)
+            - None if task was not found, or if task was not RUNNING or QUEUED
+        """
+        from gluon.dal import Query
+        st, sw = self.db.scheduler_task, self.db.scheduler_worker
+        if isinstance(ref, int):
+            q = st.id == ref
+        elif isinstance(ref, str):
+            q = st.uuid == ref
+        else:
+            raise SyntaxError(
+                "You can retrieve results only by id or uuid")
+        task = self.db(q).select(st.id, st.status, st.assigned_worker_name).first()
+        rtn = None
+        if not task:
+            return rtn
+        if task.status == 'RUNNING':
+            rtn = self.db(sw.worker_name == task.assigned_worker_name).update(status=STOP_TASK)
+        elif task.status == 'QUEUED':
+            rtn = self.db(q).update(stop_time=self.now(), enabled=False, status=STOPPED)
+        return rtn
 
 
 def main():

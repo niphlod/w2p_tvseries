@@ -455,7 +455,9 @@ class Scooper(object):
         #folders to scoop
         filelist = []
         for folder in self.folders:
-            filelist.extend(os.listdir(folder))
+            for f in os.listdir(folder):
+                if os.path.isfile(f):
+                    filelist.append(f)
         self.filelist = filelist
 
     def preview(self, mask, reload=False):

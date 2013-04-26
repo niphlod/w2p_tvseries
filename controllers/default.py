@@ -50,7 +50,8 @@ def settings():
     form.wells = [
         dict(
             title="General Settings",
-            fields=['series_language', 'season_path', 'series_basefolder', 'series_metadata', 'hash_gen']
+            fields=['series_language', 'season_path', 'series_basefolder',
+                    'series_metadata', 'hash_gen']
         ),
         dict(
             title="Scooper Settings",
@@ -58,11 +59,14 @@ def settings():
         ),
         dict(
             title="Torrent Defaults",
-            fields=['torrent_path', 'torrent_magnet', 'torrent_default_feed','torrent_default_quality','torrent_default_minsize', 'torrent_default_maxsize']
+            fields=['torrent_path', 'torrent_magnet', 'torrent_default_feed',
+                    'torrent_default_quality','torrent_default_minsize',
+                    'torrent_default_maxsize']
         ),
         dict(
             title="Subtitles Settings",
-            fields=['itasa_username','itasa_password','subtitles_default_method','subtitles_default_quality', 'subtitles_default_language']
+            fields=['itasa_username','itasa_password','subtitles_default_method',
+                    'subtitles_default_quality', 'subtitles_default_language']
         )
         ]
 
@@ -70,9 +74,16 @@ def settings():
         for a in form.vars:
             if a == 'itasa_password':
                 if form.vars[a] <> 8*('*'):
-                    db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a], kkey=a)
+                    db.global_settings.update_or_insert(
+                        db.global_settings.kkey == a,
+                        value = form.vars[a], kkey=a
+                        )
             elif a == 'series_basefolder':
-                db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a].strip(), kkey=a) ##FIXME
+                db.global_settings.update_or_insert(
+                    db.global_settings.kkey == a,
+                    value = form.vars[a].strip(),
+                    kkey=a
+                    ) ##FIXME
             elif a == 'scooper_path':
                 values = form.vars[a]
                 if not isinstance(values, (tuple,list)):
@@ -83,7 +94,10 @@ def settings():
                 for b in values:
                     db.global_settings.insert(kkey='scooper_path', value=b)
             else:
-                db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a], kkey=a)
+                db.global_settings.update_or_insert(
+                    db.global_settings.kkey == a,
+                    value = form.vars[a], kkey=a
+                    )
         db.commit()
         settings_.global_settings(refresh=True)
         if form.vars.torrent_magnet == 'ST':
@@ -106,8 +120,13 @@ def client_settings():
         settings.defaults[k] = v
 
     fi = [
-        Field(k, settings.types.get(k, 'string'), comment=settings.comments[k],
-              default=settings.defaults[k], label=settings.labels.get(k, k), widget=settings.widgets[k], requires=settings.requires[k])
+        Field(k, settings.types.get(k, 'string'),
+              comment=settings.comments[k],
+              default=settings.defaults[k],
+              label=settings.labels.get(k, k),
+              widget=settings.widgets[k],
+              requires=settings.requires[k]
+              )
         for k in settings.fields
     ]
 
@@ -121,7 +140,11 @@ def client_settings():
     )
     if form.process(hideerror=True).accepted:
         for a in form.vars:
-            db.global_settings.update_or_insert(db.global_settings.kkey == a, value = form.vars[a], kkey=a)
+            db.global_settings.update_or_insert(
+                db.global_settings.kkey == a,
+                value = form.vars[a],
+                kkey=a
+                )
 
         settings_.global_settings(refresh=True)
         session.flash = 'settings updated correctly'
@@ -157,13 +180,14 @@ def client_settings_validate():
         return dict(status='ok', message='all ok')
 
 def hints():
-    session.forget()
+    session.forget(response)
     #are there any new season if we're following the last one ?
 
     ss = db.seasons_settings
     ep_me = db.episodes_metadata
     ep_tb = db.episodes
     se_tb = db.series
+    dw_tb = db.downloads
     new_se = []
     all_se = db(se_tb.id > 0).select(se_tb.id, se_tb.name, se_tb.status)
     se_cache = {}
@@ -176,7 +200,10 @@ def hints():
         if lock_validate == request.now:
             #validate seasons every two minutes at most
             validate_seasons(row.id)
-        all_seasons = db(ss.series_id == row.id).select(ss.seasonnumber, ss.tracking, orderby=ss.seasonnumber)
+        all_seasons = db(ss.series_id == row.id).select(
+            ss.seasonnumber, ss.tracking,
+            orderby=ss.seasonnumber
+            )
         to_activate = False
         x = 0
         for a in all_seasons:
@@ -184,7 +211,9 @@ def hints():
             if a.tracking:
                 to_activate = True
             elif to_activate and not a.tracking:
-                new_se.append(Storage(id=row.id, name=row.name, seasonnumber=a.seasonnumber))
+                new_se.append(
+                    Storage(id=row.id, name=row.name, seasonnumber=a.seasonnumber)
+                    )
             #instead of doing another query, let's store in se_cache the last tracked season for every series
             if len(all_seasons) == x:
                 se_cache[row.id]['lastseason'] = a.seasonnumber
@@ -227,4 +256,53 @@ def hints():
             else:
                 double_files[row.series_id].append(inner_report)
 
-    return dict(new_se=new_se, completed_se=completed_se, se_cache=se_cache, double_files=double_files)
+    #are there any torrents that are giving us problems ?
+    unable_to_download = {}
+    counter = 0
+    all_se = db((ss.tracking == True) & (ss.torrent_tracking == True)).select()
+    for row in all_se:
+
+        rtn = db(
+            (se_tb.id == row.series_id) &
+            (ep_tb.seriesid == se_tb.seriesid) &
+            (ep_tb.language == se_tb.language) &
+            (ep_tb.seasonnumber == row.seasonnumber) &
+            (ep_tb.tracking == True) &
+            (
+                (ep_me.id == None) |
+                (ep_me.filename == None)
+            )
+            &
+            (dw_tb.episode_id == ep_tb.id) &
+            (dw_tb.queued == False)
+            ).select(left=ep_me.on(ep_me.episode_id==ep_tb.id))
+
+        no_torrent = {}
+        for irow in rtn:
+            counter += 1
+            no_torrent[irow.episodes.id] = {
+                'link' : irow.downloads.link,
+                'magnet' : irow.downloads.magnet,
+                'queued_at' : irow.downloads.queued_at,
+                'name' : irow.episodes.name,
+                'epnumber' : irow.episodes.epnumber
+            }
+        if len(no_torrent) == 0:
+            continue
+
+        if row.series_id not in unable_to_download:
+            unable_to_download[row.series_id] = {
+                row.seasonnumber : no_torrent
+            }
+        else:
+            unable_to_download[row.series_id][row.seasonnumber] = no_torrent
+
+
+    return dict(
+        new_se=new_se,
+        completed_se=completed_se,
+        se_cache=se_cache,
+        double_files=double_files,
+        unable_to_download=unable_to_download,
+        unable_to_download_counter=counter
+        )

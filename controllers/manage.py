@@ -29,7 +29,7 @@ from w2p_tvseries_tvdb import w2p_tvseries_tvdb_loader
 from w2p_tvseries_utils import tvdb_scooper_loader, w2p_tvseries_settings
 
 def index():
-    session.forget()
+    session.forget(response)
     redirect(URL('series', 'index'))
 
 def add():

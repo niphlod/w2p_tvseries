@@ -161,7 +161,6 @@ class w2p_tvseries_torrent(object):
             missing = missing.get('missing', [])
         except:
             pass
-
         to_catch = []
         valid_eps = [ep for ep in eps if not ep.reason]
         for ep in valid_eps:
@@ -189,6 +188,15 @@ class w2p_tvseries_torrent(object):
                 to_insert.series_id = seriesid
                 to_insert.seasonnumber = seasonnumber
                 db.downloads.update_or_insert(db.downloads.guid==to_insert.guid, **to_insert)
+
+        ##prune episodes that were found
+        not_missing = db(
+            (db.episodes.seriesid == rec.series.seriesid) &
+            (db.episodes.seasonnumber == seasonnumber) &
+            (~db.episodes.epnumber.belongs(missing))
+        )._select(db.episodes.id)
+        db(db.downloads.episode_id.belongs(not_missing)).delete()
+
         if len(eps_to_avoid) > 0:
             #prune relevant downloads records
             episodes_ids = db(
