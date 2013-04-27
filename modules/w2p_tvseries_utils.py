@@ -456,7 +456,8 @@ class Scooper(object):
         filelist = []
         for folder in self.folders:
             for f in os.listdir(folder):
-                if os.path.isfile(f):
+                check = os.path.join(folder, f)
+                if os.path.isfile(check):
                     filelist.append(f)
         self.filelist = filelist
 
