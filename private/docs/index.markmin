@@ -82,7 +82,7 @@ Scooper paths (source directories) can be set in [[Settings @//default/settings/
 or by the cron script.
 
 ### Torrents [[torrents]]
-Torrents will be searched through ezrss.it, torrentz.eu or showrss.karmorra.info. For every season you have some parameters to specify what to download and what not, using "Torrent Settings".
+Torrents will be searched through ezrss.it, torrentz.eu, DailyTvtorrents.org or showrss.karmorra.info. For every season you have some parameters to specify what to download and what not, using "Torrent Settings".
 Please be sure to tick "Torrent Tracking" as well. By default some parameters will be suggested by w2p_tvseries, but you can tune it and preview the results in semi real-time (you're
  encouraged to check at least the first time if the supplied parameters return something useful!).
 All recent feeds carry all kind of informations, and the app will try to do its best to retrieve what you want, but it has to deal with the actual data returned from the feed itself,

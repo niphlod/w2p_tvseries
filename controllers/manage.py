@@ -490,3 +490,4 @@ def bit():
     )
 
     return dict(all_files_records=all_files_records, all_files=all_files, form=form)
+

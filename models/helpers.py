@@ -113,7 +113,7 @@ $(function () {
     add_del = [LI(A(w2p_icon('add'), ' Add Series', _href=URL(r=request, c='manage', f='add')))]
     if delete_button:
         add_del += LI(A(w2p_icon('trash'), ' Delete Series', _href=URL(r=request, c='manage', f='delete', args=[request.args(0)])))
-
+    add_del += LI(A(w2p_icon('reset'), ' Refresh All Series', _title="Fetch them all from tvdb.com", callback=URL(r=request, c='organize', f='refresh_all')))
 
     return TAG[''](
         DIV(
@@ -127,7 +127,7 @@ $(function () {
                      _autocomplete="off"),
                      _class="btn-group"),
                    DIV(
-                        BUTTON(w2p_icon('settings', variant='white'), ' Add/Del Series ', SPAN(_class="caret"), _class="btn btn-primary dropdown-toggle", **{'_data-toggle' : 'dropdown'}),
+                        BUTTON(w2p_icon('settings', variant='white'), ' Manage Series ', SPAN(_class="caret"), _class="btn btn-primary dropdown-toggle", **{'_data-toggle' : 'dropdown'}),
                         UL(*add_del,
                             _class="dropdown-menu"),
                     _class="btn-group"),

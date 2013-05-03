@@ -260,3 +260,25 @@ def torrents_status():
         res = []
     #res = []
     return dict(res=res)
+
+
+def refresh_all():
+    db(db.global_settings.kkey == 'update_time').delete()
+    st = db2.scheduler_task
+    operation_key = 'spec'
+    uniquename = "%s:maintenance" % (operation_key)
+    st.insert(task_name=uniquename, function_name='maintenance', enabled=True, timeout=15, vars=json(dict(cb='update')))
+
+    uniquename = "%s:update:" % (operation_key)
+    st.insert(task_name=uniquename, function_name='update', enabled=False, timeout=300, vars=json(dict(cb='down_sebanners')))
+
+    uniquename = "%s:down_sebanners:" % (operation_key)
+    st.insert(task_name=uniquename, function_name='down_sebanners', enabled=False, timeout=180, vars=json(dict(cb='down_epbanners')))
+
+    uniquename = "%s:down_epbanners:" % (operation_key)
+    st.insert(task_name=uniquename, function_name='down_epbanners', enabled=False, timeout=300, vars=json(dict(cb='check_season')))
+    myscheduler.queue_task('the_boss', [], {}, task_name='%s:theBoss' % (operation_key), repeats=0, period=10, immediate=True)
+    db2.commit()
+    db.commit()
+
+    return 'started'
