@@ -581,7 +581,7 @@ class w2p_tvseries_tvren(object):
         eplist_dict = {}
         for row in eplist:
             eplist_dict[row.epnumber] = row.name
-        self.default_format = "%(seriesname)s - S%(seasonnumber).2dE%(number)s - %(name)s%(ext)s"
+        self.default_format = "%(seriesname)s - S%(seasonnumber).2d%(number)s - %(name)s%(ext)s"
 
         to_rename = []
         episodes_matching = []
@@ -626,14 +626,14 @@ class w2p_tvseries_tvren(object):
                     name.append(name_)
                     number.append(ep)
                 name = '-'.join(name)
-                number = '-'.join(["%.2d" % i for i in number])
+                number = ''.join(["E%.2d" % i for i in number])
             else:
                 #find name, if not, continue (we have a episode, we don't have a record for it)
                 name = eplist_dict.get(int(match.episodes[0]), 'WEDONTHAVEARECORDFORTHIS')
                 if name == 'WEDONTHAVEARECORDFORTHIS':
                     errors.append(file)
                     continue
-                number = "%.2d" % int(match.episodes[0])
+                number = "E%.2d" % int(match.episodes[0])
             newname = self.default_format % dict(seriesname = self.slugify(rec.series.name),
                                                  seasonnumber = int(match.seasonnumber),
                                                  number = number,
