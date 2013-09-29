@@ -100,7 +100,11 @@ def parse_web2py_version(version_file):
     version = version.replace('Version ', '')
     version = version[:version.find('-')]
     version = version.split('.')
-    return [int(a) for a in version]
+    try:
+        version = [int(a) for a in version]
+    except:
+        version = [0,0,0]
+    return version
 
 def update_w2p_tvseries(w2p_folder, version):
     if raw_input('Q:    Update/download app from internet ([Y]/n)?').lower() in ['y', 'yes']:
