@@ -10,6 +10,11 @@ if active_tab == None:
     active_class = request.vars.active_tab and 'active' or ''
 pass
 }}
+<div class="btn-toolbar">
+    <div class="btn-group">
+        {{=A("Refresh from tvdb", _class="btn reload", _href=URL('manage', 'update_from_tvdb', extension='', args=[request.args(0)]))}}
+    </div>
+</div>
 
 <div class="row-fluid">
     <dl class="dl-horizontal">
