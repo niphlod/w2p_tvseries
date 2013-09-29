@@ -180,6 +180,7 @@ if __name__ == '__main__':
         if is_binary:
             print '  ERROR: you should update web2py'
             print '  ERROR: go to http://niphlod.github.io/w2p_tvseries/ and download the new binary'
+            wait_and_exit(1)
         web2py_url = 'http://www.web2py.com/examples/static/web2py_src.zip'
         if not download(web2py_url, w2p_archive):
             print '  INFO: problems downloading from web2py.com, try again later'
