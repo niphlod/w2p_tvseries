@@ -97,9 +97,9 @@ function w2p_tvseries_ajax_page(method,action,data,target) {
       if(content=='prepend') t.prepend(html);
       else if(content=='append') t.append(html);
       else if(content!='hide') t.html(html);
-      web2py_trap_form(action,target);
-      web2py_trap_link(target);
-      web2py_ajax_init('#'+target);
+      $.web2py.trap_form(action,target);
+      $.web2py.trap_link(target);
+      $.web2py.ajax_init('#'+target);
       if(command) eval(command);
       if(flash) jQuery('.flash').html(decodeURIComponent(flash)).slideDown();
       }
