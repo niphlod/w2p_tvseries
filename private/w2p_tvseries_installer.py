@@ -94,6 +94,13 @@ def parse_tvseries_version(version_file):
     version = version.split('.')
     return [int(a) for a in version]
 
+def parse_web2py_version(version_file):
+    with open(version_file) as g:
+        version = g.read().replace('\n', '').strip()
+    version = version.replace('Version ', '')
+    version = version[:version.find('-')]
+    version = version.split('.')
+    return [int(a) for a in version]
 
 def update_w2p_tvseries(w2p_folder, version):
     if raw_input('Q:    Update/download app from internet ([Y]/n)?').lower() in ['y', 'yes']:
@@ -141,6 +148,7 @@ def update_w2p_tvseries(w2p_folder, version):
         shutil.copy(sourcefile, destfile)
 
 if __name__ == '__main__':
+    is_binary = False
     if sys.executable.endswith('web2py.exe'):
         basefolder = os.path.normpath(os.path.join(os.getcwd(), '..'))
         __file__ = os.path.join(basefolder, 'w2p_tvseries_installer.py')
@@ -162,6 +170,22 @@ if __name__ == '__main__':
                 wait_and_exit(1)
             if os.path.exists(w2p_archive):
                 extract(w2p_archive, basefolder)
+    web2py_version_file = os.path.join(w2p_folder, 'VERSION')
+    if not os.path.isfile(web2py_version_file):
+        print '   ERROR: web2py version file not found'
+        wait_and_exit(1)
+    web2py_version = parse_web2py_version(web2py_version_file)
+    if web2py_version < [2,6,4]:
+        print 'we need to update web2py'
+        if is_binary:
+            print '  ERROR: you should update web2py'
+            print '  ERROR: go to http://niphlod.github.io/w2p_tvseries/ and download the new binary'
+        web2py_url = 'http://www.web2py.com/examples/static/web2py_src.zip'
+        if not download(web2py_url, w2p_archive):
+            print '  INFO: problems downloading from web2py.com, try again later'
+            wait_and_exit(1)
+        if os.path.exists(w2p_archive):
+            extract(w2p_archive, basefolder)
     if not os.path.exists(w2p_folder):
         print '  INFO: web2py folder undetected, exiting...'
         wait_and_exit(1)
@@ -327,4 +351,5 @@ for file in [w2p_archive, zipball]:
     if os.path.exists(file):
         os.unlink(file)
 wait_and_exit(0)
+
 
