@@ -441,22 +441,24 @@ def bit():
     cond_series = db(db.series.id>0)
     cond_path = db(db.rename_log.id>0)
     vars = request.get_vars
-    if vars.series_name and vars.series_name <> '':
+    if vars.series_name and vars.series_name != '':
         cond_series = cond_series(db.series.id == vars.series_name)
-    if vars.seasonnumber and vars.seasonnumber <> '':
+    if vars.seasonnumber and vars.seasonnumber != '':
         cond_series = cond_series(db.seasons_settings.seasonnumber == vars.seasonnumber)
-    if vars.paths and vars.paths <> '':
+    if vars.paths and vars.paths != '':
         cond_path = cond_path(db.rename_log.file_to.startswith(vars.paths))
-    if vars.date_from and vars.date_from <> '':
+    if vars.date_from and vars.date_from != '':
         vars.date_from = datetime.datetime.strptime(vars.date_from, T('%Y-%m-%d %H:%M:%S', lazy=False))
         cond_path = cond_path(db.rename_log.dat_insert > vars.date_from)
-    if vars.date_to and vars.date_to <> '':
+    if vars.date_to and vars.date_to != '':
         vars.date_to = datetime.datetime.strptime(vars.date_to, T('%Y-%m-%d %H:%M:%S', lazy=False))
         cond_path = cond_path(db.rename_log.dat_insert < vars.date_to)
 
+    vars.date_to = vars.date_to or None
+    vars.date_from = vars.date_from or None
     #all folders
     folders = cond_series((db.seasons_settings.tracking == True) & (db.seasons_settings.series_id == db.series.id))
-    folders = folders.select()
+    folders = folders.select(orderby=db.series.name)
 
     all_folders = []
     for row in folders:
@@ -474,10 +476,13 @@ def bit():
         if contents.first():
             all_files_records[k] = cond_path(db.rename_log.file_to.belongs(v)).select(orderby=~db.rename_log.id)
 
+    all_folders.sort()
+    series_name = dict([(row.series.id, row.series.name) for row in folders])
+    series_name = [(k, series_name[k]) for k in sorted(series_name, key=series_name.get)]
     form = SQLFORM.factory(
         Field('paths', default=vars['paths'], requires=IS_IN_SET(all_folders)),
         Field('seasonnumber', default=vars['seasonnumber'], requires=IS_IN_SET(set([row.seasons_settings.seasonnumber for row in folders]))),
-        Field('series_name', default=vars['series_name'], requires=IS_IN_SET(dict([(row.series.id, row.series.name) for row in folders]))),
+        Field('series_name', default=vars['series_name'], requires=IS_IN_SET(series_name)),
         Field('date_from', 'datetime', default=vars['date_from']),
         Field('date_to', 'datetime', default=vars['date_to']),
         buttons=[
@@ -490,4 +495,3 @@ def bit():
     )
 
     return dict(all_files_records=all_files_records, all_files=all_files, form=form)
-
