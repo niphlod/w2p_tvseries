@@ -68,21 +68,21 @@ pass
             var el = $(this);
             el.removeClass('in');
         });
-        function showrss_helper(input, autoinput) {
-            if (input.val() == 'ShowRSS_feed') {
-                    autoinput.addClass('w2p_autocomplete');
-                    autoinput.on('change', function() {
-                        if (!autoinput.hasClass('w2p_autocomplete')) return;
-                        $.get('{{=URL('manage', 'showrss_helper')}}',
-                              {'show_name' : $(this).val()},
-                              function(data) {
-                                autoinput.val(data);
-                              }
-                        )
-                    })
-                } else {
-                    autoinput.removeClass('w2p_autocomplete');
-                }
+        function showname_helper(input, autoinput) {
+            if ((input.val() == 'ShowRSS_feed') || (input.val() == 'Eztvit_feed')) {
+                autoinput.addClass('w2p_autocomplete');
+                autoinput.on('change', function() {
+                    if (!autoinput.hasClass('w2p_autocomplete')) return;
+                    $.get('{{=URL('manage', 'showname_helper')}}',
+                          {'show_name' : $(this).val(), 'what' : input.val()},
+                          function(data) {
+                            autoinput.val(data);
+                            }
+                    )
+                })
+            } else {
+                autoinput.removeClass('w2p_autocomplete');
+            }
         }
         function pill_settings(tab) {
             var currenttab = $(tab.attr('href'));
@@ -91,9 +91,9 @@ pass
             var torrent_button = $('.btn.pre_torrents', currenttab);
             var tab_button = $('a[href=#' + currenttab.attr('id') + ']');
             var autoinput = $('input[name=tor_show_name]', currenttab);
-            showrss_helper($('input[name=tor_feed]:checked', currenttab), autoinput);
+            showname_helper($('input[name=tor_feed]:checked', currenttab), autoinput);
             $('input[name=tor_feed]', currenttab).on('change', function() {
-                showrss_helper($(this), autoinput);
+                showname_helper($(this), autoinput);
             });
             $('input[name=tracking]', currenttab).each(function() {
                 var el = $(this);
@@ -194,6 +194,11 @@ pass
                 e.preventDefault();
             }
         });
+        $("a.reload").click(function(e) {
+            e.preventDefault();
+            var href = $(this).attr('href');
+            $.ajax(href);
+        })
 
         pill_settings($('.nav.nav-pills li.active a'));
 
