@@ -129,18 +129,20 @@ def preview_torrents():
             vars.season = int(vars.season)
         except:
             return ''
-
     ez = w2p_tvseries_feed_loader(vars.feed)
     res = ez.search(vars.show_name, vars.season, vars.quality, vars.minsize, vars.maxsize, vars.regex, vars.lower_attention)
     error = ez.errors
     return dict(res=res, error=error)
 
-def showrss_helper():
+def showname_helper():
     if not request.vars.show_name:
         return ''
-    t = w2p_tvseries_feed_loader('ShowRSS_feed')
+    if not request.vars.what in ('ShowRSS_feed', 'Eztvit_feed'):
+        return ''
+    t = w2p_tvseries_feed_loader(request.vars.what)
     mapping = t.series_helper(request.vars.show_name)
     return mapping
+
 
 def series_settings():
     series_id = request.args(0)

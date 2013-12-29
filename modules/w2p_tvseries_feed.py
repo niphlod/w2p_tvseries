@@ -49,8 +49,8 @@ except ImportError:
         except ImportError:
           print("Failed to import ElementTree from any known place")
 
-import urllib
 from gluon.contrib import simplejson as sj
+from gluon.html import TAG
 from w2p_tvseries_utils import tvdb_logger, Meddler, w2p_tvseries_settings
 import hashlib
 import os
@@ -71,7 +71,8 @@ def w2p_tvseries_feed_loader(*args, **vars):
                 Eztv_feed=Eztv_feed,
                 Torrentz_feed=Torrentz_feed,
                 ShowRSS_feed=ShowRSS_feed,
-                DTT_feed=DTT_feed
+                DTT_feed=DTT_feed,
+                Eztvit_feed=Eztvit_feed
             )
             setattr(w2p_tvseries_feed_loader, 'instance_%s' % (type),  types[type](*args, **vars))
     finally:
@@ -648,11 +649,11 @@ class ShowRSS_feed(w2p_tvseries_feed):
         self.refresh_showlist()
 
     def refresh_showlist(self):
-        main_url = 'http://showrss.karmorra.info/?cs=feeds'
+        main_url = 'http://showrss.info/?cs=feeds'
         inserted_on = datetime.datetime.utcnow() + datetime.timedelta(days=7)
         content = self.downloader(main_url, inserted_on=inserted_on)
         #help ourselves with regexes without needing lxml
-        shows_select = re.search("""<select name="show">.*</select>""", content).group()
+        shows_select = re.search("""<select name="show" class="chosen" style="width:300px" data-placeholder="Pick a show...">.*</select>""", content).group()
         shows = re.findall("""<option value="([\d]+)">([^<]+)?</option>""", shows_select)
         mapping = Storage()
         for k,v in shows:
@@ -670,7 +671,7 @@ class ShowRSS_feed(w2p_tvseries_feed):
     def calc_url_feed(self, show_name, seasonnumber, lower_attention='Verified'):
         #http://showrss.karmorra.info/feeds/403.rss
         self.feed_url = None
-        feed = "http://showrss.karmorra.info/feeds/%s.rss" % self.mapping.get(show_name, "")
+        feed = "http://showrss.info/feeds/%s.rss" % self.mapping.get(show_name, "")
 
         if len(feed)>=40:
             self.feed_url = feed
@@ -760,4 +761,91 @@ class DTT_feed(w2p_tvseries_feed):
         if ep.size < 100*1024*1024:
             ep.size = 300*1024*1024
         ep.guid = item.findtext('guid')
+        return ep
+
+
+class Eztvit_feed(w2p_tvseries_feed):
+    def __init__(self, *args):
+        super(Eztvit_feed, self).__init__(*args)
+        self.refresh_showlist()
+
+    def refresh_showlist(self):
+        main_url = 'http://eztv.it/showlist/'
+        inserted_on = datetime.datetime.utcnow() + datetime.timedelta(days=7)
+        content = self.downloader(main_url, inserted_on=inserted_on)
+        #help ourselves with regexes without needing lxml
+        shows = re.findall("""<td class="forum_thread_post"><a href="([^"]*)" class="thread_link">([^<]*)</a></td>""", content)
+        mapping = Storage()
+        for link, name in shows:
+            mapping[name] = link
+        self.mapping = mapping
+
+    def series_helper(self, show_name):
+        key = None
+        for name in self.mapping:
+            if show_name.lower() in name.lower():
+                key = name
+                break
+        return key
+
+    def calc_url_feed(self, show_name, seasonnumber, lower_attention='Verified'):
+        #http://showrss.karmorra.info/feeds/403.rss
+        self.feed_url = None
+        feed = "http://eztv.it%s" % self.mapping.get(show_name, "")
+        if len(feed)>=20:
+            self.feed_url = feed
+
+    def parse_feed(self):
+        """return a list of dicts
+        title
+        seasonnumber
+        episodenumber
+        torrenturl
+        magneturl
+        guid
+        """
+        inserted_on = datetime.datetime.utcnow() + datetime.timedelta(hours=6)
+        if not self.feed_url:
+            self.eps = []
+            return
+        else:
+            content = self.downloader(self.feed_url, inserted_on=inserted_on)
+            if not content:
+                self.errors = "No content fetched"
+                self.error('parse_feed', 'Unable to download feed')
+            all_trs = re.findall(r"""<tr name="hover" class="forum_header_border">(.*?)</tr>""", content, re.MULTILINE|re.DOTALL)
+            eps = []
+            for item in all_trs:
+                parsed = self.parse_item(item)
+                if parsed:
+                    eps.append(self.parse_item(item))
+            self.eps = eps
+
+    def parse_item(self, item):
+        ep = Storage()
+        title_and_size = re.search(r'alt="([^"]*)" class="epinfo"',item)
+        if not title_and_size:
+            return None
+        title_and_size = title_and_size.group(1)
+        size = re.search(r'\((.*)\)$', title_and_size)
+        if size:
+            size = size.group(1)
+            size = size.replace('MB', '')
+            try:
+                size = float(size)*1024
+            except:
+                size = 300*1024*1024
+        else:
+            size = 300*1024*1024
+        ep.title = title_and_size.rsplit('(', 1)[0]
+        info = self.parse_title(ep.title)
+        ep.update(info)
+        magnet = re.search(r'href="magnet:\?xt([^"]*)"', item)
+        if magnet:
+            ep.magnet = 'magnet:?xt%s' % magnet.groups(1)
+        ep.filename = ep.title
+        ep.pubdate = datetime.datetime.utcnow()
+        ep.filterwith = ep.title
+        ep.size = 300*1024*1024
+        ep.guid = ep.magnet
         return ep
