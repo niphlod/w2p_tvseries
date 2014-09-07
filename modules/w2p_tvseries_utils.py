@@ -221,7 +221,7 @@ class w2p_tvseries_settings(object):
 
     def _global_settings(self):
         db = current.w2p_tvseries.database
-        settings = Storage()
+        settings = dict()
         gs_tb = db.global_settings
         all_settings = db(gs_tb.id>0).select()
         for row in all_settings:
@@ -239,7 +239,10 @@ class w2p_tvseries_settings(object):
         if refresh:
             gs = cache.disk('w2p_tvseries_gsettings', None)
         gs = cache.disk('w2p_tvseries_gsettings', lambda : self._global_settings(), time_expire=1500)
-        return gs
+        sgs = Storage()
+        for k,v in gs.iteritems():
+            sgs[k] = v
+        return sgs
 
     def general_settings(self):
         settings = Storage()
