@@ -145,28 +145,28 @@ class w2p_tvseries_xbmc(object):
                 etree.SubElement(eproot, 'episode').text = "%s" % ep.epnumber
                 etree.SubElement(eproot, 'plot').text = ep.overview.decode('utf-8')
                 etree.SubElement(eproot, 'aired').text = "%s" % ep.firstaired
-            if not ep.filename:
-                return
-            ep_nfo = os.path.join(season_path, "%s.nfo" % os.path.splitext(ep.filename)[0])
-            if os.path.exists(ep_nfo) and os.stat(ep_nfo).st_mtime > ep.lastupdated:
-                return
-            #for multi-eps banner is from last ep only
-            banner_img = "%s.tbn" % os.path.splitext(ep_nfo)[0]
-            eb_tb = db.episodes_banners
-            banner_rec = db(eb_tb.episode_id == ep.id).select().first()
-            if banner_rec:
-                etree.SubElement(eproot, 'thumb').text = 'thumb://Local'
-                filename, stream = eb_tb.banner.retrieve(banner_rec.banner)
-                with open(banner_img, 'wb') as g:
-                    shutil.copyfileobj(stream, g)
+                if not ep.filename:
+                    continue
+                ep_nfo = os.path.join(season_path, "%s.nfo" % os.path.splitext(ep.filename)[0])
+                if os.path.exists(ep_nfo) and os.stat(ep_nfo).st_mtime > ep.lastupdated:
+                   continue
+                #for multi-eps banner is from last ep only
+                banner_img = "%s.tbn" % os.path.splitext(ep_nfo)[0]
+                eb_tb = db.episodes_banners
+                banner_rec = db(eb_tb.episode_id == ep.id).select().first()
+                if banner_rec:
+                    etree.SubElement(eproot, 'thumb').text = 'thumb://Local'
+                    filename, stream = eb_tb.banner.retrieve(banner_rec.banner)
+                    with open(banner_img, 'wb') as g:
+                        shutil.copyfileobj(stream, g)
 
-            with open(ep_nfo, 'w') as g:
-                self.indent(root)
-                if etree.__package__ == 'lxml':
-                    etree.ElementTree(root).write(g, encoding='UTF-8', xml_declaration=True)
-                else:
-                    etree.ElementTree(root).write(g, encoding='UTF-8')
-            self.log(fname, "Written ep info to %s" % (ep_nfo))
+                with open(ep_nfo, 'w') as g:
+                    self.indent(root)
+                    if etree.__package__ == 'lxml':
+                        etree.ElementTree(root).write(g, encoding='UTF-8', xml_declaration=True)
+                    else:
+                        etree.ElementTree(root).write(g, encoding='UTF-8')
+                self.log(fname, "Written ep info to %s" % (ep_nfo))
 
 
 
