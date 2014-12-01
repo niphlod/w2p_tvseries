@@ -791,7 +791,7 @@ class Eztvit_feed(w2p_tvseries_feed):
     def calc_url_feed(self, show_name, seasonnumber, lower_attention='Verified'):
         #http://showrss.karmorra.info/feeds/403.rss
         self.feed_url = None
-        feed = "http://eztv.it%s" % self.mapping.get(show_name, "")
+        feed = "https://eztv.it%s" % self.mapping.get(show_name, "")
         if len(feed)>=20:
             self.feed_url = feed
 
