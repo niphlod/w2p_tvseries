@@ -572,7 +572,7 @@ class Eztv_feed(w2p_tvseries_feed):
     def calc_url_feed(self, show_name, seasonnumber, lower_attention):
         vars = dict(show_name=show_name, show_name_exact='true', season=seasonnumber, mode='rss')
         vars = urllib.urlencode(vars)
-        feed = "http://www.ezrss.it/search/index.php?" + vars
+        feed = "https://www.ezrss.it/search/index.php?" + vars
         self.feed_url = feed
 
     def parse_item(self, item):
@@ -770,7 +770,7 @@ class Eztvit_feed(w2p_tvseries_feed):
         self.refresh_showlist()
 
     def refresh_showlist(self):
-        main_url = 'http://eztv.it/showlist/'
+        main_url = 'https://eztv.it/showlist/'
         inserted_on = datetime.datetime.utcnow() + datetime.timedelta(days=7)
         content = self.downloader(main_url, inserted_on=inserted_on)
         #help ourselves with regexes without needing lxml

@@ -27,13 +27,13 @@ response.meta.author = 'Niphlod'
 response.meta.description = 'TV Series Organizer!'
 response.meta.keywords = 'TV Series Organizer!'
 response.meta.generator = 'Web2py Web Framework'
-response.meta.copyright = 'Copyright 2013'
+response.meta.copyright = 'Copyright 2014'
 
 MIGRATE = True
 LAZY_TABLES = False
 
 response.generic_patterns = ['*'] if request.is_local else []
-response.static_version = '1.3.18'
+response.static_version = '1.3.19'
 
 db = DAL(
     "sqlite://storage.db",
