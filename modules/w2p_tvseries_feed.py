@@ -572,7 +572,7 @@ class Eztv_feed(w2p_tvseries_feed):
     def calc_url_feed(self, show_name, seasonnumber, lower_attention):
         vars = dict(show_name=show_name, show_name_exact='true', season=seasonnumber, mode='rss')
         vars = urllib.urlencode(vars)
-        feed = "https://www.ezrss.it/search/index.php?" + vars
+        feed = "https://ezrss.it/search/index.php?" + vars
         self.feed_url = feed
 
     def parse_item(self, item):
