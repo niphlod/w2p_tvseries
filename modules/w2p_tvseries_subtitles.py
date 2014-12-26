@@ -61,7 +61,7 @@ class SubDownloader(object):
     def __init__(self, verbose=False):
         self.logger = tvdb_logger('subs')
         self.req = req.Session()
-        self.req.headers = {'User-Agent' : 'w2p_tvdb'}
+        self.req.headers = {'User-Agent' : 'w2p_tvseries v0.2'}
         self.verbose = verbose
 
     def log(self, function, message):
@@ -96,7 +96,7 @@ class SubDownloader(object):
             i = 0
             while i < 5:
                 try:
-                    r = self.req.get(url, timeout=3)
+                    r = self.req.get(url, timeout=3, verify=False)
                     r.raise_for_status()
                     break
                 except:
@@ -202,7 +202,7 @@ class OpenSubtitlesDownloader(SubDownloader):
             return cached.value
         else:
             server = ServerProxy(base_api)
-            session =  server.LogIn("","","en","OS Test User Agent")
+            session =  server.LogIn("","","en","w2p_tvseries v0.2")
             token = session["token"]
             moviesList = server.SearchSubtitles(token, searchlist)
             content = simplejson.dumps(moviesList)
@@ -341,7 +341,7 @@ class ItasaDownloader(SubDownloader):
             self.log('login', "Logged already")
             return 1
         self.log('login', " Logging in with username '%s' ..." % (self.username))
-        response = self.req.get(self.main_url + 'index.php')
+        response = self.req.get(self.main_url + 'index.php', verify=False)
         content = response.content
         if content is not None:
             match = re.search('logouticon.png', content, re.IGNORECASE | re.DOTALL)

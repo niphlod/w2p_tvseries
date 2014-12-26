@@ -50,7 +50,6 @@ except ImportError:
           print("Failed to import ElementTree from any known place")
 
 from gluon.contrib import simplejson as sj
-from gluon.html import TAG
 from w2p_tvseries_utils import tvdb_logger, Meddler, w2p_tvseries_settings
 import hashlib
 import os
@@ -229,7 +228,7 @@ class w2p_tvseries_torrent(object):
                 i = 0
                 while i < 5:
                     try:
-                        r = self.req.get(url, timeout=3)
+                        r = self.req.get(url, timeout=3, verify=False)
                         r.raise_for_status()
                         break
                     except:
@@ -405,7 +404,7 @@ class w2p_tvseries_feed(object):
                 i = 0
                 while i < 5:
                     try:
-                        r = self.req.get(url, timeout=3)
+                        r = self.req.get(url, timeout=3, verify=False)
                         r.raise_for_status()
                         break
                     except:
@@ -789,7 +788,6 @@ class Eztvit_feed(w2p_tvseries_feed):
         return key
 
     def calc_url_feed(self, show_name, seasonnumber, lower_attention='Verified'):
-        #http://showrss.karmorra.info/feeds/403.rss
         self.feed_url = None
         feed = "https://eztv.it%s" % self.mapping.get(show_name, "")
         if len(feed)>=20:
