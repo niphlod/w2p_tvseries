@@ -237,3 +237,7 @@ span.spinner {
 }
 
 /*series page end*/
+
+#results table.table {
+    white-space: nowrap;
+}

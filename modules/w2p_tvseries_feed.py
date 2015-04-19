@@ -811,7 +811,7 @@ class Eztvit_feed(w2p_tvseries_feed):
             if not content:
                 self.errors = "No content fetched"
                 self.error('parse_feed', 'Unable to download feed')
-            all_trs = re.findall(r"""<tr name="hover" class="forum_header_border">(.*?)</tr>""", content, re.MULTILINE|re.DOTALL)
+            all_trs = re.findall(r"""<tr name="hover" class="header_brd">(.*?)</tr>""", content, re.MULTILINE|re.DOTALL)
             eps = []
             for item in all_trs:
                 parsed = self.parse_item(item)
@@ -825,12 +825,17 @@ class Eztvit_feed(w2p_tvseries_feed):
         if not title_and_size:
             return None
         title_and_size = title_and_size.group(1)
-        size = re.search(r'\((.*)\)$', title_and_size)
+        size = re.search(r'\(([^)]*)\)$', title_and_size)
         if size:
-            size = size.group(1)
-            size = size.replace('MB', '')
+            size = size.group(0).replace('(', '').replace(')', '').strip()
+            if 'MB' in size:
+                size = size.replace('MB', '')
+                multiplier = 1024
+            elif 'GB' in size:
+                size = size.replace('GB', '')
+                multiplier = 1024*1024
             try:
-                size = float(size)*1024
+                size = float(size.strip())*multiplier
             except:
                 size = 300*1024*1024
         else:
@@ -844,6 +849,6 @@ class Eztvit_feed(w2p_tvseries_feed):
         ep.filename = ep.title
         ep.pubdate = datetime.datetime.utcnow()
         ep.filterwith = ep.title
-        ep.size = 300*1024*1024
+        ep.size = size * 1024
         ep.guid = ep.magnet
         return ep
