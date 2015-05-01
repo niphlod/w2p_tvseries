@@ -811,7 +811,7 @@ class Eztvit_feed(w2p_tvseries_feed):
             if not content:
                 self.errors = "No content fetched"
                 self.error('parse_feed', 'Unable to download feed')
-            all_trs = re.findall(r"""<tr name="hover" class="header_brd">(.*?)</tr>""", content, re.MULTILINE|re.DOTALL)
+            all_trs = re.findall(r"""<tr name="hover" class="forum_header_border">(.*?)</tr>""", content, re.MULTILINE|re.DOTALL)
             eps = []
             for item in all_trs:
                 parsed = self.parse_item(item)
