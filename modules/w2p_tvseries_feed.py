@@ -769,7 +769,7 @@ class Eztvit_feed(w2p_tvseries_feed):
         self.refresh_showlist()
 
     def refresh_showlist(self):
-        main_url = 'https://eztv.ch/showlist/'
+        main_url = 'https://eztv.ag/showlist/'
         inserted_on = datetime.datetime.utcnow() + datetime.timedelta(days=7)
         content = self.downloader(main_url, inserted_on=inserted_on)
         #help ourselves with regexes without needing lxml
@@ -789,7 +789,7 @@ class Eztvit_feed(w2p_tvseries_feed):
 
     def calc_url_feed(self, show_name, seasonnumber, lower_attention='Verified'):
         self.feed_url = None
-        feed = "https://eztv.ch%s" % self.mapping.get(show_name, "")
+        feed = "https://eztv.ag%s" % self.mapping.get(show_name, "")
         if len(feed)>=20:
             self.feed_url = feed
 
