@@ -388,6 +388,7 @@ class w2p_tvseries_tvdb(object):
         db(sb_tb.id == banner_id).update(banner=sb_tb.banner.store(inm_file, filename))
 
 
+
 class tvdb_mappers(object):
 
     def __init__(self):
@@ -422,7 +423,17 @@ class tvdb_mappers(object):
         series_node = root.find('Series')
         rtn = self.series_mapper(series_node, language)
         episodes_node = root.findall('Episode')
-        self.episode_mapper(episodes_node, language)
+        eplist = self.episode_mapper(episodes_node, language)
+        db = current.w2p_tvseries.database
+        ep_tb = db.episodes
+        se_tb = db.series
+        current_eplist = db((se_tb.id == rtn) & (se_tb.seriesid == ep_tb.seriesid)).select(ep_tb.id)
+        current_eplist = [row.id for row in current_eplist]
+        if len(current_eplist) > len(eplist):
+            diff = [x for x in current_eplist if x not in eplist]
+            self.prune_episodes(diff)
+            self.log('add_series_mapper', 'need to cleanup %s' % (diff))
+        db.commit()
         return rtn
 
     def series_mapper(self, xmlnode, language):
@@ -450,11 +461,27 @@ class tvdb_mappers(object):
             db.commit()
             return id
 
+    def prune_episodes(self, eplist):
+        db = current.w2p_tvseries.database
+        #retrieve_eplist
+        if not eplist:
+            return
+        if not isinstance(eplist, list):
+            eplist = [eplist]
+        #delete downloads
+        down =  db(db.downloads.episode_id.belongs(eplist)).delete()
+        #delete episodes_metadata
+        meta = db(db.episodes_metadata.episode_id.belongs(eplist)).delete()
+        #delete episodes_banners
+        ep_ba = db(db.episodes_banners.episode_id.belongs(eplist)).delete()
+        #delete episodes
+        eps = db(db.episodes.id.belongs(eplist)).delete()
+
     def episode_mapper(self, xmlnodes, language):
         db = current.w2p_tvseries.database
         ep_tb = db.episodes
         eb_tb = db.episodes_banners
-        records = []
+        records = []        
         for episode in xmlnodes:
             record = Storage()
             record.firstaired = episode.findtext('FirstAired')
