@@ -672,7 +672,7 @@ class ShowRSS_feed(w2p_tvseries_feed):
         self.feed_url = None
         feed = "http://showrss.info/feeds/%s.rss" % self.mapping.get(show_name, "")
 
-        if len(feed)>=40:
+        if len(feed)>=31:
             self.feed_url = feed
 
     def parse_feed(self):
